@@ -4,6 +4,7 @@
 
   var LS_KEY = "zihua_bpe_dimsum_order_v1";
   var activeSheet = "zihua";
+  var footerExpanded = false;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -254,6 +255,7 @@
     if (sheet) activeSheet = sheet.id;
 
     var html = renderSheetTabs(st);
+    html += '<div class="dimsum-list" id="dimsumList">';
     if (sheet) {
       html += '<div class="dimsum-sheet-head">';
       html += "<h3>" + esc(sheet.title) + ' <span class="badge">點心紙</span></h3>';
@@ -269,18 +271,29 @@
         html += renderSection(sec, st);
       });
     }
+    html += "</div>";
 
     var calc = calcTotals(st);
+    var expClass = footerExpanded ? " is-expanded" : "";
+    var toggleLabel = footerExpanded ? "收合" : "更多";
     html +=
-      '<div class="dimsum-footer" id="dimsumFooter">' +
-        '<div class="dimsum-total-line"><span>合計</span><strong id="dimsumGrandTotal">$' +
-        money(calc.total) +
-        "</strong></div>" +
-        '<p class="muted dimsum-hint">套裝「套」數優先按套裝價計；單品數量另計。買3送1會自動扣最平件。職員可改價（登入後）。參考用途，以攤位當日為準。</p>' +
-        '<div class="btn-row">' +
-          '<button type="button" class="btn-danger" id="btnDimsumClear">清空數量</button>' +
-          '<button type="button" class="btn-ghost" id="btnDimsumExport">匯出訂單</button>' +
-          '<button type="button" class="primary" id="btnDimsumPrint">列印／預覽</button>' +
+      '<div class="dimsum-footer' + expClass + '" id="dimsumFooter">' +
+        '<div class="dimsum-footer-bar">' +
+          '<div class="dimsum-total-line">' +
+            '<span>合計</span>' +
+            '<strong id="dimsumGrandTotal">$' + money(calc.total) + "</strong>" +
+          "</div>" +
+          '<button type="button" class="dimsum-footer-toggle" id="btnDimsumToggle" aria-expanded="' +
+            (footerExpanded ? "true" : "false") + '">' + toggleLabel + "</button>" +
+        "</div>" +
+        '<div class="dimsum-footer-extra" id="dimsumFooterExtra"' +
+          (footerExpanded ? "" : " hidden") + ">" +
+          '<p class="muted dimsum-hint">套裝「套」數優先按套裝價計；單品數量另計。買3送1會自動扣最平件。職員可改價（登入後）。參考用途，以攤位當日為準。</p>' +
+          '<div class="btn-row dimsum-footer-actions">' +
+            '<button type="button" class="btn-danger" id="btnDimsumClear">清空</button>' +
+            '<button type="button" class="btn-ghost" id="btnDimsumExport">匯出</button>' +
+            '<button type="button" class="primary" id="btnDimsumPrint">列印</button>' +
+          "</div>" +
         "</div>" +
       "</div>";
 
@@ -336,13 +349,19 @@
         setQtyValue(wrap.getAttribute("data-kind"), wrap.getAttribute("data-id"), next);
         return;
       }
-      if (e.target.id === "btnDimsumClear") {
+      var toggle = e.target.closest("#btnDimsumToggle");
+      if (toggle) {
+        footerExpanded = !footerExpanded;
+        render();
+        return;
+      }
+      if (e.target.closest("#btnDimsumClear")) {
         if (!confirm("清空全部數量同套裝？")) return;
         saveState({ items: {}, sets: {}, overrides: loadState().overrides });
         render();
         return;
       }
-      if (e.target.id === "btnDimsumExport") {
+      if (e.target.closest("#btnDimsumExport")) {
         var text = exportText();
         var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
         var a = document.createElement("a");
@@ -352,7 +371,7 @@
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
         return;
       }
-      if (e.target.id === "btnDimsumPrint") {
+      if (e.target.closest("#btnDimsumPrint")) {
         var text2 = exportText();
         var w = window.open("", "_blank");
         if (w) {
