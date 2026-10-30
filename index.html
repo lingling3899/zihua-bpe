@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="紫花油工展會攤位：班表、遊戲抽獎、三品牌追蹤、古寶入會。參考用途，非醫療建議。" />
   <title>紫花油 · 工展會</title>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261030a" />
+  <link rel="stylesheet" href="assets/css/app.css?v=20261030b" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <img class="brand-logo" src="assets/img/zihua-logo.png?v=20261030a" width="220" height="80" alt="紫花油 ZIHUA" />
+        <img class="brand-logo" src="assets/img/zihua-logo.png?v=20261030b" width="220" height="80" alt="紫花油 ZIHUA" />
         <div class="brand-text">
           <h1>紫花油 · 工展會</h1>
           <p>第60屆　｜　班表　｜　遊戲　｜　入會</p>
@@ -20,6 +20,8 @@
       <nav class="nav-tabs" aria-label="主要分頁">
         <button type="button" class="active" data-view="fair">展會資料</button>
         <button type="button" data-view="schedule">班表</button>
+        <button type="button" data-view="snack">點心紙</button>
+        <button type="button" data-view="prices">售價</button>
         <button type="button" data-view="games">遊戲</button>
         <button type="button" data-view="social">追蹤我哋</button>
         <button type="button" data-view="join">古寶入會</button>
@@ -98,21 +100,87 @@
           <button type="button" class="admin-btn" id="btnAddShift">＋ 新增班次</button>
           <button type="button" class="btn-ghost" id="btnResetSchedule">還原範本</button>
         </div>
-        <div id="snackNoteBox" class="panel" style="margin-top:12px;box-shadow:none;padding:12px;">
-          <h3 style="font-size:1rem;">點心紙／備註 <span class="badge">當日</span></h3>
+        <div id="snackNoteBox" class="panel snack-teaser" style="margin-top:12px;box-shadow:none;padding:12px;">
+          <h3 style="font-size:1rem;">點心紙 <span class="badge">獨立分頁</span></h3>
           <p id="snackNoteText" class="muted">—</p>
-          <div class="admin-only hidden" id="snackEditWrap">
-            <label class="field" for="snackNoteInput">編輯備註</label>
-            <textarea id="snackNoteInput" maxlength="800" placeholder="例如：點心時間、帶備物資…"></textarea>
-            <div class="btn-row">
-              <button type="button" class="admin-btn" id="btnSaveSnack">儲存備註</button>
-            </div>
+          <div class="btn-row">
+            <button type="button" class="btn-ghost" id="btnGoSnack">打開點心紙（文字＋相片）</button>
           </div>
         </div>
         <div id="shiftList" class="shift-list" aria-live="polite"></div>
       </section>
     </section>
 
+
+    <!-- 點心紙 -->
+    <section id="view-snack" class="hidden">
+      <section class="panel">
+        <h3>點心紙</h3>
+        <p class="muted">按日期睇／改點心時間、帶備物資、角色提示。職員可上載相片（存本機）。唔會自動帶入真實人名。</p>
+        <div class="toolbar">
+          <div>
+            <label class="field" for="snackDate">日期</label>
+            <input type="date" id="snackDate" min="2026-12-12" max="2027-01-04" />
+          </div>
+        </div>
+        <div id="snackViewPanel">
+          <h3 style="font-size:1rem;">當日備註</h3>
+          <p id="snackPageText" class="snack-text">（未有備註）</p>
+          <div id="snackPhotoGallery" class="snack-gallery" aria-label="點心紙相片"></div>
+        </div>
+        <div class="admin-only hidden" id="snackAdminPanel" style="margin-top:14px;">
+          <h3 style="font-size:1rem;">職員編輯</h3>
+          <label class="field" for="snackPageInput">文字備註</label>
+          <textarea id="snackPageInput" maxlength="2000" rows="6" placeholder="例如：點心時間 15:00；帶備水／碗；Senior Promoter 注意…"></textarea>
+          <label class="field" for="snackPhotoInput">上載相片（可多張；會自動壓縮）</label>
+          <input type="file" id="snackPhotoInput" accept="image/*" multiple />
+          <p id="snackPhotoMsg" class="admin-msg hidden" role="status"></p>
+          <div class="btn-row">
+            <button type="button" class="admin-btn" id="btnSaveSnackPage">儲存文字</button>
+            <button type="button" class="btn-ghost" id="btnClearSnackPhotos">清空當日相片</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- 售價 -->
+    <section id="view-prices" class="hidden">
+      <section class="panel">
+        <h3>產品售賣價錢</h3>
+        <p class="muted">工展會攤位價目。未填價錢顯示「待填」。職員登入後可改價／加產品。真實價表未收到前請唔好當零售官價。</p>
+        <div class="toolbar">
+          <div>
+            <label class="field" for="priceBrand">品牌</label>
+            <select id="priceBrand">
+              <option value="">全部</option>
+              <option>紫花油</option>
+              <option>日本叮叮</option>
+              <option>古寶</option>
+            </select>
+          </div>
+          <div>
+            <label class="field" for="priceSearch">搜尋</label>
+            <input type="search" id="priceSearch" placeholder="產品名…" />
+          </div>
+          <div>
+            <label class="field" for="priceFilled">顯示</label>
+            <select id="priceFilled">
+              <option value="all">全部</option>
+              <option value="filled">已填價</option>
+              <option value="empty">待填</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row admin-only hidden" id="priceAdminBar">
+          <button type="button" class="admin-btn" id="btnAddPrice">＋ 新增產品價</button>
+          <button type="button" class="btn-ghost" id="btnExportPrices">Export CSV</button>
+          <button type="button" class="btn-ghost" id="btnResetPrices">還原產品名單（清價錢）</button>
+        </div>
+        <div id="priceList" class="price-list" aria-live="polite"></div>
+      </section>
+    </section>
+
+    <!-- 價錢編輯 modal 放喺後面 -->
     <!-- 遊戲 -->
     <section id="view-games" class="hidden">
       <section class="panel">
@@ -213,6 +281,13 @@
           </table>
         </div>
 
+        <h3 style="margin-top:18px;font-size:1rem;">售價快捷</h3>
+        <p class="muted">完整價目表喺「售價」分頁；亦可喺該頁 Export CSV。</p>
+        <div class="btn-row">
+          <button type="button" class="btn-ghost" id="btnAdminGoPrices">去售價分頁</button>
+          <button type="button" class="btn-ghost" id="btnAdminExportPrices">Export 售價 CSV</button>
+        </div>
+
         <h3 style="margin-top:18px;font-size:1rem;">獎品權重</h3>
         <p class="muted">數字愈大愈易中。儲存後即時生效。</p>
         <div id="prizeWeights"></div>
@@ -229,6 +304,35 @@
       </section>
     </section>
   </main>
+
+
+  <!-- Price edit modal -->
+  <div id="priceModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h3 id="priceModalTitle">編輯售價</h3>
+      <form id="priceForm">
+        <input type="hidden" id="priceId" />
+        <label class="field" for="priceBrandIn">品牌</label>
+        <select id="priceBrandIn" required>
+          <option>紫花油</option>
+          <option>日本叮叮</option>
+          <option>古寶</option>
+        </select>
+        <label class="field" for="priceNameIn">產品名</label>
+        <input type="text" id="priceNameIn" maxlength="120" required />
+        <label class="field" for="priceSpecIn">規格</label>
+        <input type="text" id="priceSpecIn" maxlength="120" placeholder="例如 70ml／18片" />
+        <label class="field" for="priceValueIn">工展會售價（HK$）</label>
+        <input type="text" id="priceValueIn" maxlength="40" placeholder="留空＝待填；例如 88 或 3件$200" />
+        <label class="field" for="priceNoteIn">備註</label>
+        <input type="text" id="priceNoteIn" maxlength="200" placeholder="套裝／優惠說明（可選）" />
+        <div class="btn-row">
+          <button type="submit" class="primary">儲存</button>
+          <button type="button" class="btn-ghost" id="btnCancelPrice">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Login modal -->
   <div id="loginModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
@@ -285,12 +389,13 @@
   <footer class="footer">
     紫花油工展會攤位工具 · 參考用途，非醫療建議 ·
     <a href="https://www.hkzihua.com/" target="_blank" rel="noopener">hkzihua.com</a>
-    · v=20261030a
+    · v=20261030b
   </footer>
 
-  <script src="assets/js/admin-auth.js?v=20261030a"></script>
-  <script src="data/schedule-seed.js?v=20261030a"></script>
-  <script src="data/socials.js?v=20261030a"></script>
-  <script src="assets/js/app.js?v=20261030a"></script>
+  <script src="assets/js/admin-auth.js?v=20261030b"></script>
+  <script src="data/schedule-seed.js?v=20261030b"></script>
+  <script src="data/socials.js?v=20261030b"></script>
+  <script src="data/prices-seed.js?v=20261030b"></script>
+  <script src="assets/js/app.js?v=20261030b"></script>
 </body>
 </html>

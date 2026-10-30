@@ -3,12 +3,18 @@
 
   var LS = {
     shifts: "zihua_bpe_shifts_v1",
-    snacks: "zihua_bpe_snacks_v1",
+    snacks: "zihua_bpe_snacks_v2",
     members: "zihua_bpe_members_v1",
     prizes: "zihua_bpe_prizes_v1",
     socials: "zihua_bpe_socials_v1",
-    wins: "zihua_bpe_wins_v1"
+    wins: "zihua_bpe_wins_v1",
+    prices: "zihua_bpe_prices_v1"
   };
+
+  var SNACK_MAX_PHOTOS = 6;
+  var SNACK_MAX_DIM = 1200;
+  var SNACK_JPEG_Q = 0.72;
+  var SNACK_MAX_BYTES = 450000; /* ~450KB per photo after compress */
 
   var FAIR_START = "2026-12-12";
   var FAIR_END = "2027-01-04";
@@ -55,7 +61,7 @@
   /* ---------- Navigation ---------- */
 
   function showView(name) {
-    ["fair", "schedule", "games", "social", "join", "admin"].forEach(function (v) {
+    ["fair", "schedule", "snack", "prices", "games", "social", "join", "admin"].forEach(function (v) {
       var el = $("view-" + v);
       if (el) el.classList.toggle("hidden", v !== name);
     });
@@ -63,6 +69,8 @@
       b.classList.toggle("active", b.getAttribute("data-view") === name);
     });
     if (name === "schedule") renderSchedule();
+    if (name === "snack") renderSnackPage();
+    if (name === "prices") renderPrices();
     if (name === "social") renderSocials();
     if (name === "games") renderWinLog();
     if (name === "admin") {
@@ -85,13 +93,59 @@
   }
   function setShifts(list) { saveJSON(LS.shifts, list); }
 
-  function getSnacks() {
-    var seed = window.BPE_SCHEDULE_SEED;
-    var stored = loadJSON(LS.snacks, null);
-    if (stored && Array.isArray(stored)) return stored;
-    return seed && seed.snackNotes ? seed.snackNotes.slice() : [];
+  function normalizeSnack(n) {
+    if (!n || typeof n !== "object") return null;
+    return {
+      id: n.id || uid("note"),
+      date: n.date || "",
+      text: n.text || "",
+      photos: Array.isArray(n.photos) ? n.photos : []
+    };
   }
-  function setSnacks(list) { saveJSON(LS.snacks, list); }
+
+  function migrateSnacksFromV1() {
+    try {
+      var raw = localStorage.getItem("zihua_bpe_snacks_v1");
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      return parsed.map(normalizeSnack).filter(Boolean);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getSnacks() {
+    var stored = loadJSON(LS.snacks, null);
+    if (stored && Array.isArray(stored)) return stored.map(normalizeSnack).filter(Boolean);
+    var migrated = migrateSnacksFromV1();
+    if (migrated) {
+      saveJSON(LS.snacks, migrated);
+      return migrated;
+    }
+    var seed = window.BPE_SCHEDULE_SEED;
+    var base = seed && seed.snackNotes ? seed.snackNotes.slice() : [];
+    return base.map(normalizeSnack).filter(Boolean);
+  }
+  function setSnacks(list) { saveJSON(LS.snacks, list.map(normalizeSnack).filter(Boolean)); }
+
+  function getSnackForDate(date) {
+    var snacks = getSnacks();
+    var sn = snacks.find(function (n) { return n.date === date; });
+    if (sn) return sn;
+    return { id: uid("note"), date: date, text: "", photos: [] };
+  }
+
+  function upsertSnack(snack) {
+    var list = getSnacks();
+    var found = false;
+    list = list.map(function (n) {
+      if (n.date === snack.date) { found = true; return normalizeSnack(snack); }
+      return n;
+    });
+    if (!found) list.push(normalizeSnack(snack));
+    setSnacks(list);
+  }
 
   function renderSchedule() {
     var dateEl = $("schedDate");
@@ -132,11 +186,102 @@
         );
       }).join("");
     }
-    // snack note
-    var snacks = getSnacks();
-    var sn = snacks.find(function (n) { return n.date === date; });
-    $("snackNoteText").textContent = sn && sn.text ? sn.text : "（未有備註）";
-    if ($("snackNoteInput")) $("snackNoteInput").value = sn && sn.text ? sn.text : "";
+    // snack teaser on schedule page
+    var sn = getSnackForDate(date);
+    var preview = sn.text ? sn.text : "（未有備註）";
+    if (sn.photos && sn.photos.length) preview += "　📷 " + sn.photos.length + " 張相片";
+    $("snackNoteText").textContent = preview;
+  }
+
+  function renderSnackPage() {
+    var dateEl = $("snackDate");
+    if (!dateEl) return;
+    if (!dateEl.value) dateEl.value = ($("schedDate") && $("schedDate").value) || todayInFair();
+    var date = dateEl.value;
+    var sn = getSnackForDate(date);
+    var textEl = $("snackPageText");
+    if (textEl) textEl.textContent = sn.text ? sn.text : "（未有備註）";
+    if ($("snackPageInput")) $("snackPageInput").value = sn.text || "";
+    renderSnackPhotos(sn);
+  }
+
+  function renderSnackPhotos(sn) {
+    var gal = $("snackPhotoGallery");
+    if (!gal) return;
+    var photos = (sn && sn.photos) || [];
+    if (!photos.length) {
+      gal.innerHTML = '<p class="empty-state">未有點心紙相片</p>';
+      return;
+    }
+    gal.innerHTML = photos.map(function (ph) {
+      var del = isAdmin()
+        ? '<button type="button" class="photo-del" data-del-photo="' + esc(ph.id) + '" aria-label="刪除相片">×</button>'
+        : "";
+      return (
+        '<figure class="snack-photo">' +
+        '<img src="' + ph.dataUrl + '" alt="點心紙相片" data-lightbox="1" />' +
+        del +
+        "</figure>"
+      );
+    }).join("");
+  }
+
+  function compressImageFile(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file || !/^image\//.test(file.type)) {
+        reject(new Error("請揀圖片檔"));
+        return;
+      }
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error("讀取失敗")); };
+      reader.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var w = img.width;
+          var h = img.height;
+          var scale = Math.min(1, SNACK_MAX_DIM / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale));
+          var ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = cw;
+          canvas.height = ch;
+          var ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, cw, ch);
+          var q = SNACK_JPEG_Q;
+          var dataUrl = canvas.toDataURL("image/jpeg", q);
+          // shrink quality if still huge
+          while (dataUrl.length > SNACK_MAX_BYTES * 1.37 && q > 0.45) {
+            q -= 0.08;
+            dataUrl = canvas.toDataURL("image/jpeg", q);
+          }
+          if (dataUrl.length > SNACK_MAX_BYTES * 1.37) {
+            reject(new Error("相片仍然太大，請改用較細解像度"));
+            return;
+          }
+          resolve({
+            id: uid("pic"),
+            name: file.name || "photo.jpg",
+            ts: new Date().toISOString(),
+            dataUrl: dataUrl
+          });
+        };
+        img.onerror = function () { reject(new Error("圖片無法解碼")); };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function openLightbox(src) {
+    var box = document.createElement("div");
+    box.className = "lightbox";
+    box.innerHTML = '<button type="button" aria-label="關閉">×</button><img alt="放大" />';
+    box.querySelector("img").src = src;
+    box.querySelector("button").onclick = function () { box.remove(); };
+    box.addEventListener("click", function (e) {
+      if (e.target === box) box.remove();
+    });
+    document.body.appendChild(box);
   }
 
   function openShiftModal(shift) {
@@ -514,6 +659,110 @@
     }).join("");
   }
 
+
+  /* ---------- Prices ---------- */
+  function getPrices() {
+    var stored = loadJSON(LS.prices, null);
+    if (stored && Array.isArray(stored.items)) return stored.items;
+    if (stored && Array.isArray(stored)) return stored;
+    var seed = window.BPE_PRICES_SEED;
+    return seed && seed.items ? seed.items.map(clonePrice) : [];
+  }
+  function setPrices(items) {
+    saveJSON(LS.prices, { version: 1, items: items.map(clonePrice) });
+  }
+  function clonePrice(p) {
+    return {
+      id: p.id || uid("price"),
+      brand: p.brand || "",
+      name: p.name || "",
+      spec: p.spec || "",
+      price: p.price == null ? "" : String(p.price),
+      note: p.note || ""
+    };
+  }
+  function brandClass(brand) {
+    if (brand === "日本叮叮") return "dd";
+    if (brand === "古寶") return "cp";
+    return "";
+  }
+  function formatPriceDisplay(price) {
+    var s = String(price || "").trim();
+    if (!s) return { text: "待填", pending: true };
+    if (/^\$|HK\$|待填/i.test(s)) return { text: s, pending: /待填/.test(s) };
+    if (/^\d/.test(s)) return { text: "HK$ " + s, pending: false };
+    return { text: s, pending: false };
+  }
+  function renderPrices() {
+    var list = getPrices();
+    var brand = ($("priceBrand") && $("priceBrand").value) || "";
+    var q = (($("priceSearch") && $("priceSearch").value) || "").trim().toLowerCase();
+    var filled = ($("priceFilled") && $("priceFilled").value) || "all";
+    list = list.filter(function (p) {
+      if (brand && p.brand !== brand) return false;
+      if (q && (p.name + " " + p.spec + " " + p.note).toLowerCase().indexOf(q) < 0) return false;
+      var has = String(p.price || "").trim().length > 0;
+      if (filled === "filled" && !has) return false;
+      if (filled === "empty" && has) return false;
+      return true;
+    });
+    list.sort(function (a, b) {
+      var ba = a.brand.localeCompare(b.brand, "zh-Hant");
+      if (ba) return ba;
+      return a.name.localeCompare(b.name, "zh-Hant");
+    });
+    var box = $("priceList");
+    if (!box) return;
+    if (!list.length) {
+      box.innerHTML = '<p class="empty-state">未有符合條件嘅產品。</p>';
+      return;
+    }
+    box.innerHTML = list.map(function (p) {
+      var disp = formatPriceDisplay(p.price);
+      var admin = isAdmin()
+        ? '<div class="btn-row price-actions">' +
+          '<button type="button" class="btn-ghost" data-edit-price="' + esc(p.id) + '">編輯</button>' +
+          '<button type="button" class="btn-danger" data-del-price="' + esc(p.id) + '">刪除</button></div>'
+        : "";
+      return (
+        '<article class="price-card">' +
+        '<span class="brand-tag ' + brandClass(p.brand) + '">' + esc(p.brand) + "</span>" +
+        '<div class="pname">' + esc(p.name) + "</div>" +
+        (p.spec ? '<div class="pspec">' + esc(p.spec) + "</div>" : "") +
+        '<div class="pprice' + (disp.pending ? " pending" : "") + '">' + esc(disp.text) + "</div>" +
+        (p.note ? '<div class="pnote">' + esc(p.note) + "</div>" : "") +
+        admin +
+        "</article>"
+      );
+    }).join("");
+  }
+  function openPriceModal(item) {
+    $("priceModal").classList.remove("hidden");
+    $("priceModalTitle").textContent = item ? "編輯售價" : "新增產品價";
+    $("priceId").value = item ? item.id : "";
+    $("priceBrandIn").value = item ? item.brand : "紫花油";
+    $("priceNameIn").value = item ? item.name : "";
+    $("priceSpecIn").value = item ? (item.spec || "") : "";
+    $("priceValueIn").value = item ? (item.price || "") : "";
+    $("priceNoteIn").value = item ? (item.note || "") : "";
+  }
+  function exportPricesCsv() {
+    var list = getPrices();
+    var header = ["品牌", "產品名", "規格", "工展會售價", "備註"];
+    var rows = list.map(function (p) {
+      return [p.brand, p.name, p.spec, p.price, p.note].map(function (c) {
+        return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"';
+      }).join(",");
+    });
+    var csv = "\uFEFF" + header.join(",") + "\n" + rows.join("\n");
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "bpe-prices-" + todayInFair() + ".csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   /* ---------- Members ---------- */
   function getMembers() {
     return loadJSON(LS.members, []);
@@ -697,23 +946,155 @@
       if (!confirm("還原為範本（全部變回「待填」）？本機修改會被覆蓋。")) return;
       var seed = window.BPE_SCHEDULE_SEED;
       setShifts(seed.shifts.slice());
-      setSnacks(seed.snackNotes.slice());
+      setSnacks((seed.snackNotes || []).map(function (n) {
+        return { id: n.id, date: n.date, text: n.text || "", photos: [] };
+      }));
       renderSchedule();
+      if ($("snackDate")) renderSnackPage();
     });
-    $("btnSaveSnack").addEventListener("click", function () {
-      var date = $("schedDate").value || todayInFair();
-      var text = $("snackNoteInput").value.trim();
-      var snacks = getSnacks();
-      var found = false;
-      snacks = snacks.map(function (n) {
-        if (n.date === date) { found = true; return { id: n.id, date: date, text: text }; }
-        return n;
+    if ($("btnGoSnack")) {
+      $("btnGoSnack").addEventListener("click", function () {
+        var d = $("schedDate") && $("schedDate").value;
+        if ($("snackDate") && d) $("snackDate").value = d;
+        showView("snack");
       });
-      if (!found) snacks.push({ id: uid("note"), date: date, text: text });
-      setSnacks(snacks);
-      renderSchedule();
-      flashMsg($("adminMsg"), "備註已儲存", true);
+    }
+    if ($("snackDate")) {
+      $("snackDate").addEventListener("change", renderSnackPage);
+    }
+    if ($("btnSaveSnackPage")) {
+      $("btnSaveSnackPage").addEventListener("click", function () {
+        var date = ($("snackDate") && $("snackDate").value) || todayInFair();
+        var sn = getSnackForDate(date);
+        sn.text = ($("snackPageInput") && $("snackPageInput").value.trim()) || "";
+        upsertSnack(sn);
+        renderSnackPage();
+        if ($("schedDate") && $("schedDate").value === date) renderSchedule();
+        flashMsg($("snackPhotoMsg"), "文字已儲存", true);
+      });
+    }
+    if ($("snackPhotoInput")) {
+      $("snackPhotoInput").addEventListener("change", async function () {
+        var files = Array.prototype.slice.call(this.files || []);
+        this.value = "";
+        if (!files.length) return;
+        var date = ($("snackDate") && $("snackDate").value) || todayInFair();
+        var sn = getSnackForDate(date);
+        sn.photos = sn.photos || [];
+        var msg = $("snackPhotoMsg");
+        for (var i = 0; i < files.length; i++) {
+          if (sn.photos.length >= SNACK_MAX_PHOTOS) {
+            flashMsg(msg, "每日最多 " + SNACK_MAX_PHOTOS + " 張相片", false);
+            break;
+          }
+          try {
+            var ph = await compressImageFile(files[i]);
+            sn.photos.push(ph);
+            flashMsg(msg, "已加入相片（已壓縮）", true);
+          } catch (err) {
+            flashMsg(msg, err.message || "上載失敗", false);
+          }
+        }
+        upsertSnack(sn);
+        renderSnackPage();
+        if ($("schedDate") && $("schedDate").value === date) renderSchedule();
+      });
+    }
+    if ($("btnClearSnackPhotos")) {
+      $("btnClearSnackPhotos").addEventListener("click", function () {
+        if (!confirm("清空當日全部點心紙相片？")) return;
+        var date = ($("snackDate") && $("snackDate").value) || todayInFair();
+        var sn = getSnackForDate(date);
+        sn.photos = [];
+        upsertSnack(sn);
+        renderSnackPage();
+        flashMsg($("snackPhotoMsg"), "已清空相片", true);
+      });
+    }
+    if ($("snackPhotoGallery")) {
+      $("snackPhotoGallery").addEventListener("click", function (e) {
+        var img = e.target.closest("img[data-lightbox]");
+        if (img) { openLightbox(img.src); return; }
+        var del = e.target.closest("[data-del-photo]");
+        if (del && isAdmin()) {
+          var pid = del.getAttribute("data-del-photo");
+          var date = ($("snackDate") && $("snackDate").value) || todayInFair();
+          var sn = getSnackForDate(date);
+          sn.photos = (sn.photos || []).filter(function (x) { return x.id !== pid; });
+          upsertSnack(sn);
+          renderSnackPage();
+        }
+      });
+    }
+
+    ["priceBrand", "priceSearch", "priceFilled"].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener(id === "priceSearch" ? "input" : "change", renderPrices);
     });
+    if ($("btnAddPrice")) {
+      $("btnAddPrice").addEventListener("click", function () { openPriceModal(null); });
+    }
+    if ($("btnCancelPrice")) {
+      $("btnCancelPrice").addEventListener("click", function () {
+        $("priceModal").classList.add("hidden");
+      });
+    }
+    if ($("priceForm")) {
+      $("priceForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var id = $("priceId").value;
+        var item = {
+          id: id || uid("price"),
+          brand: $("priceBrandIn").value,
+          name: $("priceNameIn").value.trim(),
+          spec: $("priceSpecIn").value.trim(),
+          price: $("priceValueIn").value.trim(),
+          note: $("priceNoteIn").value.trim()
+        };
+        if (!item.name) return;
+        var list = getPrices();
+        if (id) list = list.map(function (x) { return x.id === id ? item : x; });
+        else list.push(item);
+        setPrices(list);
+        $("priceModal").classList.add("hidden");
+        renderPrices();
+      });
+    }
+    if ($("priceList")) {
+      $("priceList").addEventListener("click", function (e) {
+        var edit = e.target.closest("[data-edit-price]");
+        var del = e.target.closest("[data-del-price]");
+        if (edit) {
+          var item = getPrices().find(function (x) { return x.id === edit.getAttribute("data-edit-price"); });
+          if (item) openPriceModal(item);
+        }
+        if (del) {
+          var did = del.getAttribute("data-del-price");
+          if (confirm("刪除此產品價目？")) {
+            setPrices(getPrices().filter(function (x) { return x.id !== did; }));
+            renderPrices();
+          }
+        }
+      });
+    }
+    if ($("btnExportPrices")) {
+      $("btnExportPrices").addEventListener("click", exportPricesCsv);
+    }
+    if ($("btnAdminExportPrices")) {
+      $("btnAdminExportPrices").addEventListener("click", exportPricesCsv);
+    }
+    if ($("btnAdminGoPrices")) {
+      $("btnAdminGoPrices").addEventListener("click", function () { showView("prices"); });
+    }
+    if ($("btnResetPrices")) {
+      $("btnResetPrices").addEventListener("click", function () {
+        if (!confirm("還原產品名單並清空全部價錢？（會覆蓋本機改動）")) return;
+        var seed = window.BPE_PRICES_SEED;
+        setPrices(seed && seed.items ? seed.items.map(clonePrice) : []);
+        renderPrices();
+      });
+    }
 
     qsa("#gamePicker .game-card").forEach(function (c) {
       c.addEventListener("click", function () {
@@ -824,9 +1205,15 @@
     if (!localStorage.getItem(LS.shifts) && window.BPE_SCHEDULE_SEED) {
       setShifts(window.BPE_SCHEDULE_SEED.shifts.slice());
     }
-    if (!localStorage.getItem(LS.snacks) && window.BPE_SCHEDULE_SEED) {
-      setSnacks(window.BPE_SCHEDULE_SEED.snackNotes.slice());
+    if (!localStorage.getItem(LS.snacks) && !localStorage.getItem("zihua_bpe_snacks_v1") && window.BPE_SCHEDULE_SEED) {
+      setSnacks((window.BPE_SCHEDULE_SEED.snackNotes || []).map(function (n) {
+        return { id: n.id, date: n.date, text: n.text || "", photos: [] };
+      }));
     }
+    if (!localStorage.getItem(LS.prices) && window.BPE_PRICES_SEED) {
+      setPrices(window.BPE_PRICES_SEED.items.map(clonePrice));
+    }
+    if ($("snackDate")) $("snackDate").value = todayInFair();
   }
 
   if (document.readyState === "loading") {

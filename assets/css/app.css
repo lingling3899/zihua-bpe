@@ -124,7 +124,7 @@ a { color: var(--teal-dark); }
 
 .field { display: block; font-weight: 600; font-size: 0.88rem; margin: 10px 0 4px; color: var(--ink); }
 select, input[type="text"], input[type="password"], input[type="email"], input[type="tel"],
-input[type="date"], input[type="time"], input[type="number"], textarea {
+input[type="date"], input[type="time"], input[type="number"], input[type="search"], textarea {
   width: 100%; padding: 12px 12px; border: 1.5px solid var(--border);
   border-radius: 12px; font-size: 1rem; background: #fff; color: var(--ink);
   min-height: 46px;
@@ -345,3 +345,99 @@ table.data tr:nth-child(even) { background: #faf7fc; }
 .filter-chip.active { background: var(--teal); color: #fff; border-color: var(--teal); }
 
 .empty-state { text-align: center; color: var(--muted); padding: 20px; }
+
+/* 點心紙 */
+.snack-text {
+  white-space: pre-wrap;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  background: var(--teal-soft);
+  border-radius: 12px;
+  padding: 14px;
+  min-height: 3em;
+  margin: 0 0 12px;
+}
+.snack-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.snack-photo {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+.snack-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+  background: #faf7fc;
+  cursor: zoom-in;
+}
+.snack-photo .photo-del {
+  position: absolute; top: 6px; right: 6px;
+  border: 0; background: rgba(185,28,28,0.9); color: #fff;
+  border-radius: 999px; width: 32px; height: 32px; cursor: pointer;
+  font-weight: 800;
+}
+.snack-teaser #snackNoteText { white-space: pre-wrap; }
+
+/* 售價大字價目 */
+.price-list { display: grid; gap: 10px; margin-top: 8px; }
+.price-card {
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  background: #fff;
+  display: grid;
+  gap: 4px;
+}
+.price-card .brand-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+  width: fit-content;
+}
+.price-card .brand-tag.dd { background: #e8eef7; color: #1e3a5f; }
+.price-card .brand-tag.cp { background: #e6f4f1; color: #0f766e; }
+.price-card .pname {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.price-card .pspec { color: var(--muted); font-size: 0.9rem; }
+.price-card .pprice {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: var(--teal-dark);
+  letter-spacing: 0.02em;
+  margin-top: 4px;
+}
+.price-card .pprice.pending { color: var(--warn); font-size: 1.25rem; }
+.price-card .pnote { font-size: 0.88rem; color: var(--muted); }
+.price-card .price-actions { margin-top: 6px; }
+
+.lightbox {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0,0,0,0.85);
+  display: grid; place-items: center; padding: 16px;
+}
+.lightbox img {
+  max-width: 100%; max-height: 90vh; object-fit: contain;
+  border-radius: 8px;
+}
+.lightbox button {
+  position: absolute; top: 12px; right: 12px;
+  border: 0; background: #fff; color: #111;
+  border-radius: 999px; width: 44px; height: 44px;
+  font-size: 1.2rem; cursor: pointer; font-weight: 800;
+}
