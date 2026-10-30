@@ -276,6 +276,10 @@
     var calc = calcTotals(st);
     var expClass = footerExpanded ? " is-expanded" : "";
     var toggleLabel = footerExpanded ? "收合" : "更多";
+    var giftHtml = "";
+    if (window.BPE_Gifts && window.BPE_Gifts.renderProgressHtml) {
+      giftHtml = window.BPE_Gifts.renderProgressHtml(calc.total, st);
+    }
     html +=
       '<div class="dimsum-footer' + expClass + '" id="dimsumFooter">' +
         '<div class="dimsum-footer-bar">' +
@@ -286,6 +290,7 @@
           '<button type="button" class="dimsum-footer-toggle" id="btnDimsumToggle" aria-expanded="' +
             (footerExpanded ? "true" : "false") + '">' + toggleLabel + "</button>" +
         "</div>" +
+        giftHtml +
         '<div class="dimsum-footer-extra" id="dimsumFooterExtra"' +
           (footerExpanded ? "" : " hidden") + ">" +
           '<p class="muted dimsum-hint">套裝「套」數優先按套裝價計；單品數量另計。買3送1會自動扣最平件。職員可改價（登入後）。參考用途，以攤位當日為準。</p>' +
@@ -324,6 +329,21 @@
     });
     lines.push("———");
     lines.push("合計　$" + money(calc.total));
+    if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
+      var gev = window.BPE_Gifts.evaluate(calc.total, st);
+      if (gev.enabled && gev.reached.length) {
+        var gnames = gev.reached.map(function (t) {
+          var n = t.title;
+          if (t.soldOut) n += "（已送完）";
+          return n;
+        });
+        lines.push("目前合計可享禮遇：" + gnames.join("；"));
+      }
+      if (gev.enabled && gev.next) {
+        lines.push("再消費 $" + money(gev.next.gap) + " 可取：" + gev.next.tier.title);
+      }
+      lines.push("禮遇送完即止，以攤位當日為準");
+    }
     lines.push("（參考用途，以攤位當日為準）");
     return lines.join("\n");
   }

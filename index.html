@@ -3,23 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="紫花油工展會攤位：班表、遊戲抽獎、三品牌追蹤、古寶入會。參考用途，非醫療建議。" />
+  <meta name="description" content="紫花油工展會攤位：點心紙下單、會場購物禮遇、班表、遊戲、三品牌追蹤、古寶入會。參考用途，非醫療建議。" />
   <title>紫花油 · 工展會</title>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261030e" />
+  <link rel="stylesheet" href="assets/css/app.css?v=20261031b" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <img class="brand-logo" src="assets/img/zihua-logo.png?v=20261030e" width="220" height="80" alt="紫花油 ZIHUA" />
+        <img class="brand-logo" src="assets/img/zihua-logo.png?v=20261031b" width="220" height="80" alt="紫花油 ZIHUA" />
         <div class="brand-text">
           <h1>紫花油 · 工展會</h1>
-          <p>第60屆　｜　點心紙下單　｜　產品資料　｜　班表</p>
+          <p>第60屆　｜　點心紙下單　｜　購物禮遇　｜　班表</p>
         </div>
       </div>
       <nav class="nav-tabs" aria-label="主要分頁">
         <button type="button" class="active" data-view="fair">展會資料</button>
         <button type="button" data-view="order">點心紙下單</button>
+        <button type="button" data-view="gifts">購物禮遇</button>
         <button type="button" data-view="schedule">班表</button>
         <button type="button" data-view="products">產品資料</button>
         <button type="button" data-view="prices">售價</button>
@@ -64,8 +65,16 @@
       </div>
       <section class="panel">
         <h3>攤位小提示</h3>
-        <p>本頁供前線同事同客人用：點心紙下單（主入口）、產品資料速查、售價、班表、遊戲、追蹤三品牌、古寶入會。產品說明以包裝標籤為準。</p>
+        <p>本頁供前線同事同客人用：點心紙下單（主入口）、購物禮遇、產品資料速查、售價、班表、遊戲、追蹤三品牌、古寶入會。產品說明以包裝標籤為準。</p>
         <p class="claim-safe">免責：本站唔提供醫療建議，亦唔聲稱產品可醫治疾病。獎品以攤位當日供應為準。</p>
+      </section>
+      <section class="panel gift-teaser">
+        <h3>🎁 會場購物禮遇 <span class="badge">送完即止</span></h3>
+        <p class="muted">任何消費送年曆卡；指定花香套滿 $70 送陶瓷杯墊；全場折實滿 $168 磁石貼、滿 $328 摺疊雨傘、滿 $488 防水購物袋。</p>
+        <div class="btn-row">
+          <button type="button" class="primary" data-jump-view="gifts">睇禮遇詳情</button>
+          <button type="button" class="btn-ghost" data-jump-view="order">去點心紙下單</button>
+        </div>
       </section>
     </section>
 
@@ -74,9 +83,16 @@
     <section id="view-order" class="hidden">
       <section class="panel dimsum-panel">
         <h3>點心紙下單 <span class="badge">主入口</span></h3>
-        <p class="muted">照工展會點心紙分區：編號、名稱、原價／特價、數量。可填套裝「套」數。數量存本機；可匯出／列印簡易訂單。價錢以紙面為準，參考用途。</p>
+        <p class="muted">照工展會點心紙分區：編號、名稱、原價／特價、數量。可填套裝「套」數。數量存本機；可匯出／列印簡易訂單。價錢以紙面為準，參考用途。合計會提示會場購物禮遇階梯。</p>
         <div id="dimsumOrderRoot" class="dimsum-root" aria-live="polite"></div>
-        <p class="claim-safe">免責：唔提供醫療建議；完整標籤以包裝為準。工展現金券／扣券價照紙面文案顯示，實際以攤位當日為準。</p>
+        <p class="claim-safe">免責：唔提供醫療建議；完整標籤以包裝為準。工展現金券／扣券價照紙面文案顯示，實際以攤位當日為準。禮遇送完即止。</p>
+      </section>
+    </section>
+
+    <!-- 會場購物禮遇 -->
+    <section id="view-gifts" class="hidden">
+      <section class="panel">
+        <div id="giftsRoot" class="gifts-root" aria-live="polite"></div>
       </section>
     </section>
 
@@ -438,16 +454,18 @@
   <footer class="footer">
     紫花油工展會攤位工具 · 參考用途，非醫療建議 ·
     <a href="https://www.hkzihua.com/" target="_blank" rel="noopener">hkzihua.com</a>
-    · v=20261030e
+    · v=20261031b
   </footer>
 
-  <script src="assets/js/admin-auth.js?v=20261030e"></script>
-  <script src="data/schedule-seed.js?v=20261030e"></script>
-  <script src="data/socials.js?v=20261030e"></script>
-  <script src="data/products-seed.js?v=20261030e"></script>
-  <script src="data/prices-seed.js?v=20261030e"></script>
-  <script src="data/dimsum-order.js?v=20261030e"></script>
-  <script src="assets/js/dimsum-order-ui.js?v=20261030e"></script>
-  <script src="assets/js/app.js?v=20261030e"></script>
+  <script src="assets/js/admin-auth.js?v=20261031b"></script>
+  <script src="data/schedule-seed.js?v=20261031b"></script>
+  <script src="data/socials.js?v=20261031b"></script>
+  <script src="data/products-seed.js?v=20261031b"></script>
+  <script src="data/prices-seed.js?v=20261031b"></script>
+  <script src="data/dimsum-order.js?v=20261031b"></script>
+  <script src="data/gifts-seed.js?v=20261031b"></script>
+  <script src="assets/js/gifts-ui.js?v=20261031b"></script>
+  <script src="assets/js/dimsum-order-ui.js?v=20261031b"></script>
+  <script src="assets/js/app.js?v=20261031b"></script>
 </body>
 </html>

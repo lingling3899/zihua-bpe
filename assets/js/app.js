@@ -62,8 +62,36 @@
 
   /* ---------- Navigation ---------- */
 
+  function setAdminVisible(on) {
+    qsa(".admin-only").forEach(function (el) {
+      el.classList.toggle("hidden", !on);
+    });
+    var panel = $("adminPanel");
+    var need = $("adminNeedLogin");
+    if (panel) panel.classList.toggle("hidden", !on);
+    if (need) need.classList.toggle("hidden", !!on);
+    var btn = $("headerLoginBtn");
+    if (btn) {
+      btn.classList.toggle("is-in", !!on);
+      var out = btn.querySelector(".hdr-icon-out");
+      var inn = btn.querySelector(".hdr-icon-in");
+      var dot = btn.querySelector(".hdr-login-dot");
+      if (out) out.classList.toggle("hidden", !!on);
+      if (inn) inn.classList.toggle("hidden", !on);
+      if (dot) dot.classList.toggle("hidden", !on);
+    }
+    var adminTab = document.querySelector('.nav-tabs button[data-view="admin"]');
+    if (adminTab) adminTab.classList.toggle("hidden", !on);
+    if (window.BPE_Gifts && $("view-gifts") && !$("view-gifts").classList.contains("hidden")) {
+      window.BPE_Gifts.render();
+    }
+    if (window.BPE_DimsumOrderUI && $("view-order") && !$("view-order").classList.contains("hidden")) {
+      window.BPE_DimsumOrderUI.render();
+    }
+  }
+
   function showView(name) {
-    ["fair", "order", "schedule", "products", "prices", "games", "social", "join", "admin"].forEach(function (v) {
+    ["fair", "order", "gifts", "schedule", "products", "prices", "games", "social", "join", "admin"].forEach(function (v) {
       var el = $("view-" + v);
       if (el) el.classList.toggle("hidden", v !== name);
     });
@@ -71,6 +99,7 @@
       b.classList.toggle("active", b.getAttribute("data-view") === name);
     });
     if (name === "order" && window.BPE_DimsumOrderUI) window.BPE_DimsumOrderUI.render();
+    if (name === "gifts" && window.BPE_Gifts) window.BPE_Gifts.render();
     if (name === "schedule") renderSchedule();
     if (name === "products") renderProductsPage();
     if (name === "prices") renderPrices();
@@ -960,6 +989,11 @@
       b.addEventListener("click", function () {
         showView(b.getAttribute("data-view"));
       });
+    });
+
+    document.addEventListener("click", function (e) {
+      var jump = e.target.closest("[data-jump-view]");
+      if (jump) showView(jump.getAttribute("data-jump-view"));
     });
 
     var loginBtn = $("headerLoginBtn");

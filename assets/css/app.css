@@ -603,3 +603,69 @@ table.data tr:nth-child(even) { background: #faf7fc; }
 @media (min-width: 900px) {
   .wrap { max-width: 960px; }
 }
+
+/* —— 會場購物禮遇 —— */
+.gift-teaser { border: 1.5px solid var(--border); background: linear-gradient(180deg, #fff 0%, var(--teal-soft) 100%); }
+.gifts-hero h3 { margin: 0 0 6px; color: var(--teal-dark); }
+.gifts-tiers {
+  display: grid; gap: 12px; margin: 14px 0;
+}
+.gift-card {
+  display: grid; grid-template-columns: 56px 1fr; gap: 12px;
+  align-items: start;
+  background: #fff; border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+.gift-card.is-inactive { opacity: 0.55; filter: grayscale(0.25); }
+.gift-card-emoji {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: var(--teal-soft); display: grid; place-items: center;
+  font-size: 1.6rem;
+}
+.gift-card-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  flex-wrap: wrap;
+}
+.gift-amt { color: var(--teal-dark); font-size: 0.95rem; }
+.gift-card h4 { margin: 4px 0 4px; font-size: 1.02rem; }
+.gift-apply {
+  margin: 6px 0 0; font-size: 0.78rem; color: var(--muted);
+  background: var(--teal-soft); display: inline-block;
+  padding: 2px 8px; border-radius: 999px;
+}
+.gift-tag {
+  font-size: 0.72rem; font-weight: 700; padding: 2px 8px;
+  border-radius: 999px; border: 1px solid var(--border);
+}
+.gift-tag.ok { background: #ecfdf5; color: var(--green); border-color: #a7f3d0; }
+.gift-tag.sold { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+.gift-tag.todo { background: #fff; color: var(--muted); }
+.gift-tag.muted { background: #f3f4f6; color: var(--muted); }
+
+.gift-admin-tier {
+  margin: 12px 0; padding: 12px; border: 1px dashed var(--border);
+  border-radius: 12px; background: #faf7fc;
+}
+.gift-admin-tier h4 { margin: 0 0 8px; font-size: 0.95rem; color: var(--teal-dark); }
+
+.gift-progress {
+  margin-top: 8px; padding: 8px 10px;
+  background: var(--teal-soft); border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.gift-progress-head {
+  font-size: 0.82rem; font-weight: 700; color: var(--teal-dark); margin-bottom: 4px;
+}
+.gift-progress-line, .gift-progress-next, .gift-progress-hint, .gift-progress-disc {
+  margin: 3px 0; font-size: 0.78rem; line-height: 1.4;
+}
+.gift-progress-next strong { color: var(--danger); }
+.gift-progress-next.ok-line { color: var(--green); font-weight: 600; }
+.gift-progress-hint { color: var(--warn); }
+.gift-progress-disc { margin-top: 4px !important; }
+
+@media (max-width: 480px) {
+  .gift-card { grid-template-columns: 48px 1fr; padding: 10px; }
+  .gift-card-emoji { width: 48px; height: 48px; font-size: 1.35rem; }
+}
