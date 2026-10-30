@@ -469,3 +469,108 @@ table.data tr:nth-child(even) { background: #faf7fc; }
   margin: 0; white-space: pre-wrap; font-size: 1.02rem; line-height: 1.55;
   background: var(--teal-soft); border-radius: 10px; padding: 10px 12px;
 }
+
+/* ---------- 點心紙下單 ---------- */
+.dimsum-panel { max-width: 100%; }
+.dimsum-root { margin-top: 8px; }
+.dimsum-sheet-tabs {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+  position: sticky; top: 58px; z-index: 15;
+  background: var(--bg); padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.dimsum-sheet-tab {
+  border: 1.5px solid var(--border); background: #fff; color: var(--teal-dark);
+  border-radius: 999px; padding: 8px 12px; font-size: 0.8rem; font-weight: 700;
+  cursor: pointer; min-height: 40px;
+}
+.dimsum-sheet-tab.active {
+  background: var(--teal); color: #fff; border-color: var(--teal);
+}
+.dimsum-sheet-head { margin-bottom: 10px; }
+.dimsum-sheet-head h3 { margin: 0 0 6px; }
+.dimsum-ref-img { margin: 8px 0 12px; }
+.dimsum-ref-img summary {
+  cursor: pointer; color: var(--teal-dark); font-weight: 600; font-size: 0.9rem;
+}
+.dimsum-ref-img img {
+  display: block; width: 100%; max-width: 520px; margin-top: 8px;
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.dimsum-section {
+  margin: 14px 0 18px; padding: 12px; background: #fff;
+  border: 1px solid var(--border); border-radius: var(--radius);
+}
+.dimsum-section h4 {
+  margin: 0 0 8px; color: var(--teal-dark); font-size: 0.98rem;
+}
+.dimsum-note {
+  margin: 0 0 10px; font-size: 0.85rem; color: var(--warn);
+  background: #fff7ed; border-radius: 8px; padding: 8px 10px;
+}
+.dimsum-bundle-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px; align-items: center;
+  background: var(--teal-soft); border-radius: 10px;
+  padding: 10px; margin-bottom: 10px;
+}
+.dimsum-bundle-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dimsum-deal { color: var(--teal-dark); font-size: 0.92rem; }
+.dimsum-unit { font-size: 0.85rem; color: var(--muted); }
+.dimsum-sub { font-weight: 700; min-width: 4.5rem; text-align: right; }
+.dimsum-table { width: 100%; font-size: 0.86rem; }
+.dimsum-table th:nth-child(5), .dimsum-table td:nth-child(5) { min-width: 118px; }
+.dimsum-table .num { text-align: right; white-space: nowrap; }
+.dimsum-table .special { color: var(--danger); font-weight: 700; }
+.dimsum-table tr.dimsum-ref { opacity: 0.72; background: #fafafa; }
+.dimsum-table code {
+  font-size: 0.8rem; background: var(--teal-soft); padding: 2px 5px; border-radius: 4px;
+}
+.qty-ctrl {
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.qty-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: #fff;
+  color: var(--teal-dark); font-size: 1.2rem; font-weight: 700;
+  cursor: pointer; line-height: 1;
+}
+.qty-btn:active { background: var(--teal-soft); }
+.qty-input {
+  width: 52px; height: 36px; text-align: center;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  font-size: 1rem; font-weight: 700;
+}
+.price-override {
+  width: 72px; height: 32px; border: 1px solid var(--border);
+  border-radius: 8px; padding: 2px 6px; font-size: 0.85rem;
+}
+.dimsum-footer {
+  position: sticky; bottom: 0; z-index: 16;
+  margin-top: 16px; padding: 12px 14px;
+  background: #fff; border: 2px solid var(--teal);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.dimsum-total-line {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 1.15rem; margin-bottom: 6px;
+}
+.dimsum-total-line strong { color: var(--teal-dark); font-size: 1.45rem; }
+.dimsum-hint { font-size: 0.8rem; margin: 0 0 8px; }
+@media (max-width: 640px) {
+  .wrap { max-width: 100%; }
+  .dimsum-bundle-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "info info" "qty unit" "sub sub";
+  }
+  .dimsum-bundle-info { grid-area: info; }
+  .dimsum-bundle-row .qty-ctrl { grid-area: qty; }
+  .dimsum-bundle-row .dimsum-unit { grid-area: unit; }
+  .dimsum-bundle-row .dimsum-sub { grid-area: sub; text-align: left; }
+  .dimsum-table { font-size: 0.78rem; }
+  .qty-btn { width: 40px; height: 40px; }
+  .qty-input { width: 48px; height: 40px; }
+}
+@media (min-width: 900px) {
+  .wrap { max-width: 960px; }
+}

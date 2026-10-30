@@ -63,13 +63,14 @@
   /* ---------- Navigation ---------- */
 
   function showView(name) {
-    ["fair", "schedule", "products", "prices", "games", "social", "join", "admin"].forEach(function (v) {
+    ["fair", "order", "schedule", "products", "prices", "games", "social", "join", "admin"].forEach(function (v) {
       var el = $("view-" + v);
       if (el) el.classList.toggle("hidden", v !== name);
     });
     qsa(".nav-tabs button").forEach(function (b) {
       b.classList.toggle("active", b.getAttribute("data-view") === name);
     });
+    if (name === "order" && window.BPE_DimsumOrderUI) window.BPE_DimsumOrderUI.render();
     if (name === "schedule") renderSchedule();
     if (name === "products") renderProductsPage();
     if (name === "prices") renderPrices();

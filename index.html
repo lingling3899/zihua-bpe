@@ -5,20 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="紫花油工展會攤位：班表、遊戲抽獎、三品牌追蹤、古寶入會。參考用途，非醫療建議。" />
   <title>紫花油 · 工展會</title>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261030c" />
+  <link rel="stylesheet" href="assets/css/app.css?v=20261030d" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <img class="brand-logo" src="assets/img/zihua-logo.png?v=20261030c" width="220" height="80" alt="紫花油 ZIHUA" />
+        <img class="brand-logo" src="assets/img/zihua-logo.png?v=20261030d" width="220" height="80" alt="紫花油 ZIHUA" />
         <div class="brand-text">
           <h1>紫花油 · 工展會</h1>
-          <p>第60屆　｜　產品資料　｜　售價　｜　班表</p>
+          <p>第60屆　｜　點心紙下單　｜　產品資料　｜　班表</p>
         </div>
       </div>
       <nav class="nav-tabs" aria-label="主要分頁">
         <button type="button" class="active" data-view="fair">展會資料</button>
+        <button type="button" data-view="order">點心紙下單</button>
         <button type="button" data-view="schedule">班表</button>
         <button type="button" data-view="products">產品資料</button>
         <button type="button" data-view="prices">售價</button>
@@ -63,8 +64,19 @@
       </div>
       <section class="panel">
         <h3>攤位小提示</h3>
-        <p>本頁供前線同事同客人用：產品資料（點心紙速查）、售價、班表、遊戲、追蹤三品牌、古寶入會。產品說明以包裝標籤為準。</p>
+        <p>本頁供前線同事同客人用：點心紙下單（主入口）、產品資料速查、售價、班表、遊戲、追蹤三品牌、古寶入會。產品說明以包裝標籤為準。</p>
         <p class="claim-safe">免責：本站唔提供醫療建議，亦唔聲稱產品可醫治疾病。獎品以攤位當日供應為準。</p>
+      </section>
+    </section>
+
+
+    <!-- 點心紙下單 -->
+    <section id="view-order" class="hidden">
+      <section class="panel dimsum-panel">
+        <h3>點心紙下單 <span class="badge">主入口</span></h3>
+        <p class="muted">照工展會點心紙分區：編號、名稱、原價／特價、數量。可填套裝「套」數。數量存本機；可匯出／列印簡易訂單。價錢以紙面為準，參考用途。</p>
+        <div id="dimsumOrderRoot" class="dimsum-root" aria-live="polite"></div>
+        <p class="claim-safe">免責：唔提供醫療建議；完整標籤以包裝為準。工展現金券／扣券價照紙面文案顯示，實際以攤位當日為準。</p>
       </section>
     </section>
 
@@ -426,14 +438,16 @@
   <footer class="footer">
     紫花油工展會攤位工具 · 參考用途，非醫療建議 ·
     <a href="https://www.hkzihua.com/" target="_blank" rel="noopener">hkzihua.com</a>
-    · v=20261030c
+    · v=20261030d
   </footer>
 
-  <script src="assets/js/admin-auth.js?v=20261030c"></script>
-  <script src="data/schedule-seed.js?v=20261030c"></script>
-  <script src="data/socials.js?v=20261030c"></script>
-  <script src="data/products-seed.js?v=20261030c"></script>
-  <script src="data/prices-seed.js?v=20261030c"></script>
-  <script src="assets/js/app.js?v=20261030c"></script>
+  <script src="assets/js/admin-auth.js?v=20261030d"></script>
+  <script src="data/schedule-seed.js?v=20261030d"></script>
+  <script src="data/socials.js?v=20261030d"></script>
+  <script src="data/products-seed.js?v=20261030d"></script>
+  <script src="data/prices-seed.js?v=20261030d"></script>
+  <script src="data/dimsum-order.js?v=20261030d"></script>
+  <script src="assets/js/dimsum-order-ui.js?v=20261030d"></script>
+  <script src="assets/js/app.js?v=20261030d"></script>
 </body>
 </html>
