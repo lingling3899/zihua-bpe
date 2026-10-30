@@ -441,3 +441,31 @@ table.data tr:nth-child(even) { background: #faf7fc; }
   border-radius: 999px; width: 44px; height: 44px;
   font-size: 1.2rem; cursor: pointer; font-weight: 800;
 }
+
+/* 產品資料卡 */
+.prod-picker {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; max-height: 220px; overflow: auto;
+}
+.prod-chip {
+  border: 1.5px solid var(--border); background: #fff; color: var(--ink);
+  border-radius: 12px; padding: 10px 12px; font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; text-align: left; min-height: 44px; max-width: 100%;
+}
+.prod-chip.active, .prod-chip:hover {
+  border-color: var(--teal); background: var(--teal-soft); color: var(--teal-dark);
+}
+.prod-card-panel {
+  border: 1.5px solid var(--border); border-radius: 16px; padding: 16px;
+  background: #fff; box-shadow: var(--shadow);
+}
+.prod-card-panel.empty { color: var(--muted); text-align: center; padding: 28px 12px; }
+.prod-title { margin: 8px 0 4px; font-size: 1.25rem; color: var(--teal-dark); }
+.prod-section { margin-top: 12px; }
+.prod-section h4 {
+  margin: 0 0 4px; font-size: 0.85rem; color: var(--muted); font-weight: 800;
+  text-transform: none; letter-spacing: 0;
+}
+.prod-section p {
+  margin: 0; white-space: pre-wrap; font-size: 1.02rem; line-height: 1.55;
+  background: var(--teal-soft); border-radius: 10px; padding: 10px 12px;
+}

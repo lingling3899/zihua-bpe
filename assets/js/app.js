@@ -3,7 +3,8 @@
 
   var LS = {
     shifts: "zihua_bpe_shifts_v1",
-    snacks: "zihua_bpe_snacks_v2",
+    dayNotes: "zihua_bpe_snacks_v2",
+    products: "zihua_bpe_products_v1",
     members: "zihua_bpe_members_v1",
     prizes: "zihua_bpe_prizes_v1",
     socials: "zihua_bpe_socials_v1",
@@ -11,10 +12,11 @@
     prices: "zihua_bpe_prices_v1"
   };
 
-  var SNACK_MAX_PHOTOS = 6;
-  var SNACK_MAX_DIM = 1200;
-  var SNACK_JPEG_Q = 0.72;
-  var SNACK_MAX_BYTES = 450000; /* ~450KB per photo after compress */
+  var PHOTO_MAX = 6;
+  var PHOTO_MAX_DIM = 1200;
+  var PHOTO_JPEG_Q = 0.72;
+  var PHOTO_MAX_BYTES = 450000;
+  var selectedProductId = "";
 
   var FAIR_START = "2026-12-12";
   var FAIR_END = "2027-01-04";
@@ -61,7 +63,7 @@
   /* ---------- Navigation ---------- */
 
   function showView(name) {
-    ["fair", "schedule", "snack", "prices", "games", "social", "join", "admin"].forEach(function (v) {
+    ["fair", "schedule", "products", "prices", "games", "social", "join", "admin"].forEach(function (v) {
       var el = $("view-" + v);
       if (el) el.classList.toggle("hidden", v !== name);
     });
@@ -69,7 +71,7 @@
       b.classList.toggle("active", b.getAttribute("data-view") === name);
     });
     if (name === "schedule") renderSchedule();
-    if (name === "snack") renderSnackPage();
+    if (name === "products") renderProductsPage();
     if (name === "prices") renderPrices();
     if (name === "social") renderSocials();
     if (name === "games") renderWinLog();
@@ -93,58 +95,72 @@
   }
   function setShifts(list) { saveJSON(LS.shifts, list); }
 
-  function normalizeSnack(n) {
+  /* ---------- Schedule day notes (人手／物資；非產品資料) ---------- */
+  function normalizeDayNote(n) {
     if (!n || typeof n !== "object") return null;
-    return {
-      id: n.id || uid("note"),
-      date: n.date || "",
-      text: n.text || "",
-      photos: Array.isArray(n.photos) ? n.photos : []
-    };
+    return { id: n.id || uid("note"), date: n.date || "", text: n.text || "" };
   }
-
-  function migrateSnacksFromV1() {
+  function getDayNotes() {
+    var stored = loadJSON(LS.dayNotes, null);
+    if (stored && Array.isArray(stored)) return stored.map(normalizeDayNote).filter(Boolean);
     try {
       var raw = localStorage.getItem("zihua_bpe_snacks_v1");
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return null;
-      return parsed.map(normalizeSnack).filter(Boolean);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function getSnacks() {
-    var stored = loadJSON(LS.snacks, null);
-    if (stored && Array.isArray(stored)) return stored.map(normalizeSnack).filter(Boolean);
-    var migrated = migrateSnacksFromV1();
-    if (migrated) {
-      saveJSON(LS.snacks, migrated);
-      return migrated;
-    }
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          var mig = parsed.map(normalizeDayNote).filter(Boolean);
+          saveJSON(LS.dayNotes, mig);
+          return mig;
+        }
+      }
+    } catch (e) { /* ignore */ }
     var seed = window.BPE_SCHEDULE_SEED;
     var base = seed && seed.snackNotes ? seed.snackNotes.slice() : [];
-    return base.map(normalizeSnack).filter(Boolean);
+    return base.map(function (n) {
+      return normalizeDayNote({ id: n.id, date: n.date, text: "" });
+    }).filter(Boolean);
   }
-  function setSnacks(list) { saveJSON(LS.snacks, list.map(normalizeSnack).filter(Boolean)); }
-
-  function getSnackForDate(date) {
-    var snacks = getSnacks();
-    var sn = snacks.find(function (n) { return n.date === date; });
-    if (sn) return sn;
-    return { id: uid("note"), date: date, text: "", photos: [] };
+  function setDayNotes(list) { saveJSON(LS.dayNotes, list.map(normalizeDayNote).filter(Boolean)); }
+  function getDayNoteForDate(date) {
+    var sn = getDayNotes().find(function (n) { return n.date === date; });
+    return sn || { id: uid("note"), date: date, text: "" };
   }
-
-  function upsertSnack(snack) {
-    var list = getSnacks();
+  function upsertDayNote(note) {
+    var list = getDayNotes();
     var found = false;
     list = list.map(function (n) {
-      if (n.date === snack.date) { found = true; return normalizeSnack(snack); }
+      if (n.date === note.date) { found = true; return normalizeDayNote(note); }
       return n;
     });
-    if (!found) list.push(normalizeSnack(snack));
-    setSnacks(list);
+    if (!found) list.push(normalizeDayNote(note));
+    setDayNotes(list);
+  }
+
+  /* ---------- Product sheets（點心紙＝產品資料） ---------- */
+  function cloneProduct(p) {
+    return {
+      id: p.id || uid("prod"),
+      brand: p.brand || "",
+      name: p.name || "",
+      spec: p.spec || "",
+      ingredients: p.ingredients || "",
+      usage: p.usage || "",
+      cautions: p.cautions || "",
+      pitch: p.pitch || "",
+      photos: Array.isArray(p.photos) ? p.photos.slice() : []
+    };
+  }
+  function getProducts() {
+    var stored = loadJSON(LS.products, null);
+    if (stored && Array.isArray(stored.items)) return stored.items.map(cloneProduct);
+    var seed = window.BPE_PRODUCTS_SEED;
+    return seed && seed.items ? seed.items.map(cloneProduct) : [];
+  }
+  function setProducts(items) {
+    saveJSON(LS.products, { version: 1, items: items.map(cloneProduct) });
+  }
+  function getProductById(id) {
+    return getProducts().find(function (x) { return x.id === id; }) || null;
   }
 
   function renderSchedule() {
@@ -186,41 +202,150 @@
         );
       }).join("");
     }
-    // snack teaser on schedule page
-    var sn = getSnackForDate(date);
-    var preview = sn.text ? sn.text : "（未有備註）";
-    if (sn.photos && sn.photos.length) preview += "　📷 " + sn.photos.length + " 張相片";
-    $("snackNoteText").textContent = preview;
+    // day note on schedule page
+    var dn = getDayNoteForDate(date);
+    if ($("dayNoteText")) $("dayNoteText").textContent = dn.text ? dn.text : "（未有當日備註）";
+    if ($("dayNoteInput")) $("dayNoteInput").value = dn.text || "";
   }
 
-  function renderSnackPage() {
-    var dateEl = $("snackDate");
-    if (!dateEl) return;
-    if (!dateEl.value) dateEl.value = ($("schedDate") && $("schedDate").value) || todayInFair();
-    var date = dateEl.value;
-    var sn = getSnackForDate(date);
-    var textEl = $("snackPageText");
-    if (textEl) textEl.textContent = sn.text ? sn.text : "（未有備註）";
-    if ($("snackPageInput")) $("snackPageInput").value = sn.text || "";
-    renderSnackPhotos(sn);
+  function brandClass(brand) {
+    if (brand === "日本叮叮") return "dd";
+    if (brand === "古寶") return "cp";
+    return "";
   }
 
-  function renderSnackPhotos(sn) {
-    var gal = $("snackPhotoGallery");
+  function renderProductsPage() {
+    var brand = ($("prodBrand") && $("prodBrand").value) || "";
+    var q = (($("prodSearch") && $("prodSearch").value) || "").trim().toLowerCase();
+    var list = getProducts().filter(function (p) {
+      if (brand && p.brand !== brand) return false;
+      if (!q) return true;
+      var hay = (p.name + " " + p.spec + " " + p.ingredients + " " + p.pitch).toLowerCase();
+      return hay.indexOf(q) >= 0;
+    });
+    list.sort(function (a, b) {
+      var ba = a.brand.localeCompare(b.brand, "zh-Hant");
+      return ba || a.name.localeCompare(b.name, "zh-Hant");
+    });
+    var picker = $("prodPicker");
+    if (picker) {
+      if (!list.length) {
+        picker.innerHTML = '<p class="empty-state">未有符合條件嘅產品</p>';
+      } else {
+        picker.innerHTML = list.map(function (p) {
+          var active = p.id === selectedProductId ? " active" : "";
+          return (
+            '<button type="button" class="prod-chip' + active + '" data-prod-id="' + esc(p.id) + '">' +
+            '<span class="brand-tag ' + brandClass(p.brand) + '">' + esc(p.brand) + "</span> " +
+            esc(p.name) +
+            "</button>"
+          );
+        }).join("");
+      }
+    }
+    if (!selectedProductId || !getProductById(selectedProductId)) {
+      selectedProductId = list.length ? list[0].id : "";
+    }
+    renderProductCard(selectedProductId);
+  }
+
+  function renderProductCard(id) {
+    var card = $("prodCard");
+    var linkRow = $("prodLinkRow");
+    var p = id ? getProductById(id) : null;
+    if (!card) return;
+    if (!p) {
+      card.className = "prod-card-panel empty";
+      card.innerHTML = "請先揀一款產品。";
+      if (linkRow) linkRow.style.display = "none";
+      fillProductEditor(null);
+      return;
+    }
+    selectedProductId = p.id;
+    card.className = "prod-card-panel";
+    var photosHtml = "";
+    if (p.photos && p.photos.length) {
+      photosHtml =
+        '<div class="snack-gallery" style="margin-top:10px;">' +
+        p.photos.map(function (ph) {
+          return (
+            '<figure class="snack-photo"><img src="' +
+            ph.dataUrl +
+            '" alt="產品資料紙" data-lightbox="1" /></figure>'
+          );
+        }).join("") +
+        "</div>";
+    }
+    card.innerHTML =
+      '<div class="prod-head"><span class="brand-tag ' + brandClass(p.brand) + '">' + esc(p.brand) + "</span>" +
+      '<h3 class="prod-title">' + esc(p.name) + "</h3>" +
+      (p.spec ? '<p class="pspec">' + esc(p.spec) + "</p>" : "") +
+      "</div>" +
+      sectionBlock("攤位賣點", p.pitch) +
+      sectionBlock("成份摘要", p.ingredients) +
+      sectionBlock("用法", p.usage) +
+      sectionBlock("注意／唔適合", p.cautions) +
+      photosHtml;
+    if (linkRow) linkRow.style.display = "flex";
+    fillProductEditor(p);
+    // highlight chip
+    qsa(".prod-chip").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-prod-id") === p.id);
+    });
+  }
+
+  function sectionBlock(title, body) {
+    if (!body) return "";
+    return (
+      '<div class="prod-section"><h4>' +
+      esc(title) +
+      "</h4><p>" +
+      esc(body) +
+      "</p></div>"
+    );
+  }
+
+  function fillProductEditor(p) {
+    if (!$("prodEditId")) return;
+    if (!p) {
+      $("prodEditId").value = "";
+      $("prodEditBrand").value = "紫花油";
+      $("prodEditName").value = "";
+      $("prodEditSpec").value = "";
+      $("prodEditIng").value = "";
+      $("prodEditUsage").value = "";
+      $("prodEditCautions").value = "";
+      $("prodEditPitch").value = "";
+      renderEditPhotos([]);
+      return;
+    }
+    $("prodEditId").value = p.id;
+    $("prodEditBrand").value = p.brand || "紫花油";
+    $("prodEditName").value = p.name || "";
+    $("prodEditSpec").value = p.spec || "";
+    $("prodEditIng").value = p.ingredients || "";
+    $("prodEditUsage").value = p.usage || "";
+    $("prodEditCautions").value = p.cautions || "";
+    $("prodEditPitch").value = p.pitch || "";
+    renderEditPhotos(p.photos || []);
+  }
+
+  function renderEditPhotos(photos) {
+    var gal = $("prodEditPhotos");
     if (!gal) return;
-    var photos = (sn && sn.photos) || [];
     if (!photos.length) {
-      gal.innerHTML = '<p class="empty-state">未有點心紙相片</p>';
+      gal.innerHTML = '<p class="muted">未有相片</p>';
       return;
     }
     gal.innerHTML = photos.map(function (ph) {
-      var del = isAdmin()
-        ? '<button type="button" class="photo-del" data-del-photo="' + esc(ph.id) + '" aria-label="刪除相片">×</button>'
-        : "";
       return (
         '<figure class="snack-photo">' +
-        '<img src="' + ph.dataUrl + '" alt="點心紙相片" data-lightbox="1" />' +
-        del +
+        '<img src="' + ph.dataUrl + '" alt="產品資料紙" data-lightbox="1" />' +
+        (isAdmin()
+          ? '<button type="button" class="photo-del" data-del-prod-photo="' +
+            esc(ph.id) +
+            '" aria-label="刪除">×</button>'
+          : "") +
         "</figure>"
       );
     }).join("");
@@ -239,22 +364,20 @@
         img.onload = function () {
           var w = img.width;
           var h = img.height;
-          var scale = Math.min(1, SNACK_MAX_DIM / Math.max(w, h));
+          var scale = Math.min(1, PHOTO_MAX_DIM / Math.max(w, h));
           var cw = Math.max(1, Math.round(w * scale));
           var ch = Math.max(1, Math.round(h * scale));
           var canvas = document.createElement("canvas");
           canvas.width = cw;
           canvas.height = ch;
-          var ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, cw, ch);
-          var q = SNACK_JPEG_Q;
+          canvas.getContext("2d").drawImage(img, 0, 0, cw, ch);
+          var q = PHOTO_JPEG_Q;
           var dataUrl = canvas.toDataURL("image/jpeg", q);
-          // shrink quality if still huge
-          while (dataUrl.length > SNACK_MAX_BYTES * 1.37 && q > 0.45) {
+          while (dataUrl.length > PHOTO_MAX_BYTES * 1.37 && q > 0.45) {
             q -= 0.08;
             dataUrl = canvas.toDataURL("image/jpeg", q);
           }
-          if (dataUrl.length > SNACK_MAX_BYTES * 1.37) {
+          if (dataUrl.length > PHOTO_MAX_BYTES * 1.37) {
             reject(new Error("相片仍然太大，請改用較細解像度"));
             return;
           }
@@ -681,11 +804,7 @@
       note: p.note || ""
     };
   }
-  function brandClass(brand) {
-    if (brand === "日本叮叮") return "dd";
-    if (brand === "古寶") return "cp";
-    return "";
-  }
+
   function formatPriceDisplay(price) {
     var s = String(price || "").trim();
     if (!s) return { text: "待填", pending: true };
@@ -724,6 +843,9 @@
           '<button type="button" class="btn-ghost" data-edit-price="' + esc(p.id) + '">編輯</button>' +
           '<button type="button" class="btn-danger" data-del-price="' + esc(p.id) + '">刪除</button></div>'
         : "";
+      var toProd =
+        '<div class="btn-row price-actions">' +
+        '<button type="button" class="btn-ghost" data-to-prod="' + esc(p.id) + '">睇產品資料</button></div>';
       return (
         '<article class="price-card">' +
         '<span class="brand-tag ' + brandClass(p.brand) + '">' + esc(p.brand) + "</span>" +
@@ -731,6 +853,7 @@
         (p.spec ? '<div class="pspec">' + esc(p.spec) + "</div>" : "") +
         '<div class="pprice' + (disp.pending ? " pending" : "") + '">' + esc(disp.text) + "</div>" +
         (p.note ? '<div class="pnote">' + esc(p.note) + "</div>" : "") +
+        toProd +
         admin +
         "</article>"
       );
@@ -946,84 +1069,170 @@
       if (!confirm("還原為範本（全部變回「待填」）？本機修改會被覆蓋。")) return;
       var seed = window.BPE_SCHEDULE_SEED;
       setShifts(seed.shifts.slice());
-      setSnacks((seed.snackNotes || []).map(function (n) {
-        return { id: n.id, date: n.date, text: n.text || "", photos: [] };
+      setDayNotes((seed.snackNotes || []).map(function (n) {
+        return { id: n.id, date: n.date, text: "" };
       }));
       renderSchedule();
-      if ($("snackDate")) renderSnackPage();
     });
-    if ($("btnGoSnack")) {
-      $("btnGoSnack").addEventListener("click", function () {
-        var d = $("schedDate") && $("schedDate").value;
-        if ($("snackDate") && d) $("snackDate").value = d;
-        showView("snack");
+
+    if ($("btnGoProducts")) {
+      $("btnGoProducts").addEventListener("click", function () { showView("products"); });
+    }
+    if ($("btnSaveDayNote")) {
+      $("btnSaveDayNote").addEventListener("click", function () {
+        var date = ($("schedDate") && $("schedDate").value) || todayInFair();
+        var note = getDayNoteForDate(date);
+        note.text = ($("dayNoteInput") && $("dayNoteInput").value.trim()) || "";
+        upsertDayNote(note);
+        renderSchedule();
       });
     }
-    if ($("snackDate")) {
-      $("snackDate").addEventListener("change", renderSnackPage);
-    }
-    if ($("btnSaveSnackPage")) {
-      $("btnSaveSnackPage").addEventListener("click", function () {
-        var date = ($("snackDate") && $("snackDate").value) || todayInFair();
-        var sn = getSnackForDate(date);
-        sn.text = ($("snackPageInput") && $("snackPageInput").value.trim()) || "";
-        upsertSnack(sn);
-        renderSnackPage();
-        if ($("schedDate") && $("schedDate").value === date) renderSchedule();
-        flashMsg($("snackPhotoMsg"), "文字已儲存", true);
+
+    ["prodBrand", "prodSearch"].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener(id === "prodSearch" ? "input" : "change", renderProductsPage);
+    });
+    if ($("prodPicker")) {
+      $("prodPicker").addEventListener("click", function (e) {
+        var btn = e.target.closest("[data-prod-id]");
+        if (!btn) return;
+        selectedProductId = btn.getAttribute("data-prod-id");
+        renderProductCard(selectedProductId);
       });
     }
-    if ($("snackPhotoInput")) {
-      $("snackPhotoInput").addEventListener("change", async function () {
+    if ($("btnProdToPrice")) {
+      $("btnProdToPrice").addEventListener("click", function () {
+        var prod = getProductById(selectedProductId);
+        showView("prices");
+        if (prod && $("priceSearch")) {
+          $("priceSearch").value = prod.name;
+          if ($("priceBrand")) $("priceBrand").value = prod.brand || "";
+          renderPrices();
+        }
+      });
+    }
+    if ($("btnSaveProduct")) {
+      $("btnSaveProduct").addEventListener("click", function () {
+        var id = $("prodEditId").value || uid("prod");
+        var item = {
+          id: id,
+          brand: $("prodEditBrand").value,
+          name: $("prodEditName").value.trim(),
+          spec: $("prodEditSpec").value.trim(),
+          ingredients: $("prodEditIng").value.trim(),
+          usage: $("prodEditUsage").value.trim(),
+          cautions: $("prodEditCautions").value.trim(),
+          pitch: $("prodEditPitch").value.trim(),
+          photos: (getProductById(id) && getProductById(id).photos) || []
+        };
+        if (!item.name) {
+          flashMsg($("prodPhotoMsg"), "請填產品名", false);
+          return;
+        }
+        var list = getProducts();
+        var found = false;
+        list = list.map(function (x) {
+          if (x.id === id) { found = true; item.photos = x.photos || []; return item; }
+          return x;
+        });
+        if (!found) list.push(item);
+        setProducts(list);
+        selectedProductId = id;
+        renderProductsPage();
+        flashMsg($("prodPhotoMsg"), "資料卡已儲存（請保持 claim-safe）", true);
+      });
+    }
+    if ($("btnNewProduct")) {
+      $("btnNewProduct").addEventListener("click", function () {
+        selectedProductId = "";
+        fillProductEditor({
+          id: "",
+          brand: "紫花油",
+          name: "",
+          spec: "",
+          ingredients: "",
+          usage: "",
+          cautions: "",
+          pitch: "",
+          photos: []
+        });
+        $("prodEditId").value = "";
+        flashMsg($("prodPhotoMsg"), "請填新卡後撳儲存", true);
+      });
+    }
+    if ($("btnDeleteProduct")) {
+      $("btnDeleteProduct").addEventListener("click", function () {
+        var id = $("prodEditId").value;
+        if (!id) return;
+        if (!confirm("刪除此產品資料卡？")) return;
+        setProducts(getProducts().filter(function (x) { return x.id !== id; }));
+        selectedProductId = "";
+        renderProductsPage();
+      });
+    }
+    if ($("btnResetProducts")) {
+      $("btnResetProducts").addEventListener("click", function () {
+        if (!confirm("還原公開 seed？本機改動同相片會被覆蓋。")) return;
+        var seed = window.BPE_PRODUCTS_SEED;
+        setProducts(seed && seed.items ? seed.items.map(cloneProduct) : []);
+        selectedProductId = "";
+        renderProductsPage();
+      });
+    }
+    if ($("prodPhotoInput")) {
+      $("prodPhotoInput").addEventListener("change", async function () {
         var files = Array.prototype.slice.call(this.files || []);
         this.value = "";
-        if (!files.length) return;
-        var date = ($("snackDate") && $("snackDate").value) || todayInFair();
-        var sn = getSnackForDate(date);
-        sn.photos = sn.photos || [];
-        var msg = $("snackPhotoMsg");
+        var id = $("prodEditId").value;
+        if (!id) {
+          flashMsg($("prodPhotoMsg"), "請先儲存資料卡再上載相片", false);
+          return;
+        }
+        var prod = getProductById(id);
+        if (!prod) {
+          flashMsg($("prodPhotoMsg"), "搵唔到資料卡", false);
+          return;
+        }
+        prod.photos = prod.photos || [];
+        var msg = $("prodPhotoMsg");
         for (var i = 0; i < files.length; i++) {
-          if (sn.photos.length >= SNACK_MAX_PHOTOS) {
-            flashMsg(msg, "每日最多 " + SNACK_MAX_PHOTOS + " 張相片", false);
+          if (prod.photos.length >= PHOTO_MAX) {
+            flashMsg(msg, "每款最多 " + PHOTO_MAX + " 張", false);
             break;
           }
           try {
-            var ph = await compressImageFile(files[i]);
-            sn.photos.push(ph);
-            flashMsg(msg, "已加入相片（已壓縮）", true);
+            prod.photos.push(await compressImageFile(files[i]));
+            flashMsg(msg, "已加入產品資料紙相片", true);
           } catch (err) {
             flashMsg(msg, err.message || "上載失敗", false);
           }
         }
-        upsertSnack(sn);
-        renderSnackPage();
-        if ($("schedDate") && $("schedDate").value === date) renderSchedule();
+        var list = getProducts().map(function (x) { return x.id === id ? prod : x; });
+        setProducts(list);
+        renderProductCard(id);
       });
     }
-    if ($("btnClearSnackPhotos")) {
-      $("btnClearSnackPhotos").addEventListener("click", function () {
-        if (!confirm("清空當日全部點心紙相片？")) return;
-        var date = ($("snackDate") && $("snackDate").value) || todayInFair();
-        var sn = getSnackForDate(date);
-        sn.photos = [];
-        upsertSnack(sn);
-        renderSnackPage();
-        flashMsg($("snackPhotoMsg"), "已清空相片", true);
-      });
-    }
-    if ($("snackPhotoGallery")) {
-      $("snackPhotoGallery").addEventListener("click", function (e) {
+    if ($("prodEditPhotos")) {
+      $("prodEditPhotos").addEventListener("click", function (e) {
         var img = e.target.closest("img[data-lightbox]");
         if (img) { openLightbox(img.src); return; }
-        var del = e.target.closest("[data-del-photo]");
-        if (del && isAdmin()) {
-          var pid = del.getAttribute("data-del-photo");
-          var date = ($("snackDate") && $("snackDate").value) || todayInFair();
-          var sn = getSnackForDate(date);
-          sn.photos = (sn.photos || []).filter(function (x) { return x.id !== pid; });
-          upsertSnack(sn);
-          renderSnackPage();
-        }
+        var del = e.target.closest("[data-del-prod-photo]");
+        if (!del || !isAdmin()) return;
+        var pid = del.getAttribute("data-del-prod-photo");
+        var id = $("prodEditId").value;
+        var prod = getProductById(id);
+        if (!prod) return;
+        prod.photos = (prod.photos || []).filter(function (x) { return x.id !== pid; });
+        setProducts(getProducts().map(function (x) { return x.id === id ? prod : x; }));
+        renderProductCard(id);
+      });
+    }
+    // lightbox for product card gallery
+    if ($("prodCard")) {
+      $("prodCard").addEventListener("click", function (e) {
+        var img = e.target.closest("img[data-lightbox]");
+        if (img) openLightbox(img.src);
       });
     }
 
@@ -1063,6 +1272,23 @@
     }
     if ($("priceList")) {
       $("priceList").addEventListener("click", function (e) {
+        var toProd = e.target.closest("[data-to-prod]");
+        if (toProd) {
+          var pid = toProd.getAttribute("data-to-prod");
+          selectedProductId = pid;
+          // fallback match by name if id missing in products
+          if (!getProductById(pid)) {
+            var priceItem = getPrices().find(function (x) { return x.id === pid; });
+            if (priceItem) {
+              var match = getProducts().find(function (x) {
+                return x.brand === priceItem.brand && x.name === priceItem.name;
+              });
+              if (match) selectedProductId = match.id;
+            }
+          }
+          showView("products");
+          return;
+        }
         var edit = e.target.closest("[data-edit-price]");
         var del = e.target.closest("[data-del-price]");
         if (edit) {
@@ -1205,15 +1431,17 @@
     if (!localStorage.getItem(LS.shifts) && window.BPE_SCHEDULE_SEED) {
       setShifts(window.BPE_SCHEDULE_SEED.shifts.slice());
     }
-    if (!localStorage.getItem(LS.snacks) && !localStorage.getItem("zihua_bpe_snacks_v1") && window.BPE_SCHEDULE_SEED) {
-      setSnacks((window.BPE_SCHEDULE_SEED.snackNotes || []).map(function (n) {
-        return { id: n.id, date: n.date, text: n.text || "", photos: [] };
+    if (!localStorage.getItem(LS.dayNotes) && !localStorage.getItem("zihua_bpe_snacks_v1") && window.BPE_SCHEDULE_SEED) {
+      setDayNotes((window.BPE_SCHEDULE_SEED.snackNotes || []).map(function (n) {
+        return { id: n.id, date: n.date, text: "" };
       }));
+    }
+    if (!localStorage.getItem(LS.products) && window.BPE_PRODUCTS_SEED) {
+      setProducts(window.BPE_PRODUCTS_SEED.items.map(cloneProduct));
     }
     if (!localStorage.getItem(LS.prices) && window.BPE_PRICES_SEED) {
       setPrices(window.BPE_PRICES_SEED.items.map(clonePrice));
     }
-    if ($("snackDate")) $("snackDate").value = todayInFair();
   }
 
   if (document.readyState === "loading") {
