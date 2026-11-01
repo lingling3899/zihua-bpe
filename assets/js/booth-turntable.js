@@ -1,50 +1,31 @@
-/* 2026 紫花油工展會 — 3D 展位 image turntable（自動轉＋拖轉） */
+/* 2026 紫花油工展會 — 3D 展位：單圖連續 yaw（rAF），唔跳幀 */
 (function () {
   "use strict";
 
-  var FRAMES = [
-    "assets/img/booth/booth-1.jpg",
-    "assets/img/booth/booth-2.jpg",
-    "assets/img/booth/booth-3.jpg",
-    "assets/img/booth/booth-4.jpg"
-  ];
-  var AUTO_MS = 1100;
+  // 主視角：最清楚室外渲染；背面用同一圖（鏡像）保持「一幅圖」連貫
+  var MAIN_SRC = "assets/img/booth/booth-2.jpg?v=20261101d";
+  var DEG_PER_PX = 0.35;
+  var AUTO_DEG_PER_SEC = 22;
   var RESUME_MS = 2000;
-  var DRAG_PX = 36;
+  var TILT_X = 8;
 
-  var root, stage, imgs = [], dots = [], idx = 0;
-  var autoTimer = null, resumeTimer = null, playing = true;
+  var stage, platter;
+  var angle = -18;
+  var playing = true;
+  var dragging = false;
+  var resumeTimer = null;
+  var rafId = null;
+  var lastTs = 0;
   var drag = null;
+  var built = false;
+  var visible = false;
 
   function $(id) { return document.getElementById(id); }
 
-  function setFrame(n, instant) {
-    var len = FRAMES.length;
-    if (!len) return;
-    idx = ((n % len) + len) % len;
-    imgs.forEach(function (img, i) {
-      if (instant) img.style.transition = "none";
-      img.classList.toggle("is-active", i === idx);
-      if (instant) {
-        // force reflow then restore transition
-        void img.offsetWidth;
-        img.style.transition = "";
-      }
-    });
-    dots.forEach(function (d, i) {
-      d.classList.toggle("is-on", i === idx);
-    });
-  }
-
-  function next(dir) {
-    setFrame(idx + (dir || 1));
-  }
-
-  function stopAuto() {
-    if (autoTimer) {
-      clearInterval(autoTimer);
-      autoTimer = null;
-    }
+  function applyTransform() {
+    if (!platter) return;
+    platter.style.transform =
+      "rotateX(" + TILT_X + "deg) rotateY(" + angle + "deg)";
   }
 
   function clearResume() {
@@ -54,24 +35,39 @@
     }
   }
 
-  function startAuto() {
-    stopAuto();
-    if (!playing) return;
-    autoTimer = setInterval(function () {
-      next(1);
-    }, AUTO_MS);
+  function stopLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    lastTs = 0;
   }
 
-  function pauseForDrag() {
-    stopAuto();
-    clearResume();
+  function tick(ts) {
+    rafId = requestAnimationFrame(tick);
+    if (!visible) return;
+    if (!lastTs) lastTs = ts;
+    var dt = Math.min(0.05, (ts - lastTs) / 1000);
+    lastTs = ts;
+    if (playing && !dragging) {
+      angle += AUTO_DEG_PER_SEC * dt;
+      if (angle > 360 || angle < -360) angle = angle % 360;
+      applyTransform();
+    }
+  }
+
+  function startLoop() {
+    if (rafId) return;
+    lastTs = 0;
+    rafId = requestAnimationFrame(tick);
   }
 
   function scheduleResume() {
     clearResume();
     if (!playing) return;
     resumeTimer = setTimeout(function () {
-      startAuto();
+      dragging = false;
+      lastTs = 0;
     }, RESUME_MS);
   }
 
@@ -84,10 +80,9 @@
       btn.textContent = playing ? "⏸" : "▶";
       btn.title = playing ? "暫停" : "播放";
     }
-    if (playing) startAuto();
-    else {
-      stopAuto();
-      clearResume();
+    if (playing) {
+      lastTs = 0;
+      startLoop();
     }
   }
 
@@ -99,29 +94,21 @@
 
   function onDown(e) {
     if (e.type === "mousedown" && e.button !== 0) return;
-    pauseForDrag();
-    drag = { x: pointerX(e), moved: 0, last: pointerX(e) };
+    clearResume();
+    dragging = true;
+    drag = { last: pointerX(e) };
     if (stage) stage.classList.add("is-dragging");
-    if (e.type === "mousedown") {
-      e.preventDefault();
-    }
+    if (e.type === "mousedown") e.preventDefault();
   }
 
   function onMove(e) {
     if (!drag) return;
     var x = pointerX(e);
     var dx = x - drag.last;
-    drag.moved += dx;
     drag.last = x;
-    while (Math.abs(drag.moved) >= DRAG_PX) {
-      if (drag.moved > 0) {
-        next(-1); // drag right → previous (rotate opposite)
-        drag.moved -= DRAG_PX;
-      } else {
-        next(1);
-        drag.moved += DRAG_PX;
-      }
-    }
+    // 拖右 → 展位向右轉（角度減少）
+    angle -= dx * DEG_PER_PX;
+    applyTransform();
     if (e.cancelable) e.preventDefault();
   }
 
@@ -129,25 +116,45 @@
     if (!drag) return;
     drag = null;
     if (stage) stage.classList.remove("is-dragging");
-    scheduleResume();
+    if (playing) scheduleResume();
+    else dragging = false;
   }
 
   function build() {
-    root = $("view-booth3d");
     stage = $("boothStage");
-    if (!root || !stage) return;
+    if (!stage) return;
 
     stage.innerHTML = "";
-    imgs = [];
-    FRAMES.forEach(function (src, i) {
+
+    var scene = document.createElement("div");
+    scene.className = "booth3d-scene";
+
+    platter = document.createElement("div");
+    platter.className = "booth3d-platter";
+
+    var shadow = document.createElement("div");
+    shadow.className = "booth3d-shadow";
+    shadow.setAttribute("aria-hidden", "true");
+    platter.appendChild(shadow);
+
+    var card = document.createElement("div");
+    card.className = "booth3d-card";
+
+    function makeFace(cls) {
+      var face = document.createElement("div");
+      face.className = "booth3d-face " + cls;
       var img = document.createElement("img");
-      img.className = "booth-frame" + (i === 0 ? " is-active" : "");
-      img.src = src + "?v=20261101c";
-      img.alt = "紫花油展位角度 " + (i + 1);
+      img.src = MAIN_SRC;
+      img.alt = "紫花油展位";
       img.draggable = false;
-      stage.appendChild(img);
-      imgs.push(img);
-    });
+      face.appendChild(img);
+      return face;
+    }
+    card.appendChild(makeFace("booth3d-face-front"));
+    card.appendChild(makeFace("booth3d-face-back"));
+    platter.appendChild(card);
+    scene.appendChild(platter);
+    stage.appendChild(scene);
 
     var mtr = document.createElement("div");
     mtr.className = "booth3d-floor-hint hint-mtr";
@@ -158,18 +165,6 @@
     stg.className = "booth3d-floor-hint hint-stage";
     stg.innerHTML = "舞台<small>主舞台方向</small>";
     stage.appendChild(stg);
-
-    var dotsWrap = document.createElement("div");
-    dotsWrap.className = "booth3d-dots";
-    dotsWrap.setAttribute("aria-hidden", "true");
-    dots = [];
-    FRAMES.forEach(function (_, i) {
-      var s = document.createElement("span");
-      if (i === 0) s.className = "is-on";
-      dotsWrap.appendChild(s);
-      dots.push(s);
-    });
-    stage.appendChild(dotsWrap);
 
     var ctrls = document.createElement("div");
     ctrls.className = "booth3d-controls";
@@ -188,44 +183,55 @@
     ctrls.appendChild(play);
     stage.appendChild(ctrls);
 
-    stage.addEventListener("mousedown", onDown);
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    stage.addEventListener("touchstart", onDown, { passive: false });
-    stage.addEventListener("touchmove", onMove, { passive: false });
-    stage.addEventListener("touchend", onUp);
-    stage.addEventListener("touchcancel", onUp);
+    if (!built) {
+      stage.addEventListener("mousedown", onDown);
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+      stage.addEventListener("touchstart", onDown, { passive: false });
+      stage.addEventListener("touchmove", onMove, { passive: false });
+      stage.addEventListener("touchend", onUp);
+      stage.addEventListener("touchcancel", onUp);
 
-    var login = $("boothStaffLogin");
-    if (login) {
-      login.addEventListener("click", function () {
-        if (window.BPE_Shell && window.BPE_Shell.openLogin) {
-          window.BPE_Shell.openLogin();
-        }
-      });
+      var login = $("boothStaffLogin");
+      if (login && !login.getAttribute("data-bound")) {
+        login.setAttribute("data-bound", "1");
+        login.addEventListener("click", function () {
+          if (window.BPE_Shell && window.BPE_Shell.openLogin) {
+            window.BPE_Shell.openLogin();
+          }
+        });
+      }
+      built = true;
     }
 
-    setFrame(0, true);
+    applyTransform();
   }
 
   function onShow() {
-    if (!stage) build();
-    if (playing) startAuto();
+    visible = true;
+    if (!platter) build();
+    applyTransform();
+    startLoop();
   }
 
   function onHide() {
-    stopAuto();
+    visible = false;
+    dragging = false;
+    drag = null;
     clearResume();
+    stopLoop();
   }
 
   window.BPE_Booth3D = {
     show: onShow,
     hide: onHide,
     rebuild: function () {
-      stopAuto();
+      stopLoop();
       clearResume();
+      built = false;
+      platter = null;
       build();
-      if (playing) startAuto();
+      if (visible) startLoop();
     }
   };
 
