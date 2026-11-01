@@ -5,25 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="2026 紫花油工展會：產品計數預訂、抽獎遊戲、宅配入會、推廣員更表。參考用途，非醫療建議。" />
   <title>2026 工展會 · 紫花油</title>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261101b" />
+  <link rel="stylesheet" href="assets/css/app.css?v=20261101c" />
 </head>
 <body class="app-shell">
   <main class="wrap" id="mainWrap">
     <!-- 3D 展位 -->
     <section id="view-booth3d" class="hidden">
-      <header class="page-hero">
-        <p class="pc-hero-kicker">2026 工展會 · 紫花油</p>
-        <h2>🧊 3D 展位</h2>
-      </header>
-      <section class="panel placeholder-card">
-        <div class="placeholder-art" aria-hidden="true">🏛️</div>
-        <h3>3D 展位預覽</h3>
-        <p class="muted">真實 3D／虛擬展位連結稍後加入。而家可先用「展位地圖」同「產品計數」。</p>
-        <div class="btn-row">
-          <button type="button" class="primary" data-jump-view="map">去展位地圖</button>
-          <button type="button" class="btn-ghost" data-jump-view="order">去產品計數</button>
+      <header class="booth3d-hero">
+        <div class="booth3d-hero-text">
+          <p class="booth3d-hero-kicker">2026 工展會</p>
+          <h2>紫花油展位</h2>
         </div>
-      </section>
+        <div class="booth3d-hero-actions">
+          <button type="button" class="booth3d-login-btn" id="boothStaffLogin" aria-label="職員登入">
+            <span aria-hidden="true">🔒</span>職員登入
+          </button>
+          <span class="booth3d-hint" aria-hidden="true">🖐 用手指轉 360°</span>
+        </div>
+      </header>
+      <div id="boothStage" class="booth3d-stage" role="img" aria-label="紫花油展位 360 度檢視，可拖轉或自動旋轉"></div>
     </section>
 
     <!-- 展位地圖 -->
@@ -128,18 +128,19 @@
   <footer class="footer">
     紫花油工展會 · 參考用途，非醫療建議 ·
     <a href="https://www.hkzihua.com/" target="_blank" rel="noopener">hkzihua.com</a>
-    · v=20261101b
+    · v=20261101c
   </footer>
 
-  <script src="assets/js/admin-auth.js?v=20261101b"></script>
-  <script src="data/schedule-seed.js?v=20261101b"></script>
-  <script src="data/dimsum-order.js?v=20261101b"></script>
-  <script src="data/gifts-seed.js?v=20261101b"></script>
-  <script src="assets/js/gifts-ui.js?v=20261101b"></script>
-  <script src="assets/js/dimsum-order-ui.js?v=20261101b"></script>
-  <script src="assets/js/games-lucky.js?v=20261101b"></script>
-  <script src="assets/js/cupal-delivery.js?v=20261101b"></script>
-  <script src="assets/js/schedule-roster.js?v=20261101b"></script>
-  <script src="assets/js/app.js?v=20261101b"></script>
+  <script src="assets/js/admin-auth.js?v=20261101c"></script>
+  <script src="data/schedule-seed.js?v=20261101c"></script>
+  <script src="data/dimsum-order.js?v=20261101c"></script>
+  <script src="data/gifts-seed.js?v=20261101c"></script>
+  <script src="assets/js/gifts-ui.js?v=20261101c"></script>
+  <script src="assets/js/dimsum-order-ui.js?v=20261101c"></script>
+  <script src="assets/js/games-lucky.js?v=20261101c"></script>
+  <script src="assets/js/cupal-delivery.js?v=20261101c"></script>
+  <script src="assets/js/schedule-roster.js?v=20261101c"></script>
+  <script src="assets/js/booth-turntable.js?v=20261101c"></script>
+  <script src="assets/js/app.js?v=20261101c"></script>
 </body>
 </html>

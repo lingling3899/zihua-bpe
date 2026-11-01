@@ -29,6 +29,7 @@
 
   function showView(name) {
     if (VIEWS.indexOf(name) < 0) name = "order";
+    var prev = document.body.getAttribute("data-view") || "";
     VIEWS.forEach(function (v) {
       var el = $("view-" + v);
       if (el) el.classList.toggle("hidden", v !== name);
@@ -36,8 +37,12 @@
     qsa(".bottom-nav [data-view]").forEach(function (b) {
       b.classList.toggle("active", b.getAttribute("data-view") === name);
     });
+    document.body.setAttribute("data-view", name);
+    document.body.classList.toggle("view-booth3d", name === "booth3d");
     try { history.replaceState(null, "", "#" + name); } catch (e) {}
 
+    if (prev === "booth3d" && name !== "booth3d" && window.BPE_Booth3D) window.BPE_Booth3D.hide();
+    if (name === "booth3d" && window.BPE_Booth3D) window.BPE_Booth3D.show();
     if (name === "order" && window.BPE_DimsumOrderUI) window.BPE_DimsumOrderUI.render();
     if (name === "games" && window.BPE_LuckyGames) window.BPE_LuckyGames.render();
     if (name === "delivery" && window.BPE_CupalDelivery) window.BPE_CupalDelivery.render();
