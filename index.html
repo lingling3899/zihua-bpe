@@ -3,399 +3,81 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="紫花油工展會攤位：點心紙下單、會場購物禮遇、班表、遊戲、三品牌追蹤、古寶入會。參考用途，非醫療建議。" />
-  <title>紫花油 · 工展會</title>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261101a" />
+  <meta name="description" content="2026 紫花油工展會：產品計數預訂、抽獎遊戲、宅配入會、推廣員更表。參考用途，非醫療建議。" />
+  <title>2026 工展會 · 紫花油</title>
+  <link rel="stylesheet" href="assets/css/app.css?v=20261101b" />
 </head>
-<body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <img class="brand-logo" src="assets/img/zihua-logo.png?v=20261101a" width="220" height="80" alt="紫花油 ZIHUA" />
-        <div class="brand-text">
-          <h1>紫花油 · 工展會</h1>
-          <p>第60屆　｜　點心紙下單　｜　購物禮遇　｜　班表</p>
+<body class="app-shell">
+  <main class="wrap" id="mainWrap">
+    <!-- 3D 展位 -->
+    <section id="view-booth3d" class="hidden">
+      <header class="page-hero">
+        <p class="pc-hero-kicker">2026 工展會 · 紫花油</p>
+        <h2>🧊 3D 展位</h2>
+      </header>
+      <section class="panel placeholder-card">
+        <div class="placeholder-art" aria-hidden="true">🏛️</div>
+        <h3>3D 展位預覽</h3>
+        <p class="muted">真實 3D／虛擬展位連結稍後加入。而家可先用「展位地圖」同「產品計數」。</p>
+        <div class="btn-row">
+          <button type="button" class="primary" data-jump-view="map">去展位地圖</button>
+          <button type="button" class="btn-ghost" data-jump-view="order">去產品計數</button>
         </div>
-      </div>
-      <nav class="nav-tabs" aria-label="主要分頁">
-        <button type="button" class="active" data-view="fair">展會資料</button>
-        <button type="button" data-view="order">點心紙下單</button>
-        <button type="button" data-view="gifts">購物禮遇</button>
-        <button type="button" data-view="schedule">班表</button>
-        <button type="button" data-view="products">產品資料</button>
-        <button type="button" data-view="prices">售價</button>
-        <button type="button" data-view="games">遊戲</button>
-        <button type="button" data-view="social">追蹤我哋</button>
-        <button type="button" data-view="join">古寶入會</button>
-        <button type="button" data-view="admin" class="admin-only hidden">後台</button>
-      </nav>
-      <div class="header-login-wrap">
-        <button type="button" id="headerLoginBtn" class="header-login-btn" aria-label="職員登入" aria-haspopup="true" aria-expanded="false">
-          <svg class="hdr-icon hdr-icon-out" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 19.5c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <svg class="hdr-icon hdr-icon-in hidden" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="8" r="3.5" fill="currentColor"/><path d="M5 19.5c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" fill="currentColor"/></svg>
-          <span class="hdr-login-dot hidden" aria-hidden="true"></span>
-        </button>
-        <div id="loginDropdown" class="login-dropdown hidden" role="menu">
-          <button type="button" role="menuitem" data-dd-action="admin">⚙️ 後台</button>
-          <button type="button" role="menuitem" data-dd-action="logout" class="dd-logout">🚪 登出</button>
-        </div>
-      </div>
-    </div>
-  </header>
+      </section>
+    </section>
 
-  <main class="wrap">
-    <!-- 展會資料 -->
-    <section id="view-fair">
-      <div class="fair-hero">
-        <h2>第60屆工展會</h2>
-        <p class="theme">主題：六十耀工展　邁向新里程</p>
-        <div class="fair-facts">
+    <!-- 展位地圖 -->
+    <section id="view-map" class="hidden">
+      <header class="page-hero">
+        <p class="pc-hero-kicker">2026 工展會 · 紫花油</p>
+        <h2>🗺️ 展位地圖</h2>
+      </header>
+      <section class="panel">
+        <h3>第60屆工展會 · 維園</h3>
+        <div class="fair-facts light">
           <div class="fair-fact"><strong>日期</strong><span>2026年12月12日至2027年1月4日（24天）</span></div>
-          <div class="fair-fact"><strong>時間</strong><span>12/12–1/3：上午11時至晚上9時<br>1/4：上午11時至晚上8時<br>（結束前30分鐘停止進場；最後一天提早1小時）</span></div>
+          <div class="fair-fact"><strong>時間</strong><span>多數日子上午11時至晚上9時；1/4 提早至晚上8時</span></div>
           <div class="fair-fact"><strong>地點</strong><span>香港銅鑼灣維多利亞公園</span></div>
-          <div class="fair-fact"><strong>入場</strong><span>$10；1米或以下小童／65歲或以上／殘疾人士免費<br>每晚7時起免費（最後一天除外）</span></div>
           <div class="fair-fact"><strong>交通</strong><span>港鐵銅鑼灣站 E 出口／天后站 A2 出口</span></div>
-          <div class="fair-fact"><strong>大會查詢</strong><span><a href="tel:+85234212012" style="color:#fff;font-weight:700">(852) 3421 2012</a></span></div>
+          <div class="fair-fact"><strong>入場</strong><span>$10；合資格免費；每晚7時起免費（最後一天除外）</span></div>
         </div>
-        <div class="fair-links">
-          <a href="https://www.hkbpe.com.hk/web/subpage.php?mid=341" target="_blank" rel="noopener">官方場次頁</a>
-          <a href="https://www.hkbpe.com.hk/" target="_blank" rel="noopener">工展會官網</a>
-          <a href="https://www.hkzihua.com/" target="_blank" rel="noopener">紫花油官網</a>
-        </div>
-      </div>
-      <section class="panel">
-        <h3>攤位小提示</h3>
-        <p>本頁供前線同事同客人用：點心紙下單（主入口）、購物禮遇、產品資料速查、售價、班表、遊戲、追蹤三品牌、古寶入會。產品說明以包裝標籤為準。</p>
-        <p class="claim-safe">免責：本站唔提供醫療建議，亦唔聲稱產品可醫治疾病。獎品以攤位當日供應為準。</p>
-      </section>
-      <section class="panel gift-teaser">
-        <h3>🎁 會場購物禮遇 <span class="badge">送完即止</span></h3>
-        <p class="muted">任何消費送年曆卡；指定花香套滿 $70 送陶瓷杯墊；全場折實滿 $168 磁石貼、滿 $328 摺疊雨傘、滿 $488 手提袋。</p>
+        <p class="muted" style="margin-top:12px;">攤位編號／平面圖稍後更新。場內請跟大會指示牌。參考用途。</p>
         <div class="btn-row">
-          <button type="button" class="primary" data-jump-view="gifts">睇禮遇詳情</button>
-          <button type="button" class="btn-ghost" data-jump-view="order">去點心紙下單</button>
+          <a class="primary link-btn" href="https://www.hkbpe.com.hk/web/subpage.php?mid=341" target="_blank" rel="noopener">官方場次頁</a>
+          <button type="button" class="btn-ghost" data-jump-view="order">去產品計數</button>
         </div>
       </section>
     </section>
 
-
-    <!-- 點心紙下單 -->
-    <section id="view-order" class="hidden">
-      <section class="panel dimsum-panel">
-        <h3>點心紙下單 <span class="badge">主入口</span></h3>
-        <p class="muted">照工展會點心紙分區：編號、名稱、原價／特價、數量。可填套裝「套」數。數量存本機；可匯出／列印簡易訂單。價錢以紙面為準，參考用途。合計會提示會場購物禮遇階梯。</p>
-        <div id="dimsumOrderRoot" class="dimsum-root" aria-live="polite"></div>
-        <p class="claim-safe">免責：唔提供醫療建議；完整標籤以包裝為準。工展現金券／扣券價照紙面文案顯示，實際以攤位當日為準。禮遇送完即止。</p>
-      </section>
+    <!-- 產品計數 -->
+    <section id="view-order">
+      <div id="dimsumOrderRoot" class="dimsum-root pc-root" aria-live="polite"></div>
     </section>
 
-    <!-- 會場購物禮遇 -->
-    <section id="view-gifts" class="hidden">
-      <section class="panel">
-        <div id="giftsRoot" class="gifts-root" aria-live="polite"></div>
-      </section>
-    </section>
-
-    <!-- 班表 -->
-    <section id="view-schedule" class="hidden">
-      <section class="panel">
-        <h3>職員時間表</h3>
-        <p class="muted">訪客可睇當日／全日班表。職員登入後可新增、編輯、刪除。預載為空位範本（「待填」），收到點心紙／真名時間表後請登入更新。</p>
-        <div class="toolbar">
-          <div>
-            <label class="field" for="schedDate">日期</label>
-            <input type="date" id="schedDate" min="2026-12-12" max="2027-01-04" />
-          </div>
-          <div>
-            <label class="field" for="schedMode">顯示</label>
-            <select id="schedMode">
-              <option value="day">只睇當日</option>
-              <option value="all">全日班表</option>
-            </select>
-          </div>
-          <div>
-            <label class="field" for="schedRole">角色</label>
-            <select id="schedRole">
-              <option value="">全部角色</option>
-              <option>Senior Promoter</option>
-              <option>Promoter</option>
-              <option>Cashier</option>
-              <option>宅配會員招募助理</option>
-            </select>
-          </div>
-        </div>
-        <div class="btn-row admin-only hidden" id="schedAdminBar">
-          <button type="button" class="admin-btn" id="btnAddShift">＋ 新增班次</button>
-          <button type="button" class="btn-ghost" id="btnResetSchedule">還原範本</button>
-        </div>
-        <div id="dayNoteBox" class="panel" style="margin-top:12px;box-shadow:none;padding:12px;">
-          <h3 style="font-size:1rem;">當日班表備註 <span class="badge">非產品資料</span></h3>
-          <p id="dayNoteText" class="muted">—</p>
-          <div class="admin-only hidden" id="dayNoteEditWrap">
-            <label class="field" for="dayNoteInput">編輯當日備註（人手／物資等）</label>
-            <textarea id="dayNoteInput" maxlength="800" placeholder="例如：人手調動、物資提醒（唔係產品賣點紙）"></textarea>
-            <div class="btn-row">
-              <button type="button" class="admin-btn" id="btnSaveDayNote">儲存當日備註</button>
-            </div>
-          </div>
-          <div class="btn-row">
-            <button type="button" class="btn-ghost" id="btnGoProducts">打開產品資料（點心紙）</button>
-          </div>
-        </div>
-        <div id="shiftList" class="shift-list" aria-live="polite"></div>
-      </section>
-    </section>
-
-
-    <!-- 產品資料（點心紙） -->
-    <section id="view-products" class="hidden">
-      <section class="panel">
-        <h3>產品資料 <span class="badge">點心紙</span></h3>
-        <p class="muted">Promoter 用產品速查：成份、用法、注意、攤位賣點。資料來自公開標籤／官網整理；參考用途，非醫療建議。職員可改／上載產品資料紙相片。</p>
-        <div class="toolbar">
-          <div>
-            <label class="field" for="prodBrand">品牌</label>
-            <select id="prodBrand">
-              <option value="">全部</option>
-              <option>紫花油</option>
-              <option>日本叮叮</option>
-              <option>古寶</option>
-            </select>
-          </div>
-          <div>
-            <label class="field" for="prodSearch">搜尋</label>
-            <input type="search" id="prodSearch" placeholder="產品名／成份…" />
-          </div>
-        </div>
-        <div id="prodPicker" class="prod-picker" aria-label="產品一覽"></div>
-        <div id="prodCard" class="prod-card-panel empty" aria-live="polite">請先揀一款產品。</div>
-        <div class="btn-row" id="prodLinkRow" style="display:none;">
-          <button type="button" class="btn-ghost" id="btnProdToPrice">睇呢款售價</button>
-        </div>
-        <div class="admin-only hidden" id="prodAdminPanel" style="margin-top:14px;">
-          <h3 style="font-size:1rem;">職員編輯資料卡</h3>
-          <input type="hidden" id="prodEditId" />
-          <label class="field" for="prodEditBrand">品牌</label>
-          <select id="prodEditBrand">
-            <option>紫花油</option>
-            <option>日本叮叮</option>
-            <option>古寶</option>
-          </select>
-          <label class="field" for="prodEditName">產品名</label>
-          <input type="text" id="prodEditName" maxlength="120" />
-          <label class="field" for="prodEditSpec">規格</label>
-          <input type="text" id="prodEditSpec" maxlength="120" />
-          <label class="field" for="prodEditIng">成份摘要</label>
-          <textarea id="prodEditIng" maxlength="800" rows="2"></textarea>
-          <label class="field" for="prodEditUsage">用法</label>
-          <textarea id="prodEditUsage" maxlength="1200" rows="3"></textarea>
-          <label class="field" for="prodEditCautions">注意／唔適合</label>
-          <textarea id="prodEditCautions" maxlength="1200" rows="3"></textarea>
-          <label class="field" for="prodEditPitch">攤位賣點（簡短）</label>
-          <textarea id="prodEditPitch" maxlength="600" rows="2" placeholder="claim-safe；唔講醫好／撃退／治療"></textarea>
-          <label class="field" for="prodPhotoInput">上載產品資料紙相片</label>
-          <input type="file" id="prodPhotoInput" accept="image/*" multiple />
-          <p id="prodPhotoMsg" class="admin-msg hidden" role="status"></p>
-          <div id="prodEditPhotos" class="snack-gallery" style="margin-top:8px;"></div>
-          <div class="btn-row">
-            <button type="button" class="admin-btn" id="btnSaveProduct">儲存資料卡</button>
-            <button type="button" class="btn-ghost" id="btnNewProduct">＋ 新增產品卡</button>
-            <button type="button" class="btn-danger" id="btnDeleteProduct">刪除此卡</button>
-            <button type="button" class="btn-ghost" id="btnResetProducts">還原公開 seed</button>
-          </div>
-        </div>
-        <p class="claim-safe">免責：唔提供醫療建議；完整標籤以包裝為準。產品資料紙相片只存本機。</p>
-      </section>
-    </section>
-
-    <!-- 售價 -->
-    <section id="view-prices" class="hidden">
-      <section class="panel">
-        <h3>產品售賣價錢</h3>
-        <p class="muted">工展會攤位價目。未填價錢顯示「待填」。可同「產品資料」互相跳轉。職員登入後可改價。真實價表未收到前請唔好當零售官價。</p>
-        <div class="toolbar">
-          <div>
-            <label class="field" for="priceBrand">品牌</label>
-            <select id="priceBrand">
-              <option value="">全部</option>
-              <option>紫花油</option>
-              <option>日本叮叮</option>
-              <option>古寶</option>
-            </select>
-          </div>
-          <div>
-            <label class="field" for="priceSearch">搜尋</label>
-            <input type="search" id="priceSearch" placeholder="產品名…" />
-          </div>
-          <div>
-            <label class="field" for="priceFilled">顯示</label>
-            <select id="priceFilled">
-              <option value="all">全部</option>
-              <option value="filled">已填價</option>
-              <option value="empty">待填</option>
-            </select>
-          </div>
-        </div>
-        <div class="btn-row admin-only hidden" id="priceAdminBar">
-          <button type="button" class="admin-btn" id="btnAddPrice">＋ 新增產品價</button>
-          <button type="button" class="btn-ghost" id="btnExportPrices">Export CSV</button>
-          <button type="button" class="btn-ghost" id="btnResetPrices">還原產品名單（清價錢）</button>
-        </div>
-        <div id="priceList" class="price-list" aria-live="polite"></div>
-      </section>
-    </section>
-
-    <!-- 價錢編輯 modal 放喺後面 -->
-    <!-- 遊戲 -->
+    <!-- 抽獎遊戲 -->
     <section id="view-games" class="hidden">
-      <section class="panel">
-        <h3>攤位遊戲／抽獎</h3>
-        <p class="muted">揀一個遊戲開始。贏咗會由獎品池隨機派獎（權重可由職員喺後台調）。再玩請撳「再玩」。</p>
-        <div class="game-grid" id="gamePicker">
-          <button type="button" class="game-card" data-game="lottery"><span class="emoji">🎡</span><span class="label">抽獎</span></button>
-          <button type="button" class="game-card" data-game="pot"><span class="emoji">🏺</span><span class="label">投壺</span></button>
-          <button type="button" class="game-card" data-game="beanbag"><span class="emoji">🎒</span><span class="label">豆袋</span></button>
-          <button type="button" class="game-card" data-game="flip"><span class="emoji">🃏</span><span class="label">翻牌子</span></button>
-          <button type="button" class="game-card" data-game="claw"><span class="emoji">🕹️</span><span class="label">夾東西</span></button>
-          <button type="button" class="game-card" data-game="ring"><span class="emoji">⭕</span><span class="label">拋圈圈</span></button>
-        </div>
-        <div id="gameArena" class="game-arena hidden">
-          <h3 id="gameTitle">遊戲</h3>
-          <p id="gameHint" class="muted" style="text-align:center;"></p>
-          <div id="gameBody"></div>
-          <div id="gameStatus" class="game-status" aria-live="polite"></div>
-          <div id="prizeBanner" class="prize-banner hidden"></div>
-          <div class="btn-row" style="justify-content:center;">
-            <button type="button" class="btn-ghost" id="btnReplay">再玩</button>
-            <button type="button" class="btn-ghost" id="btnBackGames">返遊戲一覽</button>
-          </div>
-        </div>
-        <div class="panel" style="margin-top:12px;box-shadow:none;">
-          <h3 style="font-size:1rem;">近期得獎記錄 <span class="badge">本機</span></h3>
-          <ul id="winLog" class="win-log"></ul>
-          <button type="button" class="btn-ghost admin-only hidden" id="btnClearWins">清空記錄</button>
-        </div>
-        <p class="claim-safe">遊戲純娛樂；獎品以攤位庫存為準，唔涉及產品療效聲稱。</p>
-      </section>
+      <div id="luckyGamesRoot" aria-live="polite"></div>
     </section>
 
-    <!-- 追蹤 -->
-    <section id="view-social" class="hidden">
-      <section class="panel">
-        <h3>追蹤我哋 · 三品牌</h3>
-        <p class="muted">掃 QR 或撳連結追蹤 Facebook／Instagram／小紅書。空白項目為待職員補上官方連結。</p>
-        <div id="socialGrid" class="social-grid"></div>
-      </section>
+    <!-- 宅配入會 -->
+    <section id="view-delivery" class="hidden">
+      <div id="cupalDeliveryRoot" aria-live="polite"></div>
     </section>
 
-    <!-- 古寶入會 -->
-    <section id="view-join" class="hidden">
-      <section class="panel">
-        <h3>古寶入會表格</h3>
-        <p class="muted">請填寫以下資料，方便跟進會員優惠。資料只存於此裝置（localStorage），職員可於後台匯出。</p>
-        <form id="joinForm" autocomplete="on">
-          <label class="field" for="joinName">姓名 <span class="badge">必填</span></label>
-          <input id="joinName" name="name" type="text" maxlength="80" required placeholder="您的姓名" />
-          <label class="field" for="joinPhone">電話 <span class="badge">必填</span></label>
-          <input id="joinPhone" name="phone" type="tel" maxlength="20" required placeholder="例如 9123 4567" />
-          <label class="field" for="joinEmail">Email</label>
-          <input id="joinEmail" name="email" type="email" maxlength="120" placeholder="you@example.com" />
-          <label class="field" for="joinLike">喜歡古寶邊款產品</label>
-          <select id="joinLike" name="likeProduct"></select>
-          <label class="field" for="joinBought">購買了邊款產品</label>
-          <select id="joinBought" name="boughtProduct"></select>
-          <label class="field" for="joinMember">是否已是會員</label>
-          <select id="joinMember" name="isMember">
-            <option value="否">否</option>
-            <option value="是">是</option>
-            <option value="唔肯定">唔肯定</option>
-          </select>
-          <label class="field" for="joinAgain">會否再購買</label>
-          <select id="joinAgain" name="willBuyAgain">
-            <option value="會">會</option>
-            <option value="考慮中">考慮中</option>
-            <option value="唔會">唔會</option>
-          </select>
-          <div class="btn-row">
-            <button type="submit" class="primary">提交入會資料</button>
-          </div>
-          <p id="joinMsg" class="admin-msg hidden" role="status"></p>
-        </form>
-      </section>
-    </section>
-
-    <!-- 後台 -->
-    <section id="view-admin" class="hidden">
-      <section class="panel admin-only hidden" id="adminPanel">
-        <h3>職員後台</h3>
-        <p class="admin-hint">預設帳密：<code>zihua</code>／<code>office2026</code>。資料存本機瀏覽器。</p>
-
-        <h3 style="margin-top:18px;font-size:1rem;">古寶入會名單</h3>
-        <div class="btn-row">
-          <button type="button" class="admin-btn" id="btnAddMember">＋ 手動新增</button>
-          <button type="button" class="btn-ghost" id="btnExportMembers">Export CSV</button>
-        </div>
-        <div class="table-wrap" style="margin-top:10px;">
-          <table class="data" id="memberTable">
-            <thead>
-              <tr>
-                <th>時間</th><th>姓名</th><th>電話</th><th>Email</th><th>喜歡</th><th>已買</th><th>會員</th><th>再買</th><th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <h3 style="margin-top:18px;font-size:1rem;">售價快捷</h3>
-        <p class="muted">完整價目表喺「售價」分頁；亦可喺該頁 Export CSV。</p>
-        <div class="btn-row">
-          <button type="button" class="btn-ghost" id="btnAdminGoPrices">去售價分頁</button>
-          <button type="button" class="btn-ghost" id="btnAdminExportPrices">Export 售價 CSV</button>
-        </div>
-
-        <h3 style="margin-top:18px;font-size:1rem;">獎品權重</h3>
-        <p class="muted">數字愈大愈易中。儲存後即時生效。</p>
-        <div id="prizeWeights"></div>
-        <div class="btn-row"><button type="button" class="admin-btn" id="btnSavePrizes">儲存權重</button></div>
-
-        <h3 style="margin-top:18px;font-size:1rem;">三品牌社交連結</h3>
-        <div id="socialEditor"></div>
-        <div class="btn-row"><button type="button" class="admin-btn" id="btnSaveSocials">儲存社交連結</button></div>
-        <p id="adminMsg" class="admin-msg hidden" role="status"></p>
-      </section>
-      <section class="panel" id="adminNeedLogin">
-        <h3>請先登入</h3>
-        <p class="muted">撳右上角人頭圖示登入職員帳戶，先可睇後台。</p>
-      </section>
+    <!-- 推廣員更表 -->
+    <section id="view-roster" class="hidden">
+      <div id="rosterRoot" aria-live="polite"></div>
     </section>
   </main>
 
-
-  <!-- Price edit modal -->
-  <div id="priceModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal">
-      <h3 id="priceModalTitle">編輯售價</h3>
-      <form id="priceForm">
-        <input type="hidden" id="priceId" />
-        <label class="field" for="priceBrandIn">品牌</label>
-        <select id="priceBrandIn" required>
-          <option>紫花油</option>
-          <option>日本叮叮</option>
-          <option>古寶</option>
-        </select>
-        <label class="field" for="priceNameIn">產品名</label>
-        <input type="text" id="priceNameIn" maxlength="120" required />
-        <label class="field" for="priceSpecIn">規格</label>
-        <input type="text" id="priceSpecIn" maxlength="120" placeholder="例如 70ml／18片" />
-        <label class="field" for="priceValueIn">工展會售價（HK$）</label>
-        <input type="text" id="priceValueIn" maxlength="40" placeholder="留空＝待填；例如 88 或 3件$200" />
-        <label class="field" for="priceNoteIn">備註</label>
-        <input type="text" id="priceNoteIn" maxlength="200" placeholder="套裝／優惠說明（可選）" />
-        <div class="btn-row">
-          <button type="submit" class="primary">儲存</button>
-          <button type="button" class="btn-ghost" id="btnCancelPrice">取消</button>
-        </div>
-      </form>
+  <!-- 禮遇抽屜（職員／詳情） -->
+  <div id="giftsDrawer" class="drawer hidden" role="dialog" aria-modal="true">
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <h3>會場購物禮遇</h3>
+        <button type="button" class="btn-ghost" id="btnCloseGifts">關閉</button>
+      </div>
+      <div id="giftsRoot"></div>
     </div>
   </div>
 
@@ -420,52 +102,44 @@
     </div>
   </div>
 
-  <!-- Shift edit modal -->
-  <div id="shiftModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal">
-      <h3 id="shiftModalTitle">編輯班次</h3>
-      <form id="shiftForm">
-        <input type="hidden" id="shiftId" />
-        <label class="field" for="shiftDate">日期</label>
-        <input type="date" id="shiftDate" min="2026-12-12" max="2027-01-04" required />
-        <label class="field" for="shiftStart">開始</label>
-        <input type="time" id="shiftStart" required />
-        <label class="field" for="shiftEnd">結束</label>
-        <input type="time" id="shiftEnd" required />
-        <label class="field" for="shiftRole">角色</label>
-        <select id="shiftRoleSel" required>
-          <option>Senior Promoter</option>
-          <option>Promoter</option>
-          <option>Cashier</option>
-          <option>宅配會員招募助理</option>
-        </select>
-        <label class="field" for="shiftName">人名</label>
-        <input type="text" id="shiftName" maxlength="60" placeholder="待填／真實姓名" required />
-        <label class="field" for="shiftNote">備註</label>
-        <input type="text" id="shiftNote" maxlength="200" placeholder="可選" />
-        <div class="btn-row">
-          <button type="submit" class="primary">儲存</button>
-          <button type="button" class="btn-ghost" id="btnCancelShift">取消</button>
-        </div>
-      </form>
+  <!-- 隱藏登入入口（產品頁可用；主要喺更表） -->
+  <div class="header-login-wrap floating-login">
+    <button type="button" id="headerLoginBtn" class="header-login-btn" aria-label="職員登入" aria-haspopup="true" aria-expanded="false">
+      <svg class="hdr-icon hdr-icon-out" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 19.5c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="hdr-icon hdr-icon-in hidden" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="3.5" fill="currentColor"/><path d="M5 19.5c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" fill="currentColor"/></svg>
+      <span class="hdr-login-dot hidden" aria-hidden="true"></span>
+    </button>
+    <div id="loginDropdown" class="login-dropdown hidden" role="menu">
+      <button type="button" role="menuitem" data-dd-action="gifts">🎁 禮遇設定</button>
+      <button type="button" role="menuitem" data-dd-action="export-cupal">⬇ 匯出宅配 CSV</button>
+      <button type="button" role="menuitem" data-dd-action="logout" class="dd-logout">🚪 登出</button>
     </div>
   </div>
 
+  <nav class="bottom-nav" aria-label="主要分頁">
+    <button type="button" data-view="booth3d"><span class="bn-ico" aria-hidden="true">🧊</span><span>3D 展位</span></button>
+    <button type="button" data-view="map"><span class="bn-ico" aria-hidden="true">🗺️</span><span>展位地圖</span></button>
+    <button type="button" data-view="order" class="active"><span class="bn-ico" aria-hidden="true">🛍️</span><span>產品計數</span></button>
+    <button type="button" data-view="games"><span class="bn-ico" aria-hidden="true">✨</span><span>抽獎遊戲</span></button>
+    <button type="button" data-view="delivery"><span class="bn-ico" aria-hidden="true">🚚</span><span>宅配入會</span></button>
+    <button type="button" data-view="roster"><span class="bn-ico" aria-hidden="true">📅</span><span>推廣員更表</span></button>
+  </nav>
+
   <footer class="footer">
-    紫花油工展會攤位工具 · 參考用途，非醫療建議 ·
+    紫花油工展會 · 參考用途，非醫療建議 ·
     <a href="https://www.hkzihua.com/" target="_blank" rel="noopener">hkzihua.com</a>
-    · v=20261101a
+    · v=20261101b
   </footer>
 
-  <script src="assets/js/admin-auth.js?v=20261101a"></script>
-  <script src="data/schedule-seed.js?v=20261101a"></script>
-  <script src="data/socials.js?v=20261101a"></script>
-  <script src="data/products-seed.js?v=20261101a"></script>
-  <script src="data/prices-seed.js?v=20261101a"></script>
-  <script src="data/dimsum-order.js?v=20261101a"></script>
-  <script src="data/gifts-seed.js?v=20261101a"></script>
-  <script src="assets/js/gifts-ui.js?v=20261101a"></script>
-  <script src="assets/js/dimsum-order-ui.js?v=20261101a"></script>
-  <script src="assets/js/app.js?v=20261101a"></script>
+  <script src="assets/js/admin-auth.js?v=20261101b"></script>
+  <script src="data/schedule-seed.js?v=20261101b"></script>
+  <script src="data/dimsum-order.js?v=20261101b"></script>
+  <script src="data/gifts-seed.js?v=20261101b"></script>
+  <script src="assets/js/gifts-ui.js?v=20261101b"></script>
+  <script src="assets/js/dimsum-order-ui.js?v=20261101b"></script>
+  <script src="assets/js/games-lucky.js?v=20261101b"></script>
+  <script src="assets/js/cupal-delivery.js?v=20261101b"></script>
+  <script src="assets/js/schedule-roster.js?v=20261101b"></script>
+  <script src="assets/js/app.js?v=20261101b"></script>
 </body>
 </html>
