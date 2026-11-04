@@ -1,4 +1,4 @@
-/* 產品計數 · 結算 — 必揀付款；先減優惠券，再銀髮 95 折 */
+/* 產品計數 · 結算 — 必揀付款；先減優惠券，再銀髮 95 折；買6支26ml送12ml扣庫存 */
 (function () {
   "use strict";
 
@@ -143,7 +143,76 @@
         }
       });
     });
-    return { total: total, lines: lines, count: pieceCount };
+    // 買 6 支 ZE01（26ml）送 1 支 CO99（12ml）— 贈品 $0，結算要扣庫存
+    var ze01Qty = 0;
+    var z4cQty = 0;
+    sheets.forEach(function (sheet) {
+      (sheet.sections || []).forEach(function (sec) {
+        (sec.items || []).forEach(function (it) {
+          if (it.code === "ZE01") ze01Qty += itemQty(st, it.code);
+          if (it.code === "Z0004C") z4cQty += itemQty(st, it.code);
+        });
+      });
+    });
+    var freeCo99 = Math.floor(ze01Qty / 6);
+    if (freeCo99 > 0) {
+      lines.push({
+        kind: "gift",
+        label: "買6送1：26ml×" + (freeCo99 * 6) + " 送 12ml×" + freeCo99,
+        amount: 0,
+        code: "CO99",
+        giftQty: freeCo99
+      });
+    }
+    if (z4cQty > 0) {
+      lines.push({
+        kind: "gift",
+        label: "套裝已含：26ml×6 送 12ml×1 × " + z4cQty,
+        amount: null,
+        code: "Z0004C",
+        giftQty: z4cQty
+      });
+    }
+    return {
+      total: total,
+      lines: lines,
+      count: pieceCount,
+      freeCo99: freeCo99,
+      ze01Qty: ze01Qty,
+      z4cQty: z4cQty
+    };
+  }
+
+  /** 結算扣庫存需求：購物車各碼＋買6送1 嘅免費 CO99 */
+  function buildStockDemand(st) {
+    var demand = {};
+    function add(code, n) {
+      var c = String(code || "").trim();
+      var q = Math.max(0, Math.floor(Number(n) || 0));
+      if (!c || q <= 0) return;
+      demand[c] = (demand[c] || 0) + q;
+    }
+    var sheets = data().sheets || [];
+    sheets.forEach(function (sheet) {
+      (sheet.sections || []).forEach(function (sec) {
+        (sec.items || []).forEach(function (it) {
+          if (it.displayOnly) return;
+          add(it.code, itemQty(st, it.code));
+        });
+      });
+    });
+    var ze01 = demand.ZE01 || 0;
+    var freeN = Math.floor(ze01 / 6);
+    if (freeN > 0) add("CO99", freeN);
+    // Z0004C 以套裝 SKU 扣；唔另外扣 ZE01／CO99（套裝已喺總預貨量獨立列）
+    return demand;
+  }
+
+  function formatStockShorts(shorts) {
+    return (shorts || []).map(function (s) {
+      var name = s.name ? (" " + s.name) : "";
+      return "庫存唔夠：" + s.code + name + " 淨餘 " + s.have + "，訂單要 " + s.need;
+    }).join("\n");
   }
 
   /** 合計 → 減優惠券（唔低過 0）→ 銀髮 95 折 */
@@ -199,7 +268,7 @@
         (window.BPE_Gifts && window.BPE_Gifts.renderGiftCardsHtml
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
-        '<p class="pc-hero-note">套裝價自動計算 · 花香套／5 支花香油送杯墊 · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再銀髮 95 折，以最終實付計禮遇 · 送完即止</p>' +
+        '<p class="pc-hero-note">套裝價自動計算 · 花香套／5 支花香油送杯墊 · 任何消費送 2027 年曆卡 · 買6支26ml送1支12ml（扣庫存）· 滿額贈品以最高一級計 · 先減優惠券，再銀髮 95 折，以最終實付計禮遇 · 送完即止</p>' +
       "</header>"
     );
   }
@@ -244,7 +313,7 @@
           '<div class="pc-thumb" aria-hidden="true">📦</div>' +
           '<div class="pc-card-body">' +
             "<strong>" + esc(b.label) + "</strong>" +
-            '<div class="pc-meta"><code>' + esc(b.id) + "</code> · " + esc(priceLabel) + "</div>" +
+            '<div class="pc-meta"><span title="X＝入機代號">入機代號 <code>' + esc(b.id) + "</code></span> · " + esc(priceLabel) + "</div>" +
           "</div>" +
           qtyCtrl("set", b.id, q) +
         "</div>";
@@ -264,7 +333,7 @@
           '<div class="pc-thumb" aria-hidden="true">🧴</div>' +
           '<div class="pc-card-body">' +
             "<strong>" + esc(it.name) + "</strong>" +
-            '<div class="pc-meta"><code>' + esc(it.code) + '</code> · <span class="pc-price">' + esc(priceTxt) + '</span> ' + orig +
+            '<div class="pc-meta"><span class="pc-xcode" title="X＝入機代號">入機代號 <code>' + esc(it.code) + '</code></span> · <span class="pc-price">' + esc(priceTxt) + '</span> ' + orig +
               (stockBadge ? (" · " + stockBadge) : "") + '</div>' +
           "</div>" +
           qtyCtrl("item", it.code, q) +
@@ -275,8 +344,20 @@
     return html;
   }
 
-  function renderBreakdown(pr) {
+  function renderBreakdown(pr, calc) {
+    var giftNote = "";
+    if (calc && calc.freeCo99 > 0) {
+      giftNote =
+        '<div class="pc-break-row pc-break-gift"><span>買6送1</span><strong>26ml×' +
+        (calc.freeCo99 * 6) + " 送 12ml×" + calc.freeCo99 + "</strong></div>";
+    }
+    if (calc && calc.z4cQty > 0) {
+      giftNote +=
+        '<div class="pc-break-row pc-break-gift"><span>套裝已含</span><strong>送12ml × ' +
+        calc.z4cQty + "</strong></div>";
+    }
     var rows =
+      giftNote +
       '<div class="pc-break-row"><span>合計</span><strong>$' + money(pr.subtotal) + "</strong></div>" +
       '<div class="pc-break-row"><span>減優惠券</span><strong' +
         (pr.couponAmount > 0 ? ' class="pc-break-minus"' : "") +
@@ -318,7 +399,7 @@
           (pr.senior ? '<span class="pc-senior-tag">銀髮價</span>' : "") +
           (pr.couponAmount > 0 ? '<span class="pc-coupon-tag">已減券</span>' : "") +
         "</div>" +
-        renderBreakdown(pr) +
+        renderBreakdown(pr, calc) +
         '<div class="pc-coupon-row">' +
           '<label class="pc-coupon-label" for="pcCoupon">優惠券（先減券）</label>' +
           '<div class="pc-coupon-chips">' +
@@ -369,8 +450,8 @@
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105e" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105e" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105f" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105f" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
         '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
         (st.paymentMethod
@@ -438,7 +519,8 @@
     var pr = pricing(st, calc);
     var lines = ["2026 工展會 · 產品計數結算", "———"];
     calc.lines.forEach(function (L) {
-      if (L.amount == null) lines.push(L.label);
+      if (L.kind === "gift") lines.push("贈　" + L.label);
+      else if (L.amount == null) lines.push(L.label);
       else lines.push(L.label + "　$" + money(L.amount));
     });
     lines.push("———");
@@ -580,8 +662,31 @@
           alert("未有產品，請先加數量。");
           return;
         }
+        var demand = buildStockDemand(stS);
+        if (window.BPE_Stock && window.BPE_Stock.canFulfill) {
+          var stockCheck = window.BPE_Stock.canFulfill(demand);
+          if (!stockCheck.ok) {
+            alert(
+              "庫存唔夠，未能結算。請改數量或職員補貨後再試。\n\n" +
+              formatStockShorts(stockCheck.shorts)
+            );
+            return;
+          }
+        }
         var order = saveSettle();
+        if (window.BPE_Stock && window.BPE_Stock.deduct) {
+          var ded = window.BPE_Stock.deduct(demand);
+          if (!ded.ok) {
+            alert("扣庫存失敗：\n" + formatStockShorts(ded.shorts));
+          }
+        }
         var giftLine = (order.gifts && order.gifts.length) ? ("\n可享：" + order.gifts.join("；")) : "";
+        if (calcS.freeCo99 > 0) {
+          giftLine += "\n買6送1：26ml×" + (calcS.freeCo99 * 6) + " 送 12ml×" + calcS.freeCo99 + "（已扣庫存）";
+        }
+        if (calcS.z4cQty > 0) {
+          giftLine += "\n套裝 Z0004C × " + calcS.z4cQty + "（已含送12ml，已扣套裝庫存）";
+        }
         alert(
           "已結算（本機）\n" +
           "付款：" + order.paymentLabel + "\n" +
@@ -592,8 +697,9 @@
           (order.senior ? ("銀髮 95 折\n") : "") +
           "實付 $" + money(order.payable) +
           giftLine +
-          "\n\n請向攤位職員確認庫存同付款。"
+          "\n\n庫存已按售出扣減；請向攤位職員確認付款。"
         );
+        render();
         return;
       }
     });

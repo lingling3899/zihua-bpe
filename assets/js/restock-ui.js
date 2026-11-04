@@ -159,7 +159,7 @@
       return;
     }
     saveDraft(draft);
-    var lines = ["no,wfCode,appCode,category,name,packSize,qty_sets_pcs,cartons,computed_pcs,note"];
+    var lines = ["no,xCode_ruji,wfCode,appCode,category,name,packSize,qty_sets_pcs,cartons,computed_pcs,note"];
     function csv(v) {
       var t = String(v == null ? "" : v).replace(/"/g, '""');
       return '"' + t + '"';
@@ -175,6 +175,7 @@
       }
       lines.push([
         it.no,
+        it.xCode || it.wfCode,
         it.wfCode,
         it.appCode || "",
         it.category,
@@ -260,12 +261,47 @@
       "<p class='noprint'><button onclick='window.print()'>列印</button> " +
       "<button onclick='window.close()'>關閉</button></p>" +
       "<table><thead><tr>" +
-      "<th>No.</th><th>WF Code</th><th>產品</th><th>Pack</th><th>套／件</th><th>箱頭</th><th>簽收</th>" +
+      "<th>No.</th><th>X／入機代號</th><th>產品</th><th>Pack</th><th>套／件</th><th>箱頭</th><th>簽收</th>" +
       "</tr></thead><tbody>" + rowsHtml + "</tbody></table>" +
       "</body></html>"
     );
     w.document.close();
     statusMsg = "已開列印預覽";
+    renderPanel();
+  }
+
+  function applyRestockToStock() {
+    var draft = readFormIntoDraft();
+    if (!requireHeader(draft)) {
+      renderPanel();
+      return;
+    }
+    if (!window.BPE_Stock || !window.BPE_Stock.addQty) {
+      statusMsg = "庫存模組未載入";
+      renderPanel();
+      return;
+    }
+    saveDraft(draft);
+    var n = 0;
+    var added = 0;
+    (seed().items || []).forEach(function (it) {
+      var code = it.appCode || it.wfCode;
+      var q = draft.qty[it.wfCode];
+      if (q == null || q <= 0) return;
+      // prefer app code for stock; fallback wf
+      var stockCode = it.appCode || it.wfCode;
+      window.BPE_Stock.addQty(stockCode, q);
+      n += 1;
+      added += q;
+    });
+    if (!n) {
+      statusMsg = "未有套／件數量可加落庫存";
+    } else {
+      statusMsg = "已登記補貨： " + n + " 款，合共 ＋" + added + "（已加落剩餘庫存）";
+      if (window.BPE_DimsumOrderUI && window.BPE_DimsumOrderUI.render) {
+        window.BPE_DimsumOrderUI.render();
+      }
+    }
     renderPanel();
   }
 
@@ -345,6 +381,7 @@
           '<button type="button" class="btn-ghost" id="btnRestockExport">匯出 CSV</button>' +
           '<button type="button" class="btn-ghost" id="btnRestockPrint">列印／預覽</button>' +
           '<button type="button" class="btn-ghost" id="btnRestockFillPcs">用箱數填件數</button>' +
+          '<button type="button" class="btn-ghost" id="btnRestockApplyStock">登記補貨＋到庫存</button>' +
           '<button type="button" class="btn-ghost" id="btnRestockClear">清空今日數量</button>' +
           '<button type="button" class="btn-ghost" id="btnRestockResetHead">重設表頭</button>' +
         "</div>" +
@@ -352,14 +389,14 @@
       (statusMsg ? '<p class="restock-status" role="status">' + esc(statusMsg) + "</p>" : "") +
       '<div class="restock-ref muted">' +
         '紙本參考：' +
-        '<a href="assets/img/restock/restock-p1.jpg?v=20261105d" target="_blank" rel="noopener">P1</a> · ' +
-        '<a href="assets/img/restock/restock-p2.jpg?v=20261105d" target="_blank" rel="noopener">P2</a> · ' +
-        '<a href="assets/img/restock/restock-p3.jpg?v=20261105d" target="_blank" rel="noopener">P3</a>' +
+        '<a href="assets/img/restock/restock-p1.jpg?v=20261105f" target="_blank" rel="noopener">P1</a> · ' +
+        '<a href="assets/img/restock/restock-p2.jpg?v=20261105f" target="_blank" rel="noopener">P2</a> · ' +
+        '<a href="assets/img/restock/restock-p3.jpg?v=20261105f" target="_blank" rel="noopener">P3</a>' +
       "</div>" +
       '<div class="stock-table-wrap restock-table-wrap">' +
         '<table class="stock-table restock-table">' +
           "<thead><tr>" +
-            "<th>No.</th><th>WF／產品</th><th>Pack</th><th>套／件</th><th>箱頭</th>" +
+            "<th>No.</th><th title=\"X＝入機代號\">X／入機代號／產品</th><th>Pack</th><th>套／件</th><th>箱頭</th>" +
           "</tr></thead><tbody>";
 
     if (!items.length) {
@@ -383,7 +420,7 @@
         html +=
           '<tr class="restock-row" data-code="' + esc(code) + '">' +
             '<td class="num">' + esc(String(it.no)) + "</td>" +
-            "<td><code>" + esc(code) + "</code>" +
+            '<td><span class="muted" style="font-size:.7rem">X／入機代號</span><br><code title="X＝入機代號">' + esc(it.xCode || code) + "</code>" +
               (it.appCode ? '<span class="stock-wf muted"> → ' + esc(it.appCode) + "</span>" : "") +
               "<div><strong>" + esc(it.name) + "</strong></div>" +
               (it.needsNote
@@ -465,6 +502,11 @@
     if (btnPrint) btnPrint.addEventListener("click", openPrint);
     var btnFill = $("btnRestockFillPcs");
     if (btnFill) btnFill.addEventListener("click", fillPiecesFromCartons);
+    var btnApply = $("btnRestockApplyStock");
+    if (btnApply) btnApply.addEventListener("click", function () {
+      if (!confirm("將表上「套／件」數量加落庫存剩餘？（第一次落貨／總預不變，剩餘＋N）")) return;
+      applyRestockToStock();
+    });
     var btnClear = $("btnRestockClear");
     if (btnClear) btnClear.addEventListener("click", clearQtys);
     var btnReset = $("btnRestockResetHead");

@@ -4,7 +4,7 @@
 
   var WHEEL = [
     { id: "grand", label: "大獎", weight: 1, color: "#f5c542" },
-    { id: "9off", label: "9折", weight: 8, color: "#9b6bd6" },
+    { id: "calendar", label: "年曆卡", weight: 8, color: "#9b6bd6" },
     { id: "coaster", label: "杯墊", weight: 12, color: "#c4a3e8" },
     { id: "again", label: "下次再來", weight: 18, color: "#7c4dbd" },
     { id: "pen", label: "原子筆", weight: 14, color: "#a67ce0" },
@@ -25,12 +25,23 @@
   var activeTab = "wheel";
   var wheelAngle = 0;
   var spinning = false;
+  var plinkoBusy = false;
   var flipState = null;
+  var wheelRaf = 0;
+  var plinkoRaf = 0;
 
   function esc(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+  function easeOutQuart(t) {
+    t = Math.max(0, Math.min(1, t));
+    return 1 - Math.pow(1 - t, 4);
+  }
+  function easeInOutCubic(t) {
+    t = Math.max(0, Math.min(1, t));
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
   function pickWeighted(list) {
     var total = 0;
@@ -62,7 +73,9 @@
       '<div class="lucky-tabs" role="tablist">' +
       tabs.map(function (t) {
         return '<button type="button" class="lucky-tab' + (activeTab === t.id ? " active" : "") +
-          '" data-lucky-tab="' + t.id + '">' + esc(t.label) + "</button>";
+          '" data-lucky-tab="' + t.id + '"' +
+          ((spinning || plinkoBusy) && t.id !== activeTab ? " disabled" : "") +
+          ">" + esc(t.label) + "</button>";
       }).join("") +
       "</div>"
     );
@@ -86,7 +99,9 @@
           '<div class="wheel-center">紫花油</div>' +
           '<div class="wheel-labels">' + labels + "</div>" +
         "</div>" +
-        '<button type="button" class="primary lucky-spin" id="btnSpinWheel"' + (spinning ? " disabled" : "") + ">轉一次</button>" +
+        '<button type="button" class="primary lucky-spin" id="btnSpinWheel"' + (spinning ? " disabled" : "") + ">" +
+          (spinning ? "轉動中…" : "轉一次") +
+        "</button>" +
         '<p class="lucky-result" id="wheelResult" aria-live="polite"></p>' +
       "</div>"
     );
@@ -111,7 +126,9 @@
           pegs +
           '<div class="plinko-slots">' + slots + "</div>" +
         "</div>" +
-        '<button type="button" class="primary" id="btnDropBall">放下乒乓球</button>' +
+        '<button type="button" class="primary" id="btnDropBall"' + (plinkoBusy ? " disabled" : "") + ">" +
+          (plinkoBusy ? "落下中…" : "放下乒乓球") +
+        "</button>" +
         '<p class="lucky-result" id="plinkoResult" aria-live="polite"></p>' +
       "</div>"
     );
@@ -147,9 +164,12 @@
       var open = flipState.flipped.indexOf(i) >= 0 || flipState.matched[i];
       return (
         '<button type="button" class="flip-card-v2' + (open ? " open" : "") + (flipState.matched[i] ? " matched" : "") +
-          '" data-flip="' + i + '"' + (flipState.matched[i] ? " disabled" : "") + ">" +
-          '<span class="flip-back">紫花油</span>' +
-          '<span class="flip-front">' + f + "</span>" +
+          '" data-flip="' + i + '"' +
+          (flipState.matched[i] || flipState.lock ? " disabled" : "") + ">" +
+          '<span class="flip-inner">' +
+            '<span class="flip-back">紫花油</span>' +
+            '<span class="flip-front">' + f + "</span>" +
+          "</span>" +
         "</button>"
       );
     }).join("");
@@ -157,7 +177,7 @@
       '<div class="flip-wrap">' +
         '<div class="flip-stats">' +
           '<span>⏱ ' + flipElapsed() + " 秒 · 翻咗 " + flipState.moves + " 次</span>" +
-          '<button type="button" class="btn-ghost" id="btnFlipReset">重新開始</button>' +
+          '<button type="button" class="btn-ghost" id="btnFlipReset"' + (flipState.lock ? " disabled" : "") + ">重新開始</button>" +
         "</div>" +
         '<div class="flip-grid">' + cards + "</div>" +
         '<p class="lucky-result" id="flipResult" aria-live="polite">' +
@@ -190,48 +210,132 @@
     var pick = pickWeighted(WHEEL);
     var segs = WHEEL.length;
     var seg = 360 / segs;
-    // pointer at top; wheel rotates clockwise; center of segment index under pointer
-    var target = 360 - (pick.index * seg + seg / 2);
-    var extra = 360 * (4 + Math.floor(Math.random() * 3));
-    wheelAngle = (wheelAngle % 360) + extra + target;
-    render();
-    var wheel = document.getElementById("luckyWheel");
-    if (wheel) {
-      wheel.style.transition = "transform 4s cubic-bezier(.15,.85,.25,1)";
-      wheel.style.transform = "rotate(" + wheelAngle + "deg)";
+    var startAngle = ((wheelAngle % 360) + 360) % 360;
+    // pointer at top; segment i center lands under pointer when rotate = 360 - (i*seg + seg/2)
+    var targetMod = (360 - (pick.index * seg + seg / 2)) % 360;
+    var extra = 360 * (5 + Math.floor(Math.random() * 3));
+    var delta = ((targetMod - startAngle + 360) % 360) + extra;
+    var duration = 2800 + Math.floor(Math.random() * 701); // 2.8–3.5s
+    var t0 = performance.now();
+    var btn = document.getElementById("btnSpinWheel");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "轉動中…";
     }
-    setTimeout(function () {
-      spinning = false;
-      record("wheel", pick.item.label);
-      var el = document.getElementById("wheelResult");
-      if (el) el.textContent = "結果：" + pick.item.label + "（示意）";
-      var btn = document.getElementById("btnSpinWheel");
-      if (btn) btn.disabled = false;
-    }, 4100);
+    var resultEl = document.getElementById("wheelResult");
+    if (resultEl) resultEl.textContent = "";
+    if (wheelRaf) cancelAnimationFrame(wheelRaf);
+
+    function frame(now) {
+      var t = Math.min(1, (now - t0) / duration);
+      var e = easeOutQuart(t);
+      wheelAngle = startAngle + delta * e;
+      var wheel = document.getElementById("luckyWheel");
+      if (wheel) {
+        wheel.style.transition = "none";
+        wheel.style.transform = "rotate(" + wheelAngle + "deg)";
+      }
+      if (t < 1) {
+        wheelRaf = requestAnimationFrame(frame);
+      } else {
+        wheelAngle = startAngle + delta;
+        spinning = false;
+        wheelRaf = 0;
+        record("wheel", pick.item.label);
+        var el = document.getElementById("wheelResult");
+        if (el) el.textContent = "結果：" + pick.item.label + "（示意）";
+        var b = document.getElementById("btnSpinWheel");
+        if (b) {
+          b.disabled = false;
+          b.textContent = "轉一次";
+        }
+      }
+    }
+    wheelRaf = requestAnimationFrame(frame);
   }
 
   function dropPlinko() {
+    if (plinkoBusy) return;
     var ball = document.getElementById("plinkoBall");
     var board = document.getElementById("plinkoBoard");
     if (!ball || !board) return;
+    plinkoBusy = true;
+    var btn = document.getElementById("btnDropBall");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "落下中…";
+    }
+    var resultEl = document.getElementById("plinkoResult");
+    if (resultEl) resultEl.textContent = "";
+    document.querySelectorAll(".plinko-slot").forEach(function (s) {
+      s.classList.remove("hit");
+    });
+
+    var slot = Math.floor(Math.random() * PLINKO.length);
+    if (slot === 4 && Math.random() > 0.15) slot = Math.floor(Math.random() * 4);
+    var endLeft = 10 + slot * 18 + (Math.random() * 4 - 2);
+    var duration = 2000 + Math.floor(Math.random() * 400);
+    var t0 = performance.now();
+    var wiggles = [
+      { t: 0.18, dx: 10 + Math.random() * 10 },
+      { t: 0.36, dx: -(12 + Math.random() * 12) },
+      { t: 0.55, dx: 8 + Math.random() * 10 },
+      { t: 0.72, dx: -(6 + Math.random() * 8) }
+    ];
+
     ball.hidden = false;
     ball.classList.remove("drop");
-    void ball.offsetWidth;
-    var slot = Math.floor(Math.random() * PLINKO.length);
-    // bias slightly away from grand (index 4)
-    if (slot === 4 && Math.random() > 0.15) slot = Math.floor(Math.random() * 4);
-    var leftPct = 10 + slot * 18 + (Math.random() * 6 - 3);
-    ball.style.setProperty("--end-left", leftPct + "%");
-    ball.classList.add("drop");
-    setTimeout(function () {
-      var prize = PLINKO[slot];
-      record("plinko", prize.label);
-      var el = document.getElementById("plinkoResult");
-      if (el) el.textContent = "落入第 " + (slot + 1) + " 格：" + prize.label + "（示意）";
-      document.querySelectorAll(".plinko-slot").forEach(function (s, i) {
-        s.classList.toggle("hit", i === slot);
-      });
-    }, 1600);
+    ball.style.top = "8px";
+    ball.style.left = "50%";
+    ball.style.transition = "none";
+    if (plinkoRaf) cancelAnimationFrame(plinkoRaf);
+
+    function lerpWiggle(t) {
+      var base = 50;
+      var prev = 0;
+      var prevDx = 0;
+      for (var i = 0; i < wiggles.length; i++) {
+        if (t < wiggles[i].t) {
+          var u = (t - prev) / (wiggles[i].t - prev || 1);
+          var dx = prevDx + (wiggles[i].dx - prevDx) * easeInOutCubic(u);
+          return base + dx;
+        }
+        prev = wiggles[i].t;
+        prevDx = wiggles[i].dx;
+      }
+      var u2 = (t - prev) / (1 - prev || 1);
+      return base + prevDx + (endLeft - 50 - prevDx) * easeInOutCubic(u2);
+    }
+
+    function frame(now) {
+      var t = Math.min(1, (now - t0) / duration);
+      var e = easeInOutCubic(t);
+      var topPct = 8 + e * 70; // 8px-ish → ~78%
+      var leftPct = lerpWiggle(t);
+      ball.style.top = topPct + "%";
+      ball.style.left = leftPct + "%";
+      if (t < 1) {
+        plinkoRaf = requestAnimationFrame(frame);
+      } else {
+        ball.style.top = "78%";
+        ball.style.left = endLeft + "%";
+        plinkoBusy = false;
+        plinkoRaf = 0;
+        var prize = PLINKO[slot];
+        record("plinko", prize.label);
+        var el = document.getElementById("plinkoResult");
+        if (el) el.textContent = "落入第 " + (slot + 1) + " 格：" + prize.label + "（示意）";
+        document.querySelectorAll(".plinko-slot").forEach(function (s, i) {
+          s.classList.toggle("hit", i === slot);
+        });
+        var b = document.getElementById("btnDropBall");
+        if (b) {
+          b.disabled = false;
+          b.textContent = "放下乒乓球";
+        }
+      }
+    }
+    plinkoRaf = requestAnimationFrame(frame);
   }
 
   function onFlip(i) {
@@ -270,7 +374,7 @@
         flipState.flipped = [];
         flipState.lock = false;
         render();
-      }, 700);
+      }, 480);
     }
   }
 
@@ -281,6 +385,7 @@
     root.addEventListener("click", function (e) {
       var tab = e.target.closest("[data-lucky-tab]");
       if (tab) {
+        if (spinning || plinkoBusy) return;
         activeTab = tab.getAttribute("data-lucky-tab");
         render();
         return;
@@ -288,6 +393,7 @@
       if (e.target.closest("#btnSpinWheel")) { spinWheel(); return; }
       if (e.target.closest("#btnDropBall")) { dropPlinko(); return; }
       if (e.target.closest("#btnFlipReset")) {
+        if (flipState && flipState.lock) return;
         if (flipState && flipState.timer) clearInterval(flipState.timer);
         flipState = null;
         render();

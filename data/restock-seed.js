@@ -1,6 +1,6 @@
 /* 2026 工展會 日常補貨表 seed — 跟紙本 WF Code／Pack Size；no 跟紙本（保健品 55/56 紙本重號保留） */
 window.BPE_RESTOCK_SEED = {
-  version: "20261105d",
+  version: "20261105f",
   asOf: "2026-11-05",
   title: "2026 工展會 日常補貨表",
   subtitle: "紫花油＋真威龍＋WeArmask＋日本叮叮＋其他",
@@ -175,7 +175,7 @@ window.BPE_RESTOCK_SEED = {
     { no: 120, wfCode: "CUPAL-B089", category: "其他", name: "紫花油防水手挽袋（灰色）", packSize: null },
     { no: 121, wfCode: "CUPAL-B090", category: "其他", name: "紫花油立體磁石貼", packSize: null },
     { no: 122, wfCode: "CUPAL-B051", category: "其他", name: "紫花油不織布環保袋（直款）紫色 2019版", packSize: null },
-    { no: 123, wfCode: "CUPAL-B054", category: "其他", name: "紫花油 工展膠袋（2019）2色 - 花香（白袋）", packSize: null },
+    { no: 123, wfCode: "CUPAL-B054", category: "其他", name: "紫花油 工展環保袋（2019）2色 - 花香（白袋）", packSize: null },
     { no: 126, wfCode: "OTHER-BAG", category: "其他", name: "古寶宅配不織布袋", packSize: null },
     { no: 127, wfCode: "OTHER-DIMSUM", category: "其他", name: "點心紙", packSize: null },
     { no: 128, wfCode: "OTHER-WATER", category: "其他", name: "飲用水", packSize: null },

@@ -1,12 +1,13 @@
 /* 2026 工展會 總預貨量 — HKBPE seed；散裝 CO98/CO99/ZE01/ZE05–07 用獨立大數表 */
 window.BPE_STOCK_SEED = {
-  version: "20261105a",
+  version: "20261105f",
   asOf: "2026-11-05",
   source: "HKBPE 2026 總預貨量",
   notes: [
     "紫花油散裝 CO98/CO99/ZE01/ZE05/ZE06/ZE07 採用獨立摘要表較大數量，非 sheet1 散裝欄較小數。",
     "Pack 套裝列 CO98/CO99/ZE01·Z4C 分別存為 Z0004／Z0004B／Z0004C（與散裝同 WF 碼但不同 SKU）。",
-    "CPW021JS1 對應 app 碼 CPW021JS。"
+    "CPW021JS1 對應 app 碼 CPW021JS。",
+    "X／入機代號：優先 xCode，否則 wfCode，再係 app code（職員庫存／補貨表顯示）。"
   ],
   aliases: {
     Z1A: "Z0001A",
@@ -19,14 +20,14 @@ window.BPE_STOCK_SEED = {
   },
   items: [
     /* —— 紫花油套裝 —— */
-    { code: "Z0001A", wfCode: "Z1A", name: "Set A（1小＋1中＋1大）", category: "紫花油套裝", qty: 3744, unit: "套" },
-    { code: "Z0005", wfCode: "Z5", name: "Set B（2中＋2大）", category: "紫花油套裝", qty: 4500, unit: "套" },
-    { code: "Z0007A", wfCode: "Z7A", name: "芳香紅薇 set", category: "紫花油套裝", qty: 1440, unit: "套" },
-    { code: "Z0007B", wfCode: "Z7B", name: "淡花甜香 set", category: "紫花油套裝", qty: 1224, unit: "套" },
-    { code: "Z0007C", wfCode: "Z7C", name: "馥郁白木 set", category: "紫花油套裝", qty: 1224, unit: "套" },
-    { code: "Z0004", wfCode: "CO98-PACK", name: "紫花油 6ml（6件裝）pack", category: "紫花油套裝", qty: 1440, unit: "套" },
-    { code: "Z0004B", wfCode: "CO99-PACK", name: "紫花油 12ml（6件裝）pack", category: "紫花油套裝", qty: 3744, unit: "套" },
-    { code: "Z0004C", wfCode: "ZE01-PACK", name: "紫花油 26ml（6件裝）送 12ml 1支 pack", category: "紫花油套裝", qty: 1080, unit: "套" },
+    { code: "Z0001A", wfCode: "Z1A", xCode: "Z1A", name: "Set A（1小＋1中＋1大）", category: "紫花油套裝", qty: 3744, unit: "套" },
+    { code: "Z0005", wfCode: "Z5", xCode: "Z5", name: "Set B（2中＋2大）", category: "紫花油套裝", qty: 4500, unit: "套" },
+    { code: "Z0007A", wfCode: "Z7A", xCode: "Z7A", name: "芳香紅薇 set", category: "紫花油套裝", qty: 1440, unit: "套" },
+    { code: "Z0007B", wfCode: "Z7B", xCode: "Z7B", name: "淡花甜香 set", category: "紫花油套裝", qty: 1224, unit: "套" },
+    { code: "Z0007C", wfCode: "Z7C", xCode: "Z7C", name: "馥郁白木 set", category: "紫花油套裝", qty: 1224, unit: "套" },
+    { code: "Z0004", wfCode: "CO98-PACK", xCode: "CO98-PACK", name: "紫花油 6ml（6件裝）pack", category: "紫花油套裝", qty: 1440, unit: "套" },
+    { code: "Z0004B", wfCode: "CO99-PACK", xCode: "CO99-PACK", name: "紫花油 12ml（6件裝）pack", category: "紫花油套裝", qty: 3744, unit: "套" },
+    { code: "Z0004C", wfCode: "ZE01-PACK", xCode: "ZE01-PACK", name: "紫花油 26ml（6件裝）送 12ml 1支 pack", category: "紫花油套裝", qty: 1080, unit: "套" },
 
     /* —— 紫花油散裝（大數摘要表） —— */
     { code: "CO98", name: "紫花油 6ml", category: "紫花油散裝", qty: 21600, unit: "件" },
@@ -125,7 +126,7 @@ window.BPE_STOCK_SEED = {
     { code: "CPW021J", name: "日本叮叮全效驅蚊芳香石（櫻花香）", category: "日本叮叮", qty: 72, unit: "件" },
     { code: "CPW021JA", name: "全效驅蚊芳香石（綠茶香）", category: "日本叮叮", qty: 12, unit: "件" },
     { code: "CPW021JB", name: "全效驅蚊芳香石（巨峰提子香）", category: "日本叮叮", qty: 12, unit: "件" },
-    { code: "CPW021JS", wfCode: "CPW021JS1", name: "全效驅蚊精油補充裝 20ml×2（櫻花香）", category: "日本叮叮", qty: 24, unit: "件" },
+    { code: "CPW021JS", wfCode: "CPW021JS1", xCode: "CPW021JS1", name: "全效驅蚊精油補充裝 20ml×2（櫻花香）", category: "日本叮叮", qty: 24, unit: "件" },
     { code: "CPX021G", name: "日本叮叮液體驅蚊器", category: "日本叮叮", qty: 150, unit: "件" },
     { code: "CPW021H", name: "日本叮叮點必絕殺蟑餌膠 10G", category: "日本叮叮", qty: 12, unit: "件" },
     { code: "CPX021CA", name: "日本叮叮點必清 滅蟻餌膠", category: "日本叮叮", qty: 12, unit: "件" },

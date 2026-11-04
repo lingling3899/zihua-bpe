@@ -1,4 +1,4 @@
-/* 庫存：總預貨量 seed + localStorage 剩餘；職員可改數量／重設／匯出 CSV */
+/* 庫存：總預貨量 seed（第一次落貨）+ localStorage 剩餘；結算扣數／職員可改／重設／匯出 */
 (function () {
   "use strict";
 
@@ -19,6 +19,14 @@
     return !!(a && a.isLoggedIn && a.isLoggedIn());
   }
 
+  /** X／入機代號：優先 xCode，其次 wfCode，再係 app code */
+  function xCodeOf(it) {
+    if (!it) return "";
+    if (it.xCode) return String(it.xCode);
+    if (it.wfCode) return String(it.wfCode);
+    return String(it.code || "");
+  }
+
   function buildSeedQtyMap() {
     var s = seed();
     var map = {};
@@ -27,6 +35,7 @@
       var q = Math.max(0, Math.floor(Number(it.qty) || 0));
       map[it.code] = q;
       if (it.wfCode) map[it.wfCode] = q;
+      if (it.xCode) map[it.xCode] = q;
     });
     var aliases = s.aliases || {};
     Object.keys(aliases).forEach(function (wf) {
@@ -64,6 +73,14 @@
     if (!c) return "";
     var aliases = seed().aliases || {};
     if (aliases[c]) return aliases[c];
+    // match by xCode / wfCode
+    var items = seed().items || [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (it.code === c) return it.code;
+      if (it.wfCode && it.wfCode === c) return it.code;
+      if (it.xCode && it.xCode === c) return it.code;
+    }
     return c;
   }
 
@@ -75,9 +92,11 @@
       if (aliases[wf] === c) keys.push(wf);
     });
     (seed().items || []).forEach(function (it) {
-      if (it.code === c && it.wfCode) keys.push(it.wfCode);
+      if (it.code === c) {
+        if (it.wfCode) keys.push(it.wfCode);
+        if (it.xCode) keys.push(it.xCode);
+      }
     });
-    // unique
     var seen = {};
     return keys.filter(function (k) {
       if (!k || seen[k]) return false;
@@ -104,6 +123,16 @@
     return null;
   }
 
+  function getSeedQty(code) {
+    var c = canonicalCode(code);
+    var seedMap = buildSeedQtyMap();
+    var keys = relatedKeys(c);
+    for (var j = 0; j < keys.length; j++) {
+      if (seedMap[keys[j]] != null) return seedMap[keys[j]];
+    }
+    return seedMap[code] != null ? seedMap[code] : null;
+  }
+
   function setQty(code, n) {
     var c = canonicalCode(code);
     if (!c) return false;
@@ -111,7 +140,6 @@
     var ov = loadOverrides();
     var seedMap = buildSeedQtyMap();
     var keys = relatedKeys(c);
-    // Prefer writing the app/canonical code; clear sibling override keys to avoid stale alias values
     keys.forEach(function (k) {
       if (k !== c) delete ov[k];
     });
@@ -125,6 +153,62 @@
     return true;
   }
 
+  function addQty(code, delta) {
+    var c = canonicalCode(code);
+    if (!c) return false;
+    var d = Math.floor(Number(delta) || 0);
+    if (!d) return true;
+    var cur = getQty(c);
+    if (cur == null) cur = 0;
+    return setQty(c, Math.max(0, cur + d));
+  }
+
+  /**
+   * demandMap: { code: qtyNeeded }
+   * returns { ok, shorts: [{code, need, have, name}] }
+   */
+  function canFulfill(demandMap) {
+    var shorts = [];
+    var map = demandMap || {};
+    Object.keys(map).forEach(function (code) {
+      var need = Math.max(0, Math.floor(Number(map[code]) || 0));
+      if (need <= 0) return;
+      var have = getQty(code);
+      if (have == null) {
+        // unknown SKU — allow but note as unlimited; skip block
+        return;
+      }
+      if (have < need) {
+        var name = "";
+        (seed().items || []).forEach(function (it) {
+          if (canonicalCode(it.code) === canonicalCode(code)) name = it.name || "";
+        });
+        shorts.push({
+          code: canonicalCode(code) || code,
+          need: need,
+          have: have,
+          name: name
+        });
+      }
+    });
+    return { ok: shorts.length === 0, shorts: shorts };
+  }
+
+  /** Deduct quantities; returns { ok, shorts } — does nothing if short */
+  function deduct(demandMap) {
+    var check = canFulfill(demandMap);
+    if (!check.ok) return check;
+    var map = demandMap || {};
+    Object.keys(map).forEach(function (code) {
+      var need = Math.max(0, Math.floor(Number(map[code]) || 0));
+      if (need <= 0) return;
+      var have = getQty(code);
+      if (have == null) return;
+      setQty(code, Math.max(0, have - need));
+    });
+    return { ok: true, shorts: [] };
+  }
+
   function resetToSeed() {
     try { localStorage.removeItem(LS_KEY); } catch (e) {}
   }
@@ -133,14 +217,18 @@
     var s = seed();
     return (s.items || []).map(function (it) {
       var rem = getQty(it.code);
+      var seedQ = Math.max(0, Math.floor(Number(it.qty) || 0));
+      var remaining = rem == null ? 0 : rem;
       return {
         code: it.code,
         wfCode: it.wfCode || "",
+        xCode: xCodeOf(it),
         name: it.name || "",
         category: it.category || "",
         unit: it.unit || "件",
-        seed: Math.max(0, Math.floor(Number(it.qty) || 0)),
-        remaining: rem == null ? 0 : rem
+        seed: seedQ,
+        remaining: remaining,
+        sold: Math.max(0, seedQ - remaining)
       };
     });
   }
@@ -180,13 +268,13 @@
 
   function exportCsv() {
     var rows = listAll();
-    var lines = ["code,wfCode,category,name,unit,seed,remaining"];
+    var lines = ["code,xCode,wfCode,category,name,unit,seed_first_drop,sold,remaining"];
     rows.forEach(function (r) {
       function csv(v) {
         var t = String(v == null ? "" : v).replace(/"/g, '""');
         return '"' + t + '"';
       }
-      lines.push([r.code, r.wfCode, r.category, r.name, r.unit, r.seed, r.remaining].map(csv).join(","));
+      lines.push([r.code, r.xCode, r.wfCode, r.category, r.name, r.unit, r.seed, r.sold, r.remaining].map(csv).join(","));
     });
     var blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
     var a = document.createElement("a");
@@ -210,6 +298,7 @@
       var q = searchQ.toLowerCase();
       return (
         String(r.code).toLowerCase().indexOf(q) >= 0 ||
+        String(r.xCode).toLowerCase().indexOf(q) >= 0 ||
         String(r.wfCode).toLowerCase().indexOf(q) >= 0 ||
         String(r.name).toLowerCase().indexOf(q) >= 0 ||
         String(r.category).toLowerCase().indexOf(q) >= 0
@@ -220,11 +309,11 @@
       " · 版本 " + esc(s.version || "") +
       " · 截至 " + esc(s.asOf || "") +
       " · 共 " + esc(String((s.items || []).length)) + " 款" +
-      " · 剩餘存本機，重設可返 seed</p>" +
+      " · 總預＝第一次落貨；剩餘存本機；結算會減售出</p>" +
       '<div class="stock-toolbar">' +
         '<label class="pc-search stock-search">' +
           '<span class="pc-search-ico" aria-hidden="true">🔍</span>' +
-          '<input type="search" id="stockSearch" placeholder="搜編號／名稱／分類" value="' + esc(searchQ) + '" />' +
+          '<input type="search" id="stockSearch" placeholder="搜入機代號／名稱／分類" value="' + esc(searchQ) + '" />' +
         "</label>" +
         '<div class="btn-row stock-actions">' +
           '<button type="button" class="btn-ghost" id="btnStockExport">匯出 CSV</button>' +
@@ -233,21 +322,27 @@
       "</div>" +
       '<div class="stock-table-wrap">' +
         '<table class="stock-table">' +
-          "<thead><tr><th>編號</th><th>產品</th><th>總預</th><th>剩餘</th><th>改</th></tr></thead>" +
+          '<thead><tr>' +
+            '<th title="X＝入機代號">X／入機代號</th>' +
+            "<th>產品</th><th>總預</th><th>已售</th><th>剩餘</th><th>改</th>" +
+          "</tr></thead>" +
           "<tbody>";
     if (!rows.length) {
-      html += '<tr><td colspan="5" class="muted">搵唔到</td></tr>';
+      html += '<tr><td colspan="6" class="muted">搵唔到</td></tr>';
     } else {
       rows.forEach(function (r) {
         var low = r.remaining <= 0 ? " stock-row-out" : (r.remaining <= 12 ? " stock-row-low" : "");
         html +=
           '<tr class="stock-row' + low + '" data-code="' + esc(r.code) + '">' +
-            "<td><code>" + esc(r.code) + "</code>" +
-              (r.wfCode && r.wfCode !== r.code ? '<div class="stock-wf muted">' + esc(r.wfCode) + "</div>" : "") +
+            "<td><code title=\"X＝入機代號\">" + esc(r.xCode || r.code) + "</code>" +
+              (r.code && r.xCode && r.code !== r.xCode
+                ? '<div class="stock-wf muted">app ' + esc(r.code) + "</div>"
+                : "") +
             "</td>" +
             "<td><strong>" + esc(r.name) + "</strong>" +
               '<div class="muted stock-cat">' + esc(r.category) + " · " + esc(r.unit) + "</div></td>" +
-            '<td class="num">' + esc(String(r.seed)) + "</td>" +
+            '<td class="num" title="第一次落貨／總預貨">' + esc(String(r.seed)) + "</td>" +
+            '<td class="num">' + esc(String(r.sold)) + "</td>" +
             '<td class="num stock-rem">' + esc(String(r.remaining)) + "</td>" +
             '<td><input class="stock-edit" type="number" min="0" step="1" inputmode="numeric" ' +
               'data-code="' + esc(r.code) + '" value="' + esc(String(r.remaining)) + '" aria-label="剩餘庫存" /></td>' +
@@ -275,7 +370,7 @@
     var btnReset = $("btnStockReset");
     if (btnReset) {
       btnReset.addEventListener("click", function () {
-        if (!confirm("將全部剩餘重設為總預貨量 seed？本機改動會清除。")) return;
+        if (!confirm("將全部剩餘重設為總預貨量（第一次落貨）seed？本機改動會清除。")) return;
         resetToSeed();
         renderPanel();
         if (window.BPE_DimsumOrderUI && window.BPE_DimsumOrderUI.render) {
@@ -324,13 +419,18 @@
 
   window.BPE_Stock = {
     getQty: getQty,
+    getSeedQty: getSeedQty,
     setQty: setQty,
+    addQty: addQty,
+    deduct: deduct,
+    canFulfill: canFulfill,
     resetToSeed: resetToSeed,
     listAll: listAll,
     stockBadgeHtml: stockBadgeHtml,
     openPanel: openPanel,
     closePanel: closePanel,
     renderPanel: renderPanel,
-    canonicalCode: canonicalCode
+    canonicalCode: canonicalCode,
+    xCodeOf: xCodeOf
   };
 })();
