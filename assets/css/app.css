@@ -165,7 +165,7 @@ button, .link-btn {
   display: grid; place-items: center; font-weight: 800; padding: 0 4px;
 }
 
-.pc-list { padding: 8px 14px 180px; }
+.pc-list { padding: 8px 14px 12px; }
 .pc-sec-title { color: var(--purple); margin: 14px 0 4px; font-size: 1.05rem; }
 .pc-sec-note { margin: 0 0 8px; color: var(--muted); font-size: .82rem; }
 .pc-card {
@@ -688,3 +688,26 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
 .leg-blue { border-top: 2px dashed #1e88e5; background: transparent; height: 4px; }
 .leg-purple { background: #7b3fa0; height: 14px; width: 14px; border-radius: 4px; }
 .map-hint { margin-top: 10px; font-size: .8rem; }
+
+
+/* ——— 付款方式 ——— */
+.pay-panel { margin-top: 14px; }
+.pay-panel h3 { margin: 0 0 8px; }
+.pay-note {
+  margin: 0 0 12px;
+  font-size: .88rem;
+  line-height: 1.45;
+  color: var(--ink, #2a2140);
+}
+.pay-open { display: block; line-height: 0; }
+.pay-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid #e8dff3;
+  background: #fff;
+}
+.pc-pay {
+  margin: 4px 14px calc(var(--nav-h) + var(--safe-bottom) + 148px);
+}

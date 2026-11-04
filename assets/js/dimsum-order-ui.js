@@ -280,6 +280,19 @@
     );
   }
 
+
+  function renderPayment() {
+    return (
+      '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
+        '<h3 id="pcPayTitle">💳 付款方式</h3>' +
+        '<p class="pay-note">凡購物可用：八達通、現金、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105c" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105c" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        "</a>" +
+      "</section>"
+    );
+  }
+
   function render() {
     var root = $("dimsumOrderRoot");
     if (!root) return;
@@ -298,6 +311,7 @@
       });
     }
     html += "</div>";
+    html += renderPayment();
     html += renderFloat(st, calc);
     root.innerHTML = html;
 
