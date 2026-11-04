@@ -1,4 +1,4 @@
-/* 產品計數 · 預訂 — Lovable 風格；數量／銀髮存 localStorage */
+/* 產品計數 · 結算 — 必揀付款；先減優惠券，再銀髮 95 折 */
 (function () {
   "use strict";
 
@@ -6,6 +6,19 @@
   var activeSheet = "zihua";
   var searchQ = "";
   var floatExpanded = false;
+
+  var PAY_METHODS = [
+    { id: "octopus", label: "八達通" },
+    { id: "cash", label: "現金港幣" },
+    { id: "alipay", label: "Alipay" },
+    { id: "wechat", label: "WeChat Pay" },
+    { id: "payme", label: "PayMe" },
+    { id: "visa", label: "VISA" },
+    { id: "mastercard", label: "Mastercard" },
+    { id: "unionpay", label: "銀聯" }
+  ];
+
+  var COUPON_CHIPS = [0, 50, 100];
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -18,6 +31,12 @@
     var x = Math.round(Number(n) * 100) / 100;
     return (x % 1 === 0) ? String(x) : x.toFixed(2);
   }
+  function payLabel(id) {
+    for (var i = 0; i < PAY_METHODS.length; i++) {
+      if (PAY_METHODS[i].id === id) return PAY_METHODS[i].label;
+    }
+    return id || "";
+  }
   function loadState() {
     try {
       var raw = localStorage.getItem(LS_KEY);
@@ -27,11 +46,13 @@
           items: o.items || {},
           sets: o.sets || {},
           overrides: o.overrides || {},
-          senior: !!o.senior
+          senior: !!o.senior,
+          paymentMethod: o.paymentMethod || "",
+          couponAmount: Math.max(0, Number(o.couponAmount) || 0)
         };
       }
     } catch (e) {}
-    return { items: {}, sets: {}, overrides: {}, senior: false };
+    return { items: {}, sets: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 };
   }
   function saveState(st) {
     try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
@@ -125,6 +146,25 @@
     return { total: total, lines: lines, count: pieceCount };
   }
 
+  /** 合計 → 減優惠券（唔低過 0）→ 銀髮 95 折 */
+  function pricing(st, calc) {
+    var subtotal = Math.max(0, Math.round((Number(calc.total) || 0) * 100) / 100);
+    var couponRaw = Math.max(0, Number(st.couponAmount) || 0);
+    var couponAmount = Math.min(couponRaw, subtotal);
+    couponAmount = Math.round(couponAmount * 100) / 100;
+    var afterCoupon = Math.round((subtotal - couponAmount) * 100) / 100;
+    var payable = afterCoupon;
+    if (st.senior) payable = Math.round(afterCoupon * 0.95 * 100) / 100;
+    return {
+      subtotal: subtotal,
+      couponAmount: couponAmount,
+      afterCoupon: afterCoupon,
+      payable: payable,
+      senior: !!st.senior,
+      paymentMethod: st.paymentMethod || ""
+    };
+  }
+
   function sheetCount(st, sheet) {
     var n = 0;
     (sheet.sections || []).forEach(function (sec) {
@@ -155,11 +195,11 @@
     return (
       '<header class="pc-hero">' +
         '<p class="pc-hero-kicker">2026 工展會 · 會場購物禮遇</p>' +
-        "<h2>產品計數 · 預訂</h2>" +
+        "<h2>產品計數 · 結算</h2>" +
         (window.BPE_Gifts && window.BPE_Gifts.renderGiftCardsHtml
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
-        '<p class="pc-hero-note">套裝價自動計算 · 花香套／5 支花香油送杯墊 · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 銀髮 95 折後以實付計 · 送完即止</p>' +
+        '<p class="pc-hero-note">套裝價自動計算 · 花香套／5 支花香油送杯墊 · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再銀髮 95 折，以最終實付計禮遇 · 送完即止</p>' +
       "</header>"
     );
   }
@@ -191,7 +231,6 @@
     var html = '<div class="pc-section">';
     html += '<h3 class="pc-sec-title">' + esc(sec.title) + "</h3>";
     if (sec.note) html += '<p class="pc-sec-note">' + esc(sec.note) + "</p>";
-    // scent promo line for oil sets
     if (sec.id === "z-oil-set") {
       html += '<p class="pc-sec-note">芳香紅薇／淡花甜香／馥郁白木 set 每套送紫花油陶瓷杯墊</p>';
     }
@@ -236,13 +275,25 @@
     return html;
   }
 
-  function renderFloat(st, calc) {
-    var payable = calc.total;
-    if (st.senior) payable = Math.round(payable * 0.95 * 100) / 100;
+  function renderBreakdown(pr) {
+    var rows =
+      '<div class="pc-break-row"><span>合計</span><strong>$' + money(pr.subtotal) + "</strong></div>" +
+      '<div class="pc-break-row"><span>減優惠券</span><strong' +
+        (pr.couponAmount > 0 ? ' class="pc-break-minus"' : "") +
+        ">−$" + money(pr.couponAmount) + "</strong></div>" +
+      '<div class="pc-break-row"><span>折前／券後</span><strong>$' + money(pr.afterCoupon) + "</strong></div>";
+    if (pr.senior) {
+      rows +=
+        '<div class="pc-break-row"><span>銀髮 95 折</span><strong>$' + money(pr.payable) + "</strong></div>";
+    }
+    rows +=
+      '<div class="pc-break-row pc-break-pay"><span>實付</span><strong>$' + money(pr.payable) + "</strong></div>";
+    return '<div class="pc-breakdown" aria-label="金額明細">' + rows + "</div>";
+  }
+
+  function renderFloat(st, calc, pr) {
     var progress = "";
-    if (window.BPE_Gifts && window.BPE_Gifts.progressLine) {
-      progress = window.BPE_Gifts.progressLine(window.BPE_Gifts.evaluate(calc.total, st));
-    } else if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
+    if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
       var ev = window.BPE_Gifts.evaluate(calc.total, st);
       progress = window.BPE_Gifts.progressLine(ev);
     }
@@ -252,14 +303,40 @@
       progress = "共 " + calc.count + " 件 · " + progress;
     }
 
+    var hasPay = !!st.paymentMethod;
+    var settleCls = "pc-preorder" + (hasPay ? "" : " pc-settle-need-pay");
+    var settleLabel = hasPay
+      ? ("💳 結算 $" + money(pr.payable))
+      : "請先揀付款方式";
+
     return (
       '<div class="pc-float" id="pcFloat">' +
         '<button type="button" class="pc-float-progress" id="btnPcExpand" aria-expanded="' + (floatExpanded ? "true" : "false") + '">' +
           esc(progress) + ' <span aria-hidden="true">▾</span>' +
         "</button>" +
-        '<div class="pc-float-total">$' + money(payable) + (st.senior ? '<span class="pc-senior-tag">銀髮價</span>' : "") + "</div>" +
+        '<div class="pc-float-total">$' + money(pr.payable) +
+          (pr.senior ? '<span class="pc-senior-tag">銀髮價</span>' : "") +
+          (pr.couponAmount > 0 ? '<span class="pc-coupon-tag">已減券</span>' : "") +
+        "</div>" +
+        renderBreakdown(pr) +
+        '<div class="pc-coupon-row">' +
+          '<label class="pc-coupon-label" for="pcCoupon">優惠券（先減券）</label>' +
+          '<div class="pc-coupon-chips">' +
+            COUPON_CHIPS.map(function (n) {
+              var on = Number(st.couponAmount) === n ? " active" : "";
+              return (
+                '<button type="button" class="pc-coupon-chip' + on + '" data-coupon="' + n + '">$' + n + "</button>"
+              );
+            }).join("") +
+            '<button type="button" class="pc-coupon-chip' +
+              (COUPON_CHIPS.indexOf(Number(st.couponAmount)) < 0 && Number(st.couponAmount) > 0 ? " active" : "") +
+              '" data-coupon="custom">自訂</button>' +
+          "</div>" +
+          '<input type="number" id="pcCoupon" class="pc-coupon-input" min="0" step="1" inputmode="decimal" ' +
+            'placeholder="0" value="' + esc(String(st.couponAmount || 0)) + '" aria-label="優惠券金額" />' +
+        "</div>" +
         '<label class="pc-senior-toggle">' +
-          '<span>銀髮優惠 95折</span>' +
+          '<span>銀髮優惠 95折（減券後）</span>' +
           '<input type="checkbox" id="pcSenior" ' + (st.senior ? "checked" : "") + ' />' +
           '<span class="pc-switch" aria-hidden="true"></span>' +
         "</label>" +
@@ -274,21 +351,31 @@
           : "") +
         '<div class="pc-float-actions">' +
           '<button type="button" class="pc-clear" id="btnPcClear" aria-label="清除"><span aria-hidden="true">↺</span> 清除</button>' +
-          '<button type="button" class="pc-preorder" id="btnPcPreorder">📋 預訂 $' + money(payable) + "</button>" +
+          '<button type="button" class="' + settleCls + '" id="btnPcSettle">' + esc(settleLabel) + "</button>" +
         "</div>" +
       "</div>"
     );
   }
 
-
-  function renderPayment() {
+  function renderPayment(st) {
+    var chips = PAY_METHODS.map(function (m) {
+      var on = st.paymentMethod === m.id ? " active" : "";
+      return (
+        '<button type="button" class="pay-chip' + on + '" data-pay="' + esc(m.id) + '" aria-pressed="' +
+          (st.paymentMethod === m.id ? "true" : "false") + '">' + esc(m.label) + "</button>"
+      );
+    }).join("");
     return (
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
-        '<p class="pay-note">凡購物可用：八達通、現金、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105c" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105c" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105e" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105e" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
+        '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
+        (st.paymentMethod
+          ? ('<p class="pay-selected">已揀：<strong>' + esc(payLabel(st.paymentMethod)) + "</strong></p>")
+          : '<p class="pay-selected pay-need">尚未揀付款方式</p>') +
       "</section>"
     );
   }
@@ -301,6 +388,7 @@
     var sheet = sheets.filter(function (s) { return s.id === activeSheet; })[0] || sheets[0];
     if (sheet) activeSheet = sheet.id;
     var calc = calcTotals(st);
+    var pr = pricing(st, calc);
 
     var html = renderHero();
     html += renderSearchChips(st);
@@ -311,15 +399,14 @@
       });
     }
     html += "</div>";
-    html += renderPayment();
-    html += renderFloat(st, calc);
+    html += renderPayment(st);
+    html += renderFloat(st, calc, pr);
     root.innerHTML = html;
 
     var search = $("pcSearch");
     if (search) {
       search.addEventListener("input", function () {
         searchQ = search.value.trim();
-        // re-render list only would be nicer; full render ok for MVP
         var pos = search.selectionStart;
         render();
         var again = $("pcSearch");
@@ -348,15 +435,19 @@
   function exportText() {
     var st = loadState();
     var calc = calcTotals(st);
-    var payable = st.senior ? Math.round(calc.total * 0.95 * 100) / 100 : calc.total;
-    var lines = ["2026 工展會 · 產品計數預訂", "———"];
+    var pr = pricing(st, calc);
+    var lines = ["2026 工展會 · 產品計數結算", "———"];
     calc.lines.forEach(function (L) {
       if (L.amount == null) lines.push(L.label);
       else lines.push(L.label + "　$" + money(L.amount));
     });
     lines.push("———");
-    lines.push("合計　$" + money(calc.total));
-    if (st.senior) lines.push("銀髮 95 折實付　$" + money(payable));
+    lines.push("合計　$" + money(pr.subtotal));
+    lines.push("減優惠券　−$" + money(pr.couponAmount));
+    lines.push("折前／券後　$" + money(pr.afterCoupon));
+    if (pr.senior) lines.push("銀髮 95 折實付　$" + money(pr.payable));
+    else lines.push("實付　$" + money(pr.payable));
+    if (pr.paymentMethod) lines.push("付款方式　" + payLabel(pr.paymentMethod));
     if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
       var gev = window.BPE_Gifts.evaluate(calc.total, st);
       if (gev.reached && gev.reached.length) {
@@ -367,21 +458,28 @@
     return lines.join("\n");
   }
 
-  function savePreorder() {
+  function saveSettle() {
     var st = loadState();
     var calc = calcTotals(st);
-    var payable = st.senior ? Math.round(calc.total * 0.95 * 100) / 100 : calc.total;
+    var pr = pricing(st, calc);
+    var giftTitles = [];
+    if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
+      giftTitles = window.BPE_Gifts.evaluate(calc.total, st).reached.map(function (t) { return t.title; });
+    }
     var order = {
       id: "po-" + Date.now(),
       t: new Date().toISOString(),
       count: calc.count,
-      total: calc.total,
-      payable: payable,
-      senior: !!st.senior,
+      subtotal: pr.subtotal,
+      total: pr.subtotal,
+      couponAmount: pr.couponAmount,
+      afterCoupon: pr.afterCoupon,
+      payable: pr.payable,
+      senior: !!pr.senior,
+      paymentMethod: pr.paymentMethod,
+      paymentLabel: payLabel(pr.paymentMethod),
       lines: calc.lines,
-      gifts: (window.BPE_Gifts && window.BPE_Gifts.evaluate)
-        ? window.BPE_Gifts.evaluate(calc.total, st).reached.map(function (t) { return t.title; })
-        : []
+      gifts: giftTitles
     };
     try {
       var raw = localStorage.getItem("zihua_bpe_preorders_v1");
@@ -404,6 +502,32 @@
         render();
         return;
       }
+      var payBtn = e.target.closest("[data-pay]");
+      if (payBtn) {
+        var stPay = loadState();
+        var pid = payBtn.getAttribute("data-pay");
+        stPay.paymentMethod = stPay.paymentMethod === pid ? "" : pid;
+        saveState(stPay);
+        render();
+        return;
+      }
+      var couponChip = e.target.closest("[data-coupon]");
+      if (couponChip) {
+        var stC = loadState();
+        var cv = couponChip.getAttribute("data-coupon");
+        if (cv === "custom") {
+          var inp = $("pcCoupon");
+          if (inp) {
+            inp.focus();
+            inp.select();
+          }
+          return;
+        }
+        stC.couponAmount = Math.max(0, Number(cv) || 0);
+        saveState(stC);
+        render();
+        return;
+      }
       var btn = e.target.closest(".qty-btn");
       if (btn) {
         var wrap = btn.closest(".qty-ctrl");
@@ -420,7 +544,14 @@
       if (e.target.closest("#btnPcClear")) {
         if (!confirm("清除全部數量？")) return;
         var st = loadState();
-        saveState({ items: {}, sets: {}, overrides: st.overrides, senior: st.senior });
+        saveState({
+          items: {},
+          sets: {},
+          overrides: st.overrides,
+          senior: st.senior,
+          paymentMethod: st.paymentMethod,
+          couponAmount: st.couponAmount
+        });
         render();
         return;
       }
@@ -429,15 +560,40 @@
         var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
         var a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = "bpe-preorder.txt";
+        a.download = "bpe-settle.txt";
         a.click();
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
         return;
       }
-      if (e.target.closest("#btnPcPreorder")) {
-        var order = savePreorder();
+      if (e.target.closest("#btnPcSettle") || e.target.closest("#btnPcPreorder")) {
+        var stS = loadState();
+        if (!stS.paymentMethod) {
+          alert("請先揀付款方式");
+          var panel = root.querySelector(".pc-pay");
+          if (panel && panel.scrollIntoView) {
+            panel.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          return;
+        }
+        var calcS = calcTotals(stS);
+        if (calcS.count <= 0) {
+          alert("未有產品，請先加數量。");
+          return;
+        }
+        var order = saveSettle();
         var giftLine = (order.gifts && order.gifts.length) ? ("\n可享：" + order.gifts.join("；")) : "";
-        alert("已預訂（本機）\n共 " + order.count + " 件\n實付 $" + money(order.payable) + giftLine + "\n\n請向攤位職員確認庫存同付款。");
+        alert(
+          "已結算（本機）\n" +
+          "付款：" + order.paymentLabel + "\n" +
+          "共 " + order.count + " 件\n" +
+          "合計 $" + money(order.subtotal) + "\n" +
+          "減優惠券 −$" + money(order.couponAmount) + "\n" +
+          "折前／券後 $" + money(order.afterCoupon) + "\n" +
+          (order.senior ? ("銀髮 95 折\n") : "") +
+          "實付 $" + money(order.payable) +
+          giftLine +
+          "\n\n請向攤位職員確認庫存同付款。"
+        );
         return;
       }
     });
@@ -449,13 +605,35 @@
         render();
       }
     });
+    root.addEventListener("input", function (e) {
+      if (e.target && e.target.id === "pcCoupon") {
+        var st = loadState();
+        var v = Number(e.target.value);
+        if (isNaN(v) || v < 0) v = 0;
+        st.couponAmount = Math.round(v * 100) / 100;
+        saveState(st);
+        // soft refresh of totals without stealing focus: update float numbers via re-render
+        // keep cursor in coupon field
+        var pos = e.target.selectionStart;
+        render();
+        var again = $("pcCoupon");
+        if (again) {
+          again.focus();
+          try { again.setSelectionRange(pos, pos); } catch (err) {}
+        }
+      }
+    });
   }
 
   window.BPE_DimsumOrderUI = {
     render: function () { bindRoot(); render(); },
     clear: function () {
-      saveState({ items: {}, sets: {}, overrides: {}, senior: false });
+      saveState({ items: {}, sets: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 });
       render();
+    },
+    pricing: function () {
+      var st = loadState();
+      return pricing(st, calcTotals(st));
     }
   };
 })();

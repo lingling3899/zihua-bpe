@@ -83,10 +83,17 @@
       var raw = localStorage.getItem("zihua_bpe_dimsum_order_v1");
       if (raw) {
         var o = JSON.parse(raw);
-        return { items: o.items || {}, sets: o.sets || {}, overrides: o.overrides || {}, senior: !!o.senior };
+        return {
+          items: o.items || {},
+          sets: o.sets || {},
+          overrides: o.overrides || {},
+          senior: !!o.senior,
+          paymentMethod: o.paymentMethod || "",
+          couponAmount: Math.max(0, Number(o.couponAmount) || 0)
+        };
       }
     } catch (e) {}
-    return { items: {}, sets: {}, overrides: {}, senior: false };
+    return { items: {}, sets: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 };
   }
 
   function qtyOf(map, codes) {
@@ -105,8 +112,12 @@
     return false;
   }
 
-  function payableTotal(gross, senior) {
+  /** 合計 → 減優惠券（唔低過 0）→ 銀髮 95 折；滿額禮遇用最終實付 */
+  function payableTotal(gross, senior, couponAmount) {
     var t = Math.max(0, Number(gross) || 0);
+    var c = Math.max(0, Number(couponAmount) || 0);
+    if (c > t) c = t;
+    t = Math.round((t - c) * 100) / 100;
     if (senior) t = Math.round(t * 0.95 * 100) / 100;
     return t;
   }
@@ -115,7 +126,12 @@
     var cfg = getConfig();
     var st = orderSt || loadOrderState();
     var senior = !!(st && st.senior);
-    var payable = payableTotal(grossTotal, senior);
+    var coupon = Math.max(0, Number(st && st.couponAmount) || 0);
+    var gross = Math.max(0, Number(grossTotal) || 0);
+    if (coupon > gross) coupon = gross;
+    coupon = Math.round(coupon * 100) / 100;
+    var afterCoupon = Math.round((gross - coupon) * 100) / 100;
+    var payable = payableTotal(grossTotal, senior, coupon);
     var active = (cfg.tiers || []).filter(function (x) { return !x.paused; });
 
     var calendar = null, coaster = null;
@@ -148,7 +164,9 @@
     return {
       enabled: cfg.enabled !== false,
       cfg: cfg,
-      gross: Math.max(0, Number(grossTotal) || 0),
+      gross: gross,
+      couponAmount: coupon,
+      afterCoupon: afterCoupon,
       payable: payable,
       senior: senior,
       reached: reached,
@@ -183,8 +201,11 @@
         return t.emoji + " " + t.title + (t.soldOut ? "（已送完）" : "");
       });
       parts.push('<p class="gift-progress-line"><strong>目前可享：</strong>' + esc(names.join("；") || "—") + "</p>");
-      if (ev.senior) {
-        parts.push('<p class="gift-progress-line muted">銀髮 95 折後實付 $' + money(ev.payable) + "（以此計贈品）</p>");
+      if (ev.couponAmount > 0 || ev.senior) {
+        var bits = [];
+        if (ev.couponAmount > 0) bits.push("減券 $" + money(ev.couponAmount));
+        if (ev.senior) bits.push("銀髮 95 折");
+        parts.push('<p class="gift-progress-line muted">' + bits.join(" → ") + "後實付 $" + money(ev.payable) + "（以此計贈品）</p>");
       }
       if (ev.next) {
         parts.push('<p class="gift-progress-line">再買 <strong>$' + money(ev.next.gap) + "</strong> 送" + esc(ev.next.tier.title) + "</p>");
@@ -220,7 +241,7 @@
         "<li>花香套裝或任選 5 支花香油送陶瓷杯墊</li>" +
         "<li>任何消費送 2027 年曆卡</li>" +
         "<li>滿額贈品（磁石／雨傘／手提袋）以最高一級計</li>" +
-        "<li>銀髮 95 折後以實付金額計贈品資格</li>" +
+        "<li>先減優惠券，再銀髮 95 折，以最終實付計贈品資格</li>" +
         "<li>送完即止；以攤位當日為準</li>" +
       "</ul>" +
       '<p class="claim-safe">' + esc(cfg.disclaimer) + "</p>"
