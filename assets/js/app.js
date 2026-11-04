@@ -109,6 +109,9 @@
           if (gr) gr.classList.remove("hidden");
           if (window.BPE_Gifts) window.BPE_Gifts.render();
         }
+        if (act === "stock") {
+          if (window.BPE_Stock && window.BPE_Stock.openPanel) window.BPE_Stock.openPanel();
+        }
       });
     });
 

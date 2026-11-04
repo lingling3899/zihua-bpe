@@ -218,12 +218,15 @@
       var p = unitPrice(it, st);
       var priceTxt = p == null ? "待填" : ("$" + money(p) + "／" + (it.unit || "件"));
       var orig = it.orig != null ? ('<span class="pc-orig">原價 $' + money(it.orig) + "</span>") : "";
+      var stockBadge = (window.BPE_Stock && window.BPE_Stock.stockBadgeHtml)
+        ? window.BPE_Stock.stockBadgeHtml(it.code) : "";
       html +=
         '<div class="pc-card">' +
           '<div class="pc-thumb" aria-hidden="true">🧴</div>' +
           '<div class="pc-card-body">' +
             "<strong>" + esc(it.name) + "</strong>" +
-            '<div class="pc-meta"><code>' + esc(it.code) + '</code> · <span class="pc-price">' + esc(priceTxt) + '</span> ' + orig + '</div>' +
+            '<div class="pc-meta"><code>' + esc(it.code) + '</code> · <span class="pc-price">' + esc(priceTxt) + '</span> ' + orig +
+              (stockBadge ? (" · " + stockBadge) : "") + '</div>' +
           "</div>" +
           qtyCtrl("item", it.code, q) +
         "</div>";

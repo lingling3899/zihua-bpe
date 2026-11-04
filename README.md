@@ -4,7 +4,7 @@
 
 ## 預覽
 
-GitHub Pages：<https://lingling3899.github.io/zihua-bpe/?v=20261101f>
+GitHub Pages：<https://lingling3899.github.io/zihua-bpe/?v=20261105a>
 
 本機：
 
@@ -39,3 +39,11 @@ python3 -m http.server 8766
 - 銀髮 95 折後以實付金額計贈品
 
 免責：參考用途，非醫療建議；獎品以攤位當日為準。
+
+## 庫存（總預貨量）
+
+- Seed：`data/stock-seed.js`（`window.BPE_STOCK_SEED`，版本 `20261105a`）
+- 剩餘：瀏覽器 `localStorage` 鍵 `zihua_bpe_stock_remaining_v1`（只存與 seed 唔同嘅覆寫）
+- 職員登入後：右上選單 **📦 庫存** → 搜尋／改剩餘／重設為總預貨量／匯出 CSV
+- 產品計數頁每款顯示「庫存 N」；0 顯示「暫無貨」（唔硬擋下單，請職員確認）
+- 散裝 CO98／CO99／ZE01／ZE05–07 用獨立摘要表較大數量；pack 套裝用 sheet1 pack 列存為 Z0004／Z0004B／Z0004C
