@@ -112,6 +112,9 @@
         if (act === "stock") {
           if (window.BPE_Stock && window.BPE_Stock.openPanel) window.BPE_Stock.openPanel();
         }
+        if (act === "restock") {
+          if (window.BPE_Restock && window.BPE_Restock.openPanel) window.BPE_Restock.openPanel();
+        }
       });
     });
 

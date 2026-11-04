@@ -711,3 +711,62 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
 .pc-pay {
   margin: 4px 14px calc(var(--nav-h) + var(--safe-bottom) + 148px);
 }
+
+
+/* ——— 日常補貨表 ——— */
+.restock-panel { width: min(640px, 100%); max-height: 92vh; }
+.restock-title { margin: 0 0 6px; font-size: .95rem; line-height: 1.35; }
+.restock-header-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.restock-header-fields .field { display: grid; gap: 4px; font-size: .8rem; font-weight: 600; color: var(--purple-dark, #4a2a73); }
+.restock-header-fields input {
+  min-height: 44px;
+  font-size: 1rem;
+  border: 1.5px solid #d4c4e8;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.restock-actions { flex-wrap: wrap; gap: 6px; }
+.restock-status {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #e8f5e9;
+  color: #1b5e20;
+  font-size: .85rem;
+  font-weight: 600;
+}
+.restock-ref { font-size: .75rem; margin: 0 0 8px; }
+.restock-ref a { color: var(--purple, #7b3fa0); }
+.restock-table-wrap { max-height: 52vh; }
+.restock-table th:nth-child(1),
+.restock-table td:nth-child(1) { width: 40px; }
+.restock-table th:nth-child(3),
+.restock-table td:nth-child(3) { width: 52px; }
+.restock-sec td {
+  background: var(--purple-soft, #f3e8ff);
+  color: var(--purple-dark, #4a2a73);
+  font-size: .78rem;
+  padding-top: 10px;
+  border-top: 2px solid #c4a4e0;
+}
+.restock-note {
+  width: 100%;
+  margin-top: 4px;
+  min-height: 36px;
+  font-size: .85rem;
+  border: 1px dashed #d4c4e8;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+.restock-hint { margin-top: 3px; font-size: .68rem; color: #6a4a8a; }
+@media (max-width: 420px) {
+  .restock-header-fields { grid-template-columns: 1fr; }
+}
+@media print {
+  .bottom-nav, .floating-login, .footer, .booth3d-hero-actions { display: none !important; }
+}
