@@ -90,7 +90,10 @@
     }).join(", ");
     var labels = WHEEL.map(function (w, i) {
       var mid = ((i + 0.5) / segs) * 360;
-      return '<span class="wheel-label" style="--a:' + mid + 'deg">' + esc(w.label) + "</span>";
+      var chars = Array.from(String(w.label)).map(function (ch) {
+        return '<span class="wheel-ch">' + esc(ch) + "</span>";
+      }).join("");
+      return '<span class="wheel-label" style="--a:' + mid + 'deg">' + chars + "</span>";
     }).join("");
     return (
       '<div class="wheel-wrap">' +
