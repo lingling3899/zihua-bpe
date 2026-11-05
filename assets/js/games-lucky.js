@@ -35,6 +35,18 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
   }
+
+  function sliceNeedsDarkText(hex) {
+    var h = String(hex || "").replace("#", "");
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    if (h.length !== 6) return false;
+    var r = parseInt(h.slice(0, 2), 16);
+    var g = parseInt(h.slice(2, 4), 16);
+    var b = parseInt(h.slice(4, 6), 16);
+    // perceived luminance 0–1; light wedges need dark ink
+    var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return lum >= 0.62;
+  }
   function easeOutQuart(t) {
     t = Math.max(0, Math.min(1, t));
     return 1 - Math.pow(1 - t, 4);
@@ -90,15 +102,21 @@
     }).join(", ");
     var labels = WHEEL.map(function (w, i) {
       var mid = ((i + 0.5) / segs) * 360;
-      var chars = Array.from(String(w.label)).map(function (ch) {
+      var text = String(w.label);
+      var len = Array.from(text).length;
+      var chars = Array.from(text).map(function (ch) {
         return '<span class="wheel-ch">' + esc(ch) + "</span>";
       }).join("");
-      return '<span class="wheel-label" style="--a:' + mid + 'deg">' + chars + "</span>";
+      var cls = "wheel-label";
+      if (len <= 3) cls += " is-short";
+      else if (len >= 6) cls += " is-long";
+      if (sliceNeedsDarkText(w.color)) cls += " is-dark";
+      return '<span class="' + cls + '" style="--a:' + mid + 'deg">' + chars + "</span>";
     }).join("");
     return (
       '<div class="wheel-wrap">' +
         '<div class="wheel-pointer" aria-hidden="true">▼</div>' +
-        '<div class="wheel" id="luckyWheel" style="background: conic-gradient(' + grad + '); transform: rotate(' + wheelAngle + 'deg)">' +
+        '<div class="wheel" id="luckyWheel" style="background: conic-gradient(' + grad + '); transform: rotate(' + wheelAngle + 'deg); --spin: ' + wheelAngle + 'deg">' +
           '<div class="wheel-center">紫花油</div>' +
           '<div class="wheel-labels">' + labels + "</div>" +
         "</div>" +
@@ -237,11 +255,16 @@
       if (wheel) {
         wheel.style.transition = "none";
         wheel.style.transform = "rotate(" + wheelAngle + "deg)";
+        wheel.style.setProperty("--spin", wheelAngle + "deg");
       }
       if (t < 1) {
         wheelRaf = requestAnimationFrame(frame);
       } else {
         wheelAngle = startAngle + delta;
+        if (wheel) {
+          wheel.style.transform = "rotate(" + wheelAngle + "deg)";
+          wheel.style.setProperty("--spin", wheelAngle + "deg");
+        }
         spinning = false;
         wheelRaf = 0;
         record("wheel", pick.item.label);
