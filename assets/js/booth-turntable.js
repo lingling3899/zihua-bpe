@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  var V = "20261106g";
+  var V = "20261106h";
   var FRAME_COUNT = 8;
   var STRIP_W = 12800;
   var STRIP_H = 900;

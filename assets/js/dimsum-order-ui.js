@@ -3,6 +3,8 @@
   "use strict";
 
   var LS_KEY = "zihua_bpe_dimsum_order_v1";
+  var LS_PREORDERS = "zihua_bpe_preorders_v1";
+  var LS_WIPE_FLAG = "zihua_bpe_test_orders_wiped_20261106h";
   var activeSheet = "zihua";
   var searchQ = "";
   var floatOpen = false;
@@ -583,15 +585,75 @@
     var n = posN === 2 ? 2 : 1;
     return "pos" + n + "-" + date + "-" + seqStr;
   }
-  function loadRecentOrders(limit) {
+  function loadAllOrders() {
     try {
-      var raw = localStorage.getItem("zihua_bpe_preorders_v1");
+      var raw = localStorage.getItem(LS_PREORDERS);
       var list = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(list)) return [];
-      return list.slice(0, limit || 8);
+      return list;
     } catch (e) {
       return [];
     }
+  }
+
+  function loadRecentOrders(limit) {
+    var list = loadAllOrders();
+    if (limit == null || limit <= 0) return list;
+    return list.slice(0, limit);
+  }
+
+  function findOrderById(id) {
+    var want = String(id || "");
+    if (!want) return null;
+    var list = loadAllOrders();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && String(list[i].id) === want) return list[i];
+    }
+    return null;
+  }
+
+  function formatHkTime(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    try {
+      return d.toLocaleString("zh-HK", {
+        timeZone: "Asia/Hong_Kong",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      });
+    } catch (e) {
+      return d.toISOString();
+    }
+  }
+
+  /** Clear test orders + sold + remaining overrides + daily sales. Keep restock / 總預 / daily target. */
+  function clearTestOrdersData() {
+    try { localStorage.removeItem(LS_PREORDERS); } catch (e) {}
+    if (window.BPE_Stock) {
+      if (window.BPE_Stock.clearIssued) {
+        try { window.BPE_Stock.clearIssued(); } catch (e2) {}
+      }
+      if (window.BPE_Stock.resetToSeed) {
+        try { window.BPE_Stock.resetToSeed(); } catch (e3) {}
+      }
+    }
+    if (window.BPE_SalesTarget && window.BPE_SalesTarget.clearSales) {
+      try { window.BPE_SalesTarget.clearSales(); } catch (e4) {}
+    }
+  }
+
+  function maybeWipeTestOrdersOnce() {
+    try {
+      if (localStorage.getItem(LS_WIPE_FLAG)) return;
+      clearTestOrdersData();
+      localStorage.setItem(LS_WIPE_FLAG, "1");
+    } catch (e) { /* private mode */ }
   }
   function bogoDiscount(prices) {
     if (!prices.length) return 0;
@@ -861,30 +923,199 @@
 
   function renderRecentOrdersHtml() {
     if (!isAdmin()) return "";
-    var list = loadRecentOrders(8);
-    if (!list.length) {
-      return (
-        '<div class="pc-recent-orders admin-only">' +
+    var list = loadRecentOrders(50);
+    var head =
+      '<div class="pc-recent-orders admin-only">' +
+        '<div class="pc-recent-head">' +
           "<h4>最近單據</h4>" +
-          '<p class="muted">未有本機結算紀錄。</p>' +
-        "</div>"
-      );
+          '<button type="button" class="btn-ghost pc-orders-clear" id="btnClearTestOrders">清除全部測試訂單</button>' +
+        "</div>";
+    if (!list.length) {
+      return head + '<p class="muted">未有本機結算紀錄。</p></div>';
     }
     var rows = list.map(function (o) {
       var no = o.orderNo || o.id || "—";
       var pay = o.paymentLabel || o.paymentMethod || "";
       var amt = o.payable != null ? ("$" + money(o.payable)) : "";
+      var when = formatHkTime(o.t);
       return (
-        '<li><strong class="pc-order-no">' + esc(no) + "</strong>" +
-        '<span>' + esc(pay) + (amt ? " · " + esc(amt) : "") + "</span></li>"
+        '<li>' +
+          '<button type="button" class="pc-order-row" data-order-id="' + esc(o.id || "") + '" aria-label="睇單據 ' + esc(no) + '">' +
+            '<span class="pc-order-row-main">' +
+              '<strong class="pc-order-no">' + esc(no) + "</strong>" +
+              '<span class="pc-order-meta">' + esc(pay) + (amt ? " · " + esc(amt) : "") + "</span>" +
+            "</span>" +
+            '<span class="pc-order-row-sub muted">' + esc(when) +
+              (o.pos ? (" · POS" + esc(String(o.pos))) : "") +
+              ' · 撳入去睇詳情／印單</span>' +
+          "</button>" +
+        "</li>"
       );
     }).join("");
+    return head + '<ul class="pc-recent-list">' + rows + "</ul></div>";
+  }
+
+  function ensureOrderDrawer() {
+    var el = $("orderDetailDrawer");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "orderDetailDrawer";
+    el.className = "drawer hidden";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-label", "單據詳情");
+    el.innerHTML =
+      '<div class="drawer-panel order-detail-panel">' +
+        '<div class="drawer-head">' +
+          "<h3>單據詳情</h3>" +
+          '<button type="button" class="btn-ghost" id="btnCloseOrderDetail">關閉</button>' +
+        "</div>" +
+        '<div id="orderDetailRoot"></div>' +
+      "</div>";
+    document.body.appendChild(el);
+    el.addEventListener("click", function (e) {
+      if (e.target === el) closeOrderDetail();
+    });
+    return el;
+  }
+
+  function closeOrderDetail() {
+    var d = $("orderDetailDrawer");
+    if (d) d.classList.add("hidden");
+  }
+
+  function orderLinesHtml(order) {
+    var lines = (order && order.lines) || [];
+    if (!lines.length) return '<p class="muted">未有產品明細</p>';
+    var rows = lines.map(function (ln) {
+      var label = (ln && ln.label) != null ? ln.label : "—";
+      var amt = ln && ln.amount != null && ln.amount !== "" && !isNaN(ln.amount)
+        ? ("$" + money(ln.amount))
+        : "—";
+      return (
+        '<li class="order-line">' +
+          '<span class="order-line-label">' + esc(label) + "</span>" +
+          '<span class="order-line-amt">' + esc(amt) + "</span>" +
+        "</li>"
+      );
+    }).join("");
+    return '<ul class="order-lines">' + rows + "</ul>";
+  }
+
+  function renderOrderDetail(order) {
+    if (!order) {
+      return '<p class="muted">搵唔到呢張單。</p>';
+    }
+    var gifts = (order.gifts && order.gifts.length)
+      ? ('<p class="order-detail-gifts"><strong>禮遇</strong>：' + esc(order.gifts.join("；")) + "</p>")
+      : "";
     return (
-      '<div class="pc-recent-orders admin-only">' +
-        "<h4>最近單據</h4>" +
-        "<ul>" + rows + "</ul>" +
+      '<div class="order-detail">' +
+        '<p class="order-detail-no"><strong class="pc-order-no">' + esc(order.orderNo || order.id || "—") + "</strong></p>" +
+        '<p class="order-detail-meta">POS ' + esc(String(order.pos != null ? order.pos : "—")) +
+          " · " + esc(formatHkTime(order.t)) + "</p>" +
+        '<p class="order-detail-pay"><strong>付款</strong>：' + esc(order.paymentLabel || order.paymentMethod || "—") + "</p>" +
+        '<h4 class="order-detail-h">產品</h4>' +
+        orderLinesHtml(order) +
+        '<div class="order-detail-totals">' +
+          '<div><span>合計</span><strong>$' + esc(money(order.subtotal != null ? order.subtotal : order.total)) + "</strong></div>" +
+          '<div><span>優惠券</span><strong>−$' + esc(money(order.couponAmount || 0)) + "</strong></div>" +
+          '<div><span>券後</span><strong>$' + esc(money(order.afterCoupon)) + "</strong></div>" +
+          (order.senior ? '<div><span>銀髮 95 折</span><strong>已套用</strong></div>' : "") +
+          '<div class="order-detail-payable"><span>實付</span><strong>$' + esc(money(order.payable)) + "</strong></div>" +
+        "</div>" +
+        gifts +
+        '<div class="btn-row order-detail-actions">' +
+          '<button type="button" class="primary" id="btnPrintOrder" data-order-id="' + esc(order.id || "") + '">印單</button>' +
+          '<button type="button" class="btn-ghost" id="btnCloseOrderDetail2">關閉</button>' +
+        "</div>" +
+        '<p class="muted order-detail-note">本機結算單據；以支付為準</p>' +
       "</div>"
     );
+  }
+
+  function openOrderDetail(id) {
+    var order = findOrderById(id);
+    var d = ensureOrderDrawer();
+    var root = $("orderDetailRoot");
+    if (!root) return;
+    root.innerHTML = renderOrderDetail(order);
+    d.classList.remove("hidden");
+    var close1 = $("btnCloseOrderDetail");
+    if (close1) close1.onclick = closeOrderDetail;
+    var close2 = $("btnCloseOrderDetail2");
+    if (close2) close2.onclick = closeOrderDetail;
+    var printBtn = $("btnPrintOrder");
+    if (printBtn) {
+      printBtn.onclick = function () {
+        printOrderReceipt(findOrderById(printBtn.getAttribute("data-order-id")));
+      };
+    }
+  }
+
+  function printOrderReceipt(order) {
+    if (!order) {
+      alert("搵唔到呢張單");
+      return;
+    }
+    var linesHtml = "";
+    ((order.lines) || []).forEach(function (ln) {
+      var label = (ln && ln.label) != null ? ln.label : "—";
+      var amt = ln && ln.amount != null && ln.amount !== "" && !isNaN(ln.amount)
+        ? ("$" + money(ln.amount))
+        : "—";
+      linesHtml +=
+        "<tr><td>" + esc(label) + '</td><td class="num">' + esc(amt) + "</td></tr>";
+    });
+    if (!linesHtml) {
+      linesHtml = '<tr><td colspan="2" class="muted">未有產品明細</td></tr>';
+    }
+    var gifts = (order.gifts && order.gifts.length) ? order.gifts.join("；") : "—";
+    var w = window.open("", "_blank");
+    if (!w) {
+      alert("瀏覽器阻擋咗列印視窗，請允許彈出");
+      return;
+    }
+    w.document.write(
+      "<!DOCTYPE html><html lang='zh-Hant-HK'><head><meta charset='utf-8' />" +
+      "<meta name='viewport' content='width=device-width, initial-scale=1' />" +
+      "<title>單據 " + esc(order.orderNo || "") + "</title>" +
+      "<style>" +
+      "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;padding:16px;color:#222;}" +
+      "h1{font-size:1.25rem;margin:0 0 4px;} .sub{color:#555;margin:0 0 12px;font-size:.9rem;}" +
+      ".meta{margin-bottom:12px;font-size:1rem;line-height:1.5;} .meta div{margin:2px 0;}" +
+      "table{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0;}" +
+      "th,td{border-bottom:1px solid #ddd;padding:8px 4px;vertical-align:top;}" +
+      "th{text-align:left;background:#f3e8ff;} td.num{text-align:right;font-variant-numeric:tabular-nums;}" +
+      ".totals{margin-top:10px;font-size:1rem;} .totals div{display:flex;justify-content:space-between;padding:4px 0;}" +
+      ".pay{font-size:1.15rem;font-weight:800;margin-top:8px;} .note{color:#666;font-size:.85rem;margin-top:16px;}" +
+      ".noprint{margin:12px 0;} @media print{body{padding:0;} .noprint{display:none;}}" +
+      "</style></head><body>" +
+      "<h1>紫花油工展會</h1>" +
+      "<p class='sub'>ZIHUA · 本機結算單據</p>" +
+      "<div class='meta'>" +
+        "<div><strong>單號：</strong>" + esc(order.orderNo || order.id || "—") + "</div>" +
+        "<div><strong>時間：</strong>" + esc(formatHkTime(order.t)) + "（香港）</div>" +
+        "<div><strong>POS：</strong>" + esc(String(order.pos != null ? order.pos : "—")) + "</div>" +
+        "<div><strong>付款：</strong>" + esc(order.paymentLabel || order.paymentMethod || "—") + "</div>" +
+      "</div>" +
+      "<p class='noprint'><button onclick='window.print()'>列印</button> " +
+      "<button onclick='window.close()'>關閉</button></p>" +
+      "<table><thead><tr><th>項目</th><th>金額</th></tr></thead><tbody>" +
+      linesHtml +
+      "</tbody></table>" +
+      "<div class='totals'>" +
+        "<div><span>合計</span><span>$" + esc(money(order.subtotal != null ? order.subtotal : order.total)) + "</span></div>" +
+        "<div><span>優惠券</span><span>−$" + esc(money(order.couponAmount || 0)) + "</span></div>" +
+        "<div><span>券後</span><span>$" + esc(money(order.afterCoupon)) + "</span></div>" +
+        (order.senior ? "<div><span>銀髮 95 折</span><span>已套用</span></div>" : "") +
+        "<div class='pay'><span>實付</span><span>$" + esc(money(order.payable)) + "</span></div>" +
+      "</div>" +
+      "<p><strong>禮遇：</strong>" + esc(gifts) + "</p>" +
+      "<p class='note'>本機結算単據；以支付為準</p>" +
+      "</body></html>"
+    );
+    w.document.close();
   }
 
   function renderHero() {
@@ -1278,11 +1509,11 @@
       gifts: giftTitles
     };
     try {
-      var raw = localStorage.getItem("zihua_bpe_preorders_v1");
+      var raw = localStorage.getItem(LS_PREORDERS);
       var list = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(list)) list = [];
       list.unshift(order);
-      localStorage.setItem("zihua_bpe_preorders_v1", JSON.stringify(list.slice(0, 50)));
+      localStorage.setItem(LS_PREORDERS, JSON.stringify(list.slice(0, 50)));
     } catch (e) {}
     if (window.BPE_SalesTarget && window.BPE_SalesTarget.addSale) {
       try { window.BPE_SalesTarget.addSale(order.payable, order.t); } catch (e2) {}
@@ -1295,6 +1526,18 @@
     if (!root || root._pcBound) return;
     root._pcBound = true;
     root.addEventListener("click", function (e) {
+      if (e.target.closest("#btnClearTestOrders")) {
+        if (!confirm("清除全部測試訂單？售出會歸零，今日營業額進度亦會清走。補貨同總預會保留。")) return;
+        clearTestOrdersData();
+        closeOrderDetail();
+        render();
+        return;
+      }
+      var orderBtn = e.target.closest("[data-order-id].pc-order-row");
+      if (orderBtn) {
+        openOrderDetail(orderBtn.getAttribute("data-order-id"));
+        return;
+      }
       if (e.target.closest("#btnPcPos")) {
         cyclePosStation();
         render();
@@ -1492,8 +1735,21 @@
     });
   }
 
+  maybeWipeTestOrdersOnce();
+
+  if (!document._orderDetailBound) {
+    document._orderDetailBound = true;
+    document.addEventListener("click", function (e) {
+      if (e.target && (e.target.id === "btnCloseOrderDetail" || e.target.id === "btnCloseOrderDetail2")) {
+        closeOrderDetail();
+      }
+    });
+  }
+
   window.BPE_DimsumOrderUI = {
     render: function () { bindRoot(); render(); },
+    clearTestOrdersData: clearTestOrdersData,
+    openOrderDetail: openOrderDetail,
     clear: function () {
       saveState({ items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 });
       render();

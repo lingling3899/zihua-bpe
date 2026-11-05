@@ -523,6 +523,10 @@
     // 只清人手「改剩餘」覆寫；剩餘改返跟 補貨−售出。補貨／已售／職員加貨保留。
   }
 
+  function clearIssued() {
+    try { localStorage.removeItem(LS_ISSUED); } catch (e) {}
+  }
+
   function listAll() {
     return allItems().map(function (it) {
       var unknown = !!it.qtyUnknown;
@@ -1003,6 +1007,7 @@
     removeProduct: removeProduct,
     stockBadgeHtml: stockBadgeHtml,
     getIssued: getIssued,
+    clearIssued: clearIssued,
     openPanel: openPanel,
     closePanel: closePanel,
     renderPanel: renderPanel,

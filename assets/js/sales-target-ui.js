@@ -90,6 +90,10 @@
     } catch (e) { /* private mode */ }
   }
 
+  function clearSales() {
+    try { localStorage.removeItem(LS_SALES); } catch (e) {}
+  }
+
   function orderHkDate(order) {
     if (!order || !order.t) return "";
     var d = new Date(order.t);
@@ -321,6 +325,7 @@
     saveTarget: saveTarget,
     getTodayBucket: getTodayBucket,
     addSale: addSale,
+    clearSales: clearSales,
     renderProgressHtml: renderProgressHtml,
     openPanel: openPanel,
     closePanel: closePanel,
