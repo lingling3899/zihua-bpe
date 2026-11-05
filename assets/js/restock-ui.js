@@ -5,6 +5,7 @@
   var LS_KEY = "zihua_bpe_restock_draft_v1";
   var searchQ = "";
   var statusMsg = "";
+  var focusHeaderAfterRender = null; /* "date" | "handler" | null */
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -95,13 +96,23 @@
     return draft;
   }
 
+  function isWarnStatus(msg) {
+    var m = String(msg || "");
+    if (!m) return false;
+    if (/^(請填|未有|儲存失敗|庫存模組|瀏覽器阻擋)/.test(m)) return true;
+    if (m.indexOf("已冇得補貨") >= 0 || m.indexOf("未成功") >= 0) return true;
+    return false;
+  }
+
   function requireHeader(draft) {
     if (!draft.date) {
       statusMsg = "請填日期";
+      focusHeaderAfterRender = "date";
       return false;
     }
     if (!String(draft.handler || "").trim()) {
       statusMsg = "請填經手人，先可以儲存／匯出／列印";
+      focusHeaderAfterRender = "handler";
       return false;
     }
     return true;
@@ -276,7 +287,7 @@
       renderPanel();
       return;
     }
-    if (!window.BPE_Stock || !window.BPE_Stock.addQty) {
+    if (!window.BPE_Stock || !window.BPE_Stock.addRestockAmount) {
       statusMsg = "庫存模組未載入";
       renderPanel();
       return;
@@ -284,21 +295,43 @@
     saveDraft(draft);
     var n = 0;
     var added = 0;
+    var fails = [];
+    var hasCartons = false;
     (seed().items || []).forEach(function (it) {
-      var code = it.appCode || it.wfCode;
+      var ctn = draft.cartons[it.wfCode];
+      if (ctn != null && Number(ctn) > 0) hasCartons = true;
+    });
+    (seed().items || []).forEach(function (it) {
       var q = draft.qty[it.wfCode];
       if (q == null || q <= 0) return;
       // prefer app code for stock; fallback wf
       var stockCode = it.appCode || it.wfCode;
-      window.BPE_Stock.addQty(stockCode, q);
-      n += 1;
-      added += q;
+      var res = window.BPE_Stock.addRestockAmount(stockCode, q);
+      if (res && res.ok) {
+        n += 1;
+        added += q;
+      } else {
+        fails.push(
+          (it.name || stockCode) + "：" + ((res && res.error) || "已冇得補貨")
+        );
+      }
     });
-    if (!n) {
-      statusMsg = "未有套／件數量可加落庫存";
+    if (!n && !fails.length) {
+      statusMsg = hasCartons
+        ? "未有套／件數量可加落庫存。你已填箱頭，可先撳「用箱數填件數」再登記。"
+        : "未有套／件數量可加落庫存";
     } else {
-      statusMsg = "已登記補貨： " + n + " 款，合共 ＋" + added + "（已加落剩餘庫存）";
-      if (window.BPE_DimsumOrderUI && window.BPE_DimsumOrderUI.render) {
+      var parts = [];
+      if (n) parts.push("已登記補貨： " + n + " 款，合共 ＋" + added);
+      if (fails.length) {
+        parts.push(
+          "未成功 " + fails.length + " 款——" +
+          fails.slice(0, 3).join("；") +
+          (fails.length > 3 ? "…" : "")
+        );
+      }
+      statusMsg = parts.join("。");
+      if (n && window.BPE_DimsumOrderUI && window.BPE_DimsumOrderUI.render) {
         window.BPE_DimsumOrderUI.render();
       }
     }
@@ -365,10 +398,14 @@
       " · 共 " + esc(String((s.items || []).length)) + " 款 · 草稿存本機</p>" +
       '<div class="restock-header-fields">' +
         '<label class="field">日期' +
-          '<input type="date" id="restockDate" value="' + esc(draft.date) + '" required />' +
+          '<input type="date" id="restockDate" value="' + esc(draft.date) + '" required' +
+            (focusHeaderAfterRender === "date" ? ' class="restock-handler-needed"' : "") +
+          ' />' +
         "</label>" +
         '<label class="field">經手人' +
-          '<input type="text" id="restockHandler" value="' + esc(draft.handler) + '" placeholder="姓名／工號" required autocomplete="name" />' +
+          '<input type="text" id="restockHandler" value="' + esc(draft.handler) + '" placeholder="姓名／工號" required autocomplete="name"' +
+            (focusHeaderAfterRender === "handler" ? ' class="restock-handler-needed"' : "") +
+          ' />' +
         "</label>" +
       "</div>" +
       '<div class="stock-toolbar">' +
@@ -386,7 +423,10 @@
           '<button type="button" class="btn-ghost" id="btnRestockResetHead">重設表頭</button>' +
         "</div>" +
       "</div>" +
-      (statusMsg ? '<p class="restock-status" role="status">' + esc(statusMsg) + "</p>" : "") +
+      (statusMsg
+        ? ('<p class="restock-status' + (isWarnStatus(statusMsg) ? " restock-status--warn" : "") +
+          '" role="status">' + esc(statusMsg) + "</p>")
+        : "") +
       '<div class="restock-ref muted">' +
         '紙本參考：' +
         '<a href="assets/img/restock/restock-p1.jpg?v=20261105f" target="_blank" rel="noopener">P1</a> · ' +
@@ -504,13 +544,31 @@
     if (btnFill) btnFill.addEventListener("click", fillPiecesFromCartons);
     var btnApply = $("btnRestockApplyStock");
     if (btnApply) btnApply.addEventListener("click", function () {
-      if (!confirm("將表上「套／件」數量加落庫存剩餘？（第一次落貨／總預不變，剩餘＋N）")) return;
+      if (!confirm("將表上「套／件」數量加落庫存「補貨」？（剩餘＝補貨−售出；補貨不可超過總預）")) return;
       applyRestockToStock();
     });
     var btnClear = $("btnRestockClear");
     if (btnClear) btnClear.addEventListener("click", clearQtys);
     var btnReset = $("btnRestockResetHead");
     if (btnReset) btnReset.addEventListener("click", resetHeader);
+
+    if (focusHeaderAfterRender) {
+      var focusKind = focusHeaderAfterRender;
+      focusHeaderAfterRender = null;
+      var focusId = focusKind === "date" ? "restockDate" : "restockHandler";
+      var focusEl = $(focusId);
+      if (focusEl) {
+        var sticky = focusEl.closest(".restock-header-fields") || focusEl;
+        try {
+          sticky.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (e1) {
+          try { sticky.scrollIntoView(true); } catch (e2) {}
+        }
+        setTimeout(function () {
+          try { focusEl.focus(); } catch (e3) {}
+        }, 60);
+      }
+    }
   }
 
   function openPanel() {
