@@ -23,7 +23,7 @@
       title: "CUPAL 推廣員",
       roles: ["CUPAL", "CUPAL 推廣員"],
       shifts: [
-        { key: "11v", label: "場時更", start: "11:00", end: "21:00" },
+        { key: "11v", label: "場時更", start: "11:00", end: "20:00" },
         { key: "12", label: "12點更", start: "12:00", end: "20:00" },
         { key: "13", label: "1點更", start: "13:00", end: "21:00" },
         { key: "14", label: "2點更", start: "14:00", end: "21:00" }

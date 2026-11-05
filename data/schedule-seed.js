@@ -1,5 +1,5 @@
 window.BPE_SCHEDULE_SEED = {
-  "version": "20261105p",
+  "version": "20261105q",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "roles": [
@@ -76,7 +76,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-8",
       "date": "2026-12-12",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "秋姐",
       "note": "WS Promoter"
@@ -175,7 +175,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-19",
       "date": "2026-12-13",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "秋姐",
       "note": "WS Promoter"
@@ -589,7 +589,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-65",
       "date": "2026-12-18",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "Ruby",
       "note": "WS Promoter"
@@ -670,7 +670,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-74",
       "date": "2026-12-19",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "Ruby",
       "note": "WS Promoter"
@@ -760,7 +760,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-84",
       "date": "2026-12-20",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "Ruby",
       "note": "WS Promoter"
@@ -922,7 +922,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-102",
       "date": "2026-12-22",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "秋姐",
       "note": "WS Promoter"
@@ -1111,7 +1111,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-123",
       "date": "2026-12-24",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "Ruby",
       "note": "WS Promoter"
@@ -1201,7 +1201,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-133",
       "date": "2026-12-25",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "Ruby",
       "note": "WS Promoter"
@@ -1291,7 +1291,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-143",
       "date": "2026-12-26",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "秋姐",
       "note": "WS Promoter"
@@ -1381,7 +1381,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-153",
       "date": "2026-12-27",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "秋姐",
       "note": "WS Promoter"
@@ -1714,7 +1714,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-190",
       "date": "2026-12-31",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "Ruby",
       "note": "WS Promoter"
@@ -1786,7 +1786,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-198",
       "date": "2027-01-01",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "秋姐",
       "note": "WS Promoter"
@@ -1867,7 +1867,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-207",
       "date": "2027-01-02",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "秋姐",
       "note": "WS Promoter"
@@ -1948,7 +1948,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-216",
       "date": "2027-01-03",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "Ruby",
       "note": "WS Promoter"
@@ -2047,7 +2047,7 @@ window.BPE_SCHEDULE_SEED = {
       "id": "seed-227",
       "date": "2027-01-04",
       "start": "11:00",
-      "end": "21:00",
+      "end": "20:00",
       "role": "CUPAL 推廣員",
       "name": "Ruby",
       "note": "WS Promoter"
