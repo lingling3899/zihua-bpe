@@ -93,6 +93,18 @@
     );
   }
 
+  /** Long prize names wrap to 2 lines inside the yellow chip; wording unchanged. */
+  function wheelLabelInnerHtml(label) {
+    var map = {
+      "下次再來": "下次<br>再來",
+      "神秘禮品": "神秘<br>禮品",
+      "再買減$10": "再買<br>減$10",
+      "滿200減20": "滿200<br>減20"
+    };
+    if (map[label]) return map[label];
+    return esc(label);
+  }
+
   function wheelHtml() {
     var segs = WHEEL.length;
     var grad = WHEEL.map(function (w, i) {
@@ -104,17 +116,19 @@
       var mid = ((i + 0.5) / segs) * 360;
       var text = String(w.label);
       var len = Array.from(text).length;
-      var flip = (mid > 90 && mid < 270) ? "180deg" : "0deg";
       var cls = "wheel-label";
       if (len <= 3) cls += " is-short";
-      else if (len >= 6) cls += " is-long";
-      if (sliceNeedsDarkText(w.color)) cls += " is-dark";
-      return '<span class="' + cls + '" style="--a:' + mid + 'deg;--flip:' + flip + '">' + esc(text) + "</span>";
+      else if (len >= 5) cls += " is-long";
+      return (
+        '<span class="' + cls + '" style="--a:' + mid + 'deg">' +
+          '<span class="wheel-label-chip">' + wheelLabelInnerHtml(text) + "</span>" +
+        "</span>"
+      );
     }).join("");
     return (
       '<div class="wheel-wrap">' +
         '<div class="wheel-pointer" aria-hidden="true">▼</div>' +
-        '<div class="wheel" id="luckyWheel" style="background: conic-gradient(' + grad + '); transform: rotate(' + wheelAngle + 'deg)">' +
+        '<div class="wheel" id="luckyWheel" style="background: conic-gradient(' + grad + '); transform: rotate(' + wheelAngle + 'deg); --spin:' + wheelAngle + 'deg">' +
           '<div class="wheel-center">紫花油</div>' +
           '<div class="wheel-labels">' + labels + "</div>" +
         "</div>" +
@@ -253,6 +267,7 @@
       if (wheel) {
         wheel.style.transition = "none";
         wheel.style.transform = "rotate(" + wheelAngle + "deg)";
+        wheel.style.setProperty("--spin", wheelAngle + "deg");
       }
       if (t < 1) {
         wheelRaf = requestAnimationFrame(frame);
@@ -260,6 +275,7 @@
         wheelAngle = startAngle + delta;
         if (wheel) {
           wheel.style.transform = "rotate(" + wheelAngle + "deg)";
+          wheel.style.setProperty("--spin", wheelAngle + "deg");
         }
         spinning = false;
         wheelRaf = 0;
