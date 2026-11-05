@@ -911,6 +911,9 @@
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
         '<p class="pc-hero-note">套裝價自動計算 · 散支加到 6 支 26ml 或 5 支 10ml 先自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊（唔自動跳結算） · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再銀髮 95 折，以最終實付計禮遇 · 送完即止</p>' +
+        (window.BPE_SalesTarget && window.BPE_SalesTarget.renderProgressHtml
+          ? window.BPE_SalesTarget.renderProgressHtml()
+          : "") +
         renderRecentOrdersHtml() +
       "</header>"
     );
@@ -1281,6 +1284,9 @@
       list.unshift(order);
       localStorage.setItem("zihua_bpe_preorders_v1", JSON.stringify(list.slice(0, 50)));
     } catch (e) {}
+    if (window.BPE_SalesTarget && window.BPE_SalesTarget.addSale) {
+      try { window.BPE_SalesTarget.addSale(order.payable, order.t); } catch (e2) {}
+    }
     return order;
   }
 

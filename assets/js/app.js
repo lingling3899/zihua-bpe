@@ -187,6 +187,9 @@
         if (act === "restock") {
           if (window.BPE_Restock && window.BPE_Restock.openPanel) window.BPE_Restock.openPanel();
         }
+        if (act === "target") {
+          if (window.BPE_SalesTarget && window.BPE_SalesTarget.openPanel) window.BPE_SalesTarget.openPanel();
+        }
       });
     });
 
