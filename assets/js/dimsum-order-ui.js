@@ -5,7 +5,7 @@
   var LS_KEY = "zihua_bpe_dimsum_order_v1";
   var activeSheet = "zihua";
   var searchQ = "";
-  var floatExpanded = false;
+  var floatOpen = false;
 
   var PAY_METHODS = [
     { id: "octopus", label: "八達通" },
@@ -389,50 +389,68 @@
     var settleLabel = hasPay
       ? ("💳 結算 $" + money(pr.payable))
       : "請先揀付款方式";
+    var hasItems = calc.count > 0;
+    var collapsedSummary = "$" + money(pr.payable) + " · 共 " + calc.count + " 件";
+
+    if (!floatOpen) {
+      return (
+        '<div class="pc-float is-collapsed' + (hasItems ? " has-items" : "") + '" id="pcFloat">' +
+          '<button type="button" class="pc-float-bar" id="btnPcExpand" aria-expanded="false" aria-controls="pcFloatBody">' +
+            '<span class="pc-float-bar-sum">' + esc(collapsedSummary) + "</span>" +
+            '<span class="pc-float-bar-cta">展開 <span aria-hidden="true">▴</span></span>' +
+          "</button>" +
+        "</div>"
+      );
+    }
 
     return (
-      '<div class="pc-float" id="pcFloat">' +
-        '<button type="button" class="pc-float-progress" id="btnPcExpand" aria-expanded="' + (floatExpanded ? "true" : "false") + '">' +
-          esc(progress) + ' <span aria-hidden="true">▾</span>' +
-        "</button>" +
-        '<div class="pc-float-total">$' + money(pr.payable) +
-          (pr.senior ? '<span class="pc-senior-tag">銀髮價</span>' : "") +
-          (pr.couponAmount > 0 ? '<span class="pc-coupon-tag">已減券</span>' : "") +
+      '<div class="pc-float is-open' + (hasItems ? " has-items" : "") + '" id="pcFloat">' +
+        '<div class="pc-float-head">' +
+          '<button type="button" class="pc-float-progress" id="btnPcExpandHint" aria-expanded="true">' +
+            esc(progress) +
+          "</button>" +
+          '<button type="button" class="pc-float-close" id="btnPcCollapse" aria-label="收起結算">' +
+            '<span aria-hidden="true">✕</span> 收起' +
+          "</button>" +
         "</div>" +
-        renderBreakdown(pr, calc) +
-        '<div class="pc-coupon-row">' +
-          '<label class="pc-coupon-label" for="pcCoupon">優惠券（先減券）</label>' +
-          '<div class="pc-coupon-chips">' +
-            COUPON_CHIPS.map(function (n) {
-              var on = Number(st.couponAmount) === n ? " active" : "";
-              return (
-                '<button type="button" class="pc-coupon-chip' + on + '" data-coupon="' + n + '">$' + n + "</button>"
-              );
-            }).join("") +
-            '<button type="button" class="pc-coupon-chip' +
-              (COUPON_CHIPS.indexOf(Number(st.couponAmount)) < 0 && Number(st.couponAmount) > 0 ? " active" : "") +
-              '" data-coupon="custom">自訂</button>' +
+        '<div class="pc-float-body" id="pcFloatBody">' +
+          '<div class="pc-float-total">$' + money(pr.payable) +
+            (pr.senior ? '<span class="pc-senior-tag">銀髮價</span>' : "") +
+            (pr.couponAmount > 0 ? '<span class="pc-coupon-tag">已減券</span>' : "") +
           "</div>" +
-          '<input type="number" id="pcCoupon" class="pc-coupon-input" min="0" step="1" inputmode="decimal" ' +
-            'placeholder="0" value="' + esc(String(st.couponAmount || 0)) + '" aria-label="優惠券金額" />' +
-        "</div>" +
-        '<label class="pc-senior-toggle">' +
-          '<span>銀髮優惠 95折（減券後）</span>' +
-          '<input type="checkbox" id="pcSenior" ' + (st.senior ? "checked" : "") + ' />' +
-          '<span class="pc-switch" aria-hidden="true"></span>' +
-        "</label>" +
-        (floatExpanded
-          ? ('<div class="pc-float-extra">' +
-              (window.BPE_Gifts && window.BPE_Gifts.renderProgressHtml
-                ? window.BPE_Gifts.renderProgressHtml(calc.total, st) : "") +
-              (isAdmin()
-                ? '<button type="button" class="btn-ghost" id="btnPcExport">匯出訂單</button>'
-                : "") +
-            "</div>")
-          : "") +
-        '<div class="pc-float-actions">' +
-          '<button type="button" class="pc-clear" id="btnPcClear" aria-label="清除"><span aria-hidden="true">↺</span> 清除</button>' +
-          '<button type="button" class="' + settleCls + '" id="btnPcSettle">' + esc(settleLabel) + "</button>" +
+          renderBreakdown(pr, calc) +
+          '<div class="pc-coupon-row">' +
+            '<label class="pc-coupon-label" for="pcCoupon">優惠券（先減券）</label>' +
+            '<div class="pc-coupon-chips">' +
+              COUPON_CHIPS.map(function (n) {
+                var on = Number(st.couponAmount) === n ? " active" : "";
+                return (
+                  '<button type="button" class="pc-coupon-chip' + on + '" data-coupon="' + n + '">$' + n + "</button>"
+                );
+              }).join("") +
+              '<button type="button" class="pc-coupon-chip' +
+                (COUPON_CHIPS.indexOf(Number(st.couponAmount)) < 0 && Number(st.couponAmount) > 0 ? " active" : "") +
+                '" data-coupon="custom">自訂</button>' +
+            "</div>" +
+            '<input type="number" id="pcCoupon" class="pc-coupon-input" min="0" step="1" inputmode="decimal" ' +
+              'placeholder="0" value="' + esc(String(st.couponAmount || 0)) + '" aria-label="優惠券金額" />' +
+          "</div>" +
+          '<label class="pc-senior-toggle">' +
+            '<span>銀髮優惠 95折（減券後）</span>' +
+            '<input type="checkbox" id="pcSenior" ' + (st.senior ? "checked" : "") + ' />' +
+            '<span class="pc-switch" aria-hidden="true"></span>' +
+          "</label>" +
+          '<div class="pc-float-extra">' +
+            (window.BPE_Gifts && window.BPE_Gifts.renderProgressHtml
+              ? window.BPE_Gifts.renderProgressHtml(calc.total, st) : "") +
+            (isAdmin()
+              ? '<button type="button" class="btn-ghost" id="btnPcExport">匯出訂單</button>'
+              : "") +
+          "</div>" +
+          '<div class="pc-float-actions">' +
+            '<button type="button" class="pc-clear" id="btnPcClear" aria-label="清除"><span aria-hidden="true">↺</span> 清除</button>' +
+            '<button type="button" class="' + settleCls + '" id="btnPcSettle">' + esc(settleLabel) + "</button>" +
+          "</div>" +
         "</div>" +
       "</div>"
     );
@@ -450,8 +468,8 @@
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105f" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105f" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105g" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105g" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
         '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
         (st.paymentMethod
@@ -483,6 +501,7 @@
     html += renderPayment(st);
     html += renderFloat(st, calc, pr);
     root.innerHTML = html;
+    root.classList.toggle("is-float-open", !!floatOpen);
 
     var search = $("pcSearch");
     if (search) {
@@ -618,8 +637,13 @@
         setQtyValue(wrap.getAttribute("data-kind"), wrap.getAttribute("data-id"), cur + Number(btn.getAttribute("data-delta")));
         return;
       }
-      if (e.target.closest("#btnPcExpand")) {
-        floatExpanded = !floatExpanded;
+      if (e.target.closest("#btnPcExpand") || e.target.closest("#btnPcExpandHint")) {
+        floatOpen = true;
+        render();
+        return;
+      }
+      if (e.target.closest("#btnPcCollapse")) {
+        floatOpen = false;
         render();
         return;
       }
