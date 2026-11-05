@@ -1,4 +1,4 @@
-/* 產品計數 · 結算 — 必揀付款；先減優惠券，再銀髮 95 折；買6支26ml送12ml扣庫存 */
+/* 產品計數 · 結算 — 必揀付款；先減優惠券，再銀髮 95 折；買6支26ml送12ml／買5支10ml送杯墊自動跳結算並扣庫存 */
 (function () {
   "use strict";
 
@@ -156,6 +156,45 @@
     return disc;
   }
 
+
+  /** 買 6 支 ZE01（26ml）送 1 支 CO99（12ml） */
+  function countFreeCo99(st) {
+    return Math.floor(itemQty(st, "ZE01") / 6);
+  }
+
+  /**
+   * 陶瓷杯墊贈品數（可疊加，唔重複計同一支）：
+   * - floor((ZE05+ZE06+ZE07)/5) 單支 10ml
+   * - 每個 z-scent-5 任選 5 支 bundle＝1
+   * - 每個 Z0007A／B／C 花香套＝1
+   */
+  function countFreeCoasterParts(st) {
+    var singles = itemQty(st, "ZE05") + itemQty(st, "ZE06") + itemQty(st, "ZE07");
+    var fromSingles = Math.floor(singles / 5);
+    var fromBundle = setQty(st, "z-scent-5");
+    var fromSets = itemQty(st, "Z0007A") + itemQty(st, "Z0007B") + itemQty(st, "Z0007C");
+    return {
+      singles: singles,
+      fromSingles: fromSingles,
+      fromBundle: fromBundle,
+      fromSets: fromSets,
+      freeCoaster: fromSingles + fromBundle + fromSets
+    };
+  }
+
+  function countFreeCoaster(st) {
+    return countFreeCoasterParts(st).freeCoaster;
+  }
+
+  function coasterGiftLabel(parts) {
+    var bits = [];
+    if (parts.fromSingles > 0) bits.push("10ml×" + parts.singles);
+    if (parts.fromBundle > 0) bits.push("任選5支×" + parts.fromBundle);
+    if (parts.fromSets > 0) bits.push("花香套×" + parts.fromSets);
+    var head = bits.length ? bits.join("＋") : "合資格";
+    return "買5送杯墊：" + head + " 送陶瓷杯墊×" + parts.freeCoaster;
+  }
+
   function calcTotals(st) {
     var sheets = allSheets();
     var total = 0;
@@ -212,17 +251,9 @@
       });
     });
     // 買 6 支 ZE01（26ml）送 1 支 CO99（12ml）— 贈品 $0，結算要扣庫存
-    var ze01Qty = 0;
-    var z4cQty = 0;
-    sheets.forEach(function (sheet) {
-      (sheet.sections || []).forEach(function (sec) {
-        (sec.items || []).forEach(function (it) {
-          if (it.code === "ZE01") ze01Qty += itemQty(st, it.code);
-          if (it.code === "Z0004C") z4cQty += itemQty(st, it.code);
-        });
-      });
-    });
-    var freeCo99 = Math.floor(ze01Qty / 6);
+    var ze01Qty = itemQty(st, "ZE01");
+    var z4cQty = itemQty(st, "Z0004C");
+    var freeCo99 = countFreeCo99(st);
     if (freeCo99 > 0) {
       lines.push({
         kind: "gift",
@@ -241,17 +272,31 @@
         giftQty: z4cQty
       });
     }
+    // 買 5 支 10ml／任選5支／花香套 → 陶瓷杯墊 CUPAL-B088
+    var coasterParts = countFreeCoasterParts(st);
+    var freeCoaster = coasterParts.freeCoaster;
+    if (freeCoaster > 0) {
+      lines.push({
+        kind: "gift",
+        label: coasterGiftLabel(coasterParts),
+        amount: 0,
+        code: "CUPAL-B088",
+        giftQty: freeCoaster
+      });
+    }
     return {
       total: total,
       lines: lines,
       count: pieceCount,
       freeCo99: freeCo99,
       ze01Qty: ze01Qty,
-      z4cQty: z4cQty
+      z4cQty: z4cQty,
+      freeCoaster: freeCoaster,
+      coasterParts: coasterParts
     };
   }
 
-  /** 結算扣庫存需求：購物車各碼＋買6送1 嘅免費 CO99 */
+  /** 結算扣庫存需求：購物車各碼＋買6送1 免費 CO99＋買5送杯墊 CUPAL-B088 */
   function buildStockDemand(st) {
     var demand = {};
     function add(code, n) {
@@ -273,6 +318,8 @@
     var freeN = Math.floor(ze01 / 6);
     if (freeN > 0) add("CO99", freeN);
     // Z0004C 以套裝 SKU 扣；唔另外扣 ZE01／CO99（套裝已喺總預貨量獨立列）
+    var freeCoaster = countFreeCoaster(st);
+    if (freeCoaster > 0) add("CUPAL-B088", freeCoaster);
     return demand;
   }
 
@@ -379,7 +426,7 @@
         (window.BPE_Gifts && window.BPE_Gifts.renderGiftCardsHtml
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
-        '<p class="pc-hero-note">套裝價自動計算 · 花香套／5 支花香油送杯墊 · 任何消費送 2027 年曆卡 · 買6支26ml送1支12ml（扣庫存）· 滿額贈品以最高一級計 · 先減優惠券，再銀髮 95 折，以最終實付計禮遇 · 送完即止</p>' +
+        '<p class="pc-hero-note">套裝價自動計算 · 加到 6 支 26ml 或 5 支 10ml 會自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊 · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再銀髮 95 折，以最終實付計禮遇 · 送完即止</p>' +
         renderRecentOrdersHtml() +
       "</header>"
     );
@@ -491,6 +538,11 @@
       giftNote +=
         '<div class="pc-break-row pc-break-gift"><span>套裝已含</span><strong>送12ml × ' +
         calc.z4cQty + "</strong></div>";
+    }
+    if (calc && calc.freeCoaster > 0) {
+      giftNote +=
+        '<div class="pc-break-row pc-break-gift"><span>送杯墊</span><strong>陶瓷杯墊 × ' +
+        calc.freeCoaster + "</strong></div>";
     }
     var rows =
       giftNote +
@@ -656,6 +708,8 @@
 
   function setQtyValue(kind, id, val) {
     var st = loadState();
+    var beforeCo99 = countFreeCo99(st);
+    var beforeCoaster = countFreeCoaster(st);
     var n = Math.max(0, Math.floor(Number(val) || 0));
     if (kind === "set") {
       if (n <= 0) delete st.sets[id];
@@ -665,6 +719,10 @@
       else st.items[id] = n;
     }
     saveState(st);
+    // 達標／再達標（6→12 等）自動展開結算浮層；減數唔會強制收起
+    if (countFreeCo99(st) > beforeCo99 || countFreeCoaster(st) > beforeCoaster) {
+      floatOpen = true;
+    }
     render();
   }
 
@@ -863,6 +921,9 @@
         }
         if (calcS.z4cQty > 0) {
           giftLine += "\n套裝 Z0004C × " + calcS.z4cQty + "（已含送12ml，已扣套裝庫存）";
+        }
+        if (calcS.freeCoaster > 0) {
+          giftLine += "\n杯墊已自動送出：陶瓷杯墊 × " + calcS.freeCoaster + "（已扣庫存／減數）";
         }
         alert(
           "已結算（本機）\n\n" +

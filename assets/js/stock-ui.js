@@ -1,9 +1,10 @@
-/* 庫存：總預貨量 seed（第一次落貨）+ localStorage 剩餘；職員可改剩餘／加產品；結算扣數／重設／匯出 */
+/* 庫存：總預貨量 seed（第一次落貨）+ localStorage 剩餘；qtyUnknown 禮品未填剩餘唔擋結算；職員可改剩餘／加產品；結算扣數／重設／匯出 */
 (function () {
   "use strict";
 
   var LS_KEY = "zihua_bpe_stock_remaining_v1";
   var LS_EXTRA = "zihua_bpe_stock_extra_v1";
+  var LS_ISSUED = "zihua_bpe_stock_issued_v1";
   var searchQ = "";
   var showAddForm = false;
 
@@ -88,6 +89,56 @@
     } catch (e) { /* private mode */ }
   }
 
+
+  function loadIssued() {
+    try {
+      var raw = localStorage.getItem(LS_ISSUED);
+      if (!raw) return {};
+      var o = JSON.parse(raw);
+      if (!o || typeof o !== "object") return {};
+      var out = {};
+      Object.keys(o).forEach(function (k) {
+        var n = Number(o[k]);
+        if (!isNaN(n) && n >= 0) out[k] = Math.floor(n);
+      });
+      return out;
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveIssued(map) {
+    try {
+      localStorage.setItem(LS_ISSUED, JSON.stringify(map || {}));
+    } catch (e) { /* private mode */ }
+  }
+
+  function getIssued(code) {
+    var c = canonicalCode(code);
+    if (!c) return 0;
+    var map = loadIssued();
+    var keys = relatedKeys(c);
+    var n = 0;
+    for (var i = 0; i < keys.length; i++) {
+      if (map[keys[i]] != null) n = Math.max(n, Math.floor(Number(map[keys[i]]) || 0));
+    }
+    return n;
+  }
+
+  function addIssued(code, delta) {
+    var c = canonicalCode(code);
+    if (!c) return;
+    var d = Math.max(0, Math.floor(Number(delta) || 0));
+    if (!d) return;
+    var map = loadIssued();
+    var keys = relatedKeys(c);
+    keys.forEach(function (k) {
+      if (k !== c) delete map[k];
+    });
+    map[c] = (Math.floor(Number(map[c]) || 0)) + d;
+    saveIssued(map);
+  }
+
   function allItems() {
     var base = (seed().items || []).map(function (it) {
       return {
@@ -97,7 +148,8 @@
         name: it.name || "",
         category: it.category || "",
         unit: it.unit || "件",
-        qty: Math.max(0, Math.floor(Number(it.qty) || 0)),
+        qty: it.qtyUnknown ? 0 : Math.max(0, Math.floor(Number(it.qty) || 0)),
+        qtyUnknown: !!it.qtyUnknown,
         price: null,
         custom: false
       };
@@ -119,6 +171,8 @@
     var map = {};
     (s.items || []).forEach(function (it) {
       if (!it || !it.code) return;
+      // qtyUnknown：唔寫入數字，getQty 無職員覆寫時回 null（唔擋結算）
+      if (it.qtyUnknown) return;
       var q = Math.max(0, Math.floor(Number(it.qty) || 0));
       map[it.code] = q;
       if (it.wfCode) map[it.wfCode] = q;
@@ -278,7 +332,10 @@
     return { ok: shorts.length === 0, shorts: shorts };
   }
 
-  /** Deduct quantities; returns { ok, shorts } — does nothing if short */
+  /** Deduct quantities; returns { ok, shorts } — does nothing if short.
+   *  getQty == null（未知／qtyUnknown 未填剩餘）：唔擋、唔發明數字，只記已送出。
+   *  職員已填剩餘：照扣；唔夠就 canFulfill 擋。
+   */
   function deduct(demandMap) {
     var check = canFulfill(demandMap);
     if (!check.ok) return check;
@@ -287,8 +344,12 @@
       var need = Math.max(0, Math.floor(Number(map[code]) || 0));
       if (need <= 0) return;
       var have = getQty(code);
-      if (have == null) return;
+      if (have == null) {
+        addIssued(code, need);
+        return;
+      }
       setQty(code, Math.max(0, have - need));
+      addIssued(code, need);
     });
     return { ok: true, shorts: [] };
   }
@@ -301,8 +362,18 @@
   function listAll() {
     return allItems().map(function (it) {
       var rem = getQty(it.code);
-      var seedQ = Math.max(0, Math.floor(Number(it.qty) || 0));
-      var remaining = rem == null ? 0 : rem;
+      var unknown = !!it.qtyUnknown;
+      var seedQ = unknown ? null : Math.max(0, Math.floor(Number(it.qty) || 0));
+      var issued = getIssued(it.code);
+      var remaining = rem; // null = 未填／未知
+      var sold;
+      if (unknown && rem == null) {
+        sold = issued;
+      } else if (seedQ == null) {
+        sold = issued;
+      } else {
+        sold = Math.max(0, seedQ - (rem == null ? seedQ : rem));
+      }
       return {
         code: it.code,
         wfCode: it.wfCode || "",
@@ -312,7 +383,9 @@
         unit: it.unit || "件",
         seed: seedQ,
         remaining: remaining,
-        sold: Math.max(0, seedQ - remaining),
+        sold: sold,
+        issued: issued,
+        qtyUnknown: unknown,
         custom: !!it.custom,
         price: it.price
       };
@@ -462,7 +535,7 @@
     });
     var extraCount = loadExtras().length;
     var html =
-      '<p class="stock-meta"><strong>喺呢度更新存貨表</strong>：改「剩餘」即改現場庫存；撳「加產品」可加新款。總預＝第一次落貨／加貨量；剩餘存本機；結算會減售出。</p>' +
+      '<p class="stock-meta"><strong>喺呢度更新存貨表</strong>：改「剩餘」即改現場庫存；撳「加產品」可加新款。總預＝第一次落貨／加貨量；剩餘存本機；結算會減售出。禮品（如杯墊）總預未填時顯示「未填」——填剩餘後先會擋／扣數；未填亦可結算並記已送出。</p>' +
       '<p class="stock-meta muted">來源：' + esc(s.source || "") +
       " · 版本 " + esc(s.version || "") +
       " · 截至 " + esc(s.asOf || "") +
@@ -514,28 +587,38 @@
       html += '<tr><td colspan="6" class="muted">搵唔到</td></tr>';
     } else {
       rows.forEach(function (r) {
-        var low = r.remaining <= 0 ? " stock-row-out" : (r.remaining <= 12 ? " stock-row-low" : "");
+        var remNull = r.remaining == null;
+        var low = remNull ? "" : (r.remaining <= 0 ? " stock-row-out" : (r.remaining <= 12 ? " stock-row-low" : ""));
+        var seedTxt = remNull && r.qtyUnknown ? "未填" : (r.seed == null ? "—" : String(r.seed));
+        var remTxt = remNull ? "未填" : String(r.remaining);
+        var soldTxt = String(r.sold == null ? 0 : r.sold);
+        if (r.qtyUnknown && (r.issued || 0) > 0) {
+          soldTxt = String(r.issued) + "（已送）";
+        }
         html +=
-          '<tr class="stock-row' + low + (r.custom ? " stock-row-custom" : "") + '" data-code="' + esc(r.code) + '">' +
+          '<tr class="stock-row' + low + (r.custom ? " stock-row-custom" : "") + (r.qtyUnknown ? " stock-row-gift" : "") + '" data-code="' + esc(r.code) + '">' +
             "<td><code title=\"X＝入機代號\">" + esc(r.xCode || r.code) + "</code>" +
               (r.code && r.xCode && r.code !== r.xCode
                 ? '<div class="stock-wf muted">app ' + esc(r.code) + "</div>"
                 : "") +
               (r.custom ? '<div class="stock-custom-tag">職員加</div>' : "") +
+              (r.qtyUnknown ? '<div class="stock-custom-tag">禮品</div>' : "") +
             "</td>" +
             "<td><strong>" + esc(r.name) + "</strong>" +
               '<div class="muted stock-cat">' + esc(r.category) + " · " + esc(r.unit) +
               (r.price != null ? (" · $" + esc(String(r.price))) : "") +
+              (r.qtyUnknown ? " · 總預未填，填剩餘後先擋結算" : "") +
               "</div>" +
               (r.custom
                 ? ('<button type="button" class="stock-del" data-del-code="' + esc(r.code) + '">刪除加貨</button>')
                 : "") +
             "</td>" +
-            '<td class="num" title="第一次落貨／總預貨">' + esc(String(r.seed)) + "</td>" +
-            '<td class="num">' + esc(String(r.sold)) + "</td>" +
-            '<td class="num stock-rem">' + esc(String(r.remaining)) + "</td>" +
+            '<td class="num" title="第一次落貨／總預貨">' + esc(seedTxt) + "</td>" +
+            '<td class="num">' + esc(soldTxt) + "</td>" +
+            '<td class="num stock-rem">' + esc(remTxt) + "</td>" +
             '<td><input class="stock-edit" type="number" min="0" step="1" inputmode="numeric" ' +
-              'data-code="' + esc(r.code) + '" value="' + esc(String(r.remaining)) + '" aria-label="剩餘庫存 ' + esc(r.name) + '" /></td>' +
+              'data-code="' + esc(r.code) + '" data-qty-unknown="' + (r.qtyUnknown ? "1" : "0") + '" ' +
+              'value="' + (remNull ? "" : esc(String(r.remaining))) + '" placeholder="未填" aria-label="剩餘庫存 ' + esc(r.name) + '" /></td>' +
           "</tr>";
       });
     }
@@ -623,7 +706,16 @@
     root.querySelectorAll(".stock-edit").forEach(function (inp) {
       inp.addEventListener("change", function () {
         var code = inp.getAttribute("data-code");
-        setQty(code, inp.value);
+        var raw = String(inp.value == null ? "" : inp.value).trim();
+        if (raw === "" && inp.getAttribute("data-qty-unknown") === "1") {
+          // 清空＝回到「未填剩餘」（唔擋結算）
+          var ov = loadOverrides();
+          relatedKeys(code).forEach(function (k) { delete ov[k]; });
+          delete ov[canonicalCode(code)];
+          saveOverrides(ov);
+        } else {
+          setQty(code, raw === "" ? 0 : raw);
+        }
         renderPanel();
         refreshOrderUi();
       });
@@ -670,6 +762,7 @@
     addProduct: addProduct,
     removeProduct: removeProduct,
     stockBadgeHtml: stockBadgeHtml,
+    getIssued: getIssued,
     openPanel: openPanel,
     closePanel: closePanel,
     renderPanel: renderPanel,

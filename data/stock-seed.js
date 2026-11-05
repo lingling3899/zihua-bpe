@@ -1,13 +1,14 @@
 /* 2026 工展會 總預貨量 — HKBPE seed；散裝 CO98/CO99/ZE01/ZE05–07 用獨立大數表 */
 window.BPE_STOCK_SEED = {
-  version: "20261105f",
+  version: "20261105r",
   asOf: "2026-11-05",
   source: "HKBPE 2026 總預貨量",
   notes: [
     "紫花油散裝 CO98/CO99/ZE01/ZE05/ZE06/ZE07 採用獨立摘要表較大數量，非 sheet1 散裝欄較小數。",
     "Pack 套裝列 CO98/CO99/ZE01·Z4C 分別存為 Z0004／Z0004B／Z0004C（與散裝同 WF 碼但不同 SKU）。",
     "CPW021JS1 對應 app 碼 CPW021JS。",
-    "X／入機代號：優先 xCode，否則 wfCode，再係 app code（職員庫存／補貨表顯示）。"
+    "X／入機代號：優先 xCode，否則 wfCode，再係 app code（職員庫存／補貨表顯示）。",
+    "CUPAL-B088 陶瓷杯墊：總預貨量未填（qtyUnknown）；職員輸入「剩餘」後先會按數扣／擋結算；未填時唔擋結算但會記已送出。"
   ],
   aliases: {
     Z1A: "Z0001A",
@@ -39,6 +40,9 @@ window.BPE_STOCK_SEED = {
     { code: "ZE03", name: "紫花滴 50ML", category: "紫花油散裝", qty: 810, unit: "件" },
     { code: "ZE08", name: "紫花 C75 軟膏 50g", category: "紫花油散裝", qty: 600, unit: "件" },
     { code: "ZE10", name: "紫花油蚊水 85ML（新款）", category: "紫花油散裝", qty: 72, unit: "件" },
+
+    /* —— 禮品（工展會贈品；總預未填） —— */
+    { code: "CUPAL-B088", wfCode: "CUPAL-B088", xCode: "CUPAL-B088", name: "紫花油陶瓷杯墊", category: "禮品", qtyUnknown: true, unit: "件" },
 
     /* —— 口罩 —— */
     { code: "ZHMA17", name: "小童立體口罩（紫）WeArmask 3D (V) Kids", category: "口罩", qty: 80, unit: "件" },

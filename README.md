@@ -4,7 +4,7 @@
 
 ## 預覽
 
-GitHub Pages：<https://lingling3899.github.io/zihua-bpe/?v=20261105q>
+GitHub Pages：<https://lingling3899.github.io/zihua-bpe/?v=20261105r>
 
 本機：
 
