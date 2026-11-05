@@ -44,7 +44,7 @@ window.BPE_DIMSUM_ORDER = {
             { code: "CO98", name: "紫花油 6ml", orig: 19, special: 17, unit: "支" },
             { code: "CO99", name: "紫花油 12ml", orig: 33, special: 29, unit: "支" },
             { code: "ZE01", name: "紫花油 26ml", orig: 54, special: 44, unit: "支" },
-            { code: "ZE03", name: "紫花滴", orig: null, special: null, unit: "支" },
+            { code: "ZE03", name: "紫花滴", orig: null, special: 35, unit: "支" },
             { code: "ZE08", name: "紫花 C75 軟膏", orig: 68, special: 50, unit: "盒" },
             { code: "ZE10", name: "紫花油蚊水 85ml（新款）", orig: 62, special: 55, unit: "支" }
           ]

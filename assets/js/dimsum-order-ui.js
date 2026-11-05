@@ -364,7 +364,7 @@
           "[ POS " + esc(String(pos)) + " ]" +
         "</button>" +
         '<div class="pc-logo-wrap">' +
-          '<img class="pc-logo" src="assets/img/zihua-logo.png?v=20261105l" width="200" height="84" alt="紫花油 ZIHUA EMBROCATION" decoding="async" />' +
+          '<img class="pc-logo" src="assets/img/zihua-logo.png?v=20261105m" width="200" height="84" alt="紫花油 ZIHUA EMBROCATION" decoding="async" />' +
         "</div>" +
         '<button type="button" class="pc-gear-btn" id="btnPcGear" aria-label="職員設定" aria-haspopup="true">' +
           '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">' +
@@ -604,8 +604,8 @@
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105l" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105l" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105m" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105m" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
         '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
         (st.paymentMethod
