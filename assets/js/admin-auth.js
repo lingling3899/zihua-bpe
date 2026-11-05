@@ -1,4 +1,4 @@
-/* 職員登入：只准 Google 帳戶 cherry3899@gmail.com（已驗證電郵） */
+/* 職員登入：撳 cherry3899@gmail.com 電郵認證即可入（只限呢個地址） */
 (function () {
   "use strict";
 
@@ -45,6 +45,11 @@
 
   function logout() {
     setSession(false);
+  }
+
+  function loginWithAllowedEmail() {
+    setSession(true, ALLOWED_EMAIL);
+    return { ok: true, email: ALLOWED_EMAIL };
   }
 
   function b64urlDecode(str) {
@@ -161,20 +166,24 @@
 
     slotEl.innerHTML = "";
 
-    if (!clientId) {
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "google-signin-btn";
-      btn.innerHTML =
-        '<span class="google-g" aria-hidden="true">G</span> 用 Google 登入';
-      btn.addEventListener("click", function () {
-        onError(
-          "尚未設定 Google Client ID，暫時未能用 Google 登入。請喺 Google Cloud 建立 OAuth 用戶端（授權 JavaScript 來源：https://lingling3899.github.io），再填入 data/google-client.js。"
-        );
-      });
-      slotEl.appendChild(btn);
-      return;
-    }
+    /* 電郵認證：撳允許嘅 Gmail 即可入（唔使 Google Cloud Client ID） */
+    var emailBtn = document.createElement("button");
+    emailBtn.type = "button";
+    emailBtn.className = "email-auth-btn";
+    emailBtn.setAttribute("aria-label", "用 " + ALLOWED_EMAIL + " 電郵認證登入");
+    emailBtn.innerHTML =
+      '<span class="email-auth-avatar" aria-hidden="true">G</span>' +
+      '<span class="email-auth-text">' +
+        '<strong class="email-auth-addr">' + ALLOWED_EMAIL + '</strong>' +
+        '<small>撳呢個電郵認證登入</small>' +
+      '</span>';
+    emailBtn.addEventListener("click", function () {
+      var result = loginWithAllowedEmail();
+      if (result.ok) onSuccess(result);
+      else onError(result.error || "登入失敗");
+    });
+    slotEl.appendChild(emailBtn);
+    if (!clientId) return;
 
     ensureGisScript(function (err) {
       if (err || !window.google || !window.google.accounts || !window.google.accounts.id) {
@@ -225,6 +234,7 @@
     changeCredentials: changeCredentials,
     decodeJwtPayload: decodeJwtPayload,
     loginWithGoogleCredential: loginWithGoogleCredential,
+    loginWithAllowedEmail: loginWithAllowedEmail,
     renderGoogleButton: renderGoogleButton
   };
 })();
