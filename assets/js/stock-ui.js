@@ -1,4 +1,4 @@
-/* 庫存：總預 seed + 補貨累計 + localStorage 剩餘；剩餘≈總預+補貨-售出；qtyUnknown 未填剩餘唔擋結算；職員可改剩餘／新增補貨／加產品；結算扣數／重設／匯出 */
+/* 庫存：總預＝未到場計劃量（上限）；補貨＝已到場；售出＝結算累積；剩餘＝補貨−售出（真正到場先可賣）；補貨不可超過總預；qtyUnknown 未填剩餘唔擋結算 */
 (function () {
   "use strict";
 
@@ -149,47 +149,6 @@
     return n;
   }
 
-  /** Cumulative restock += N; also bump on-hand remaining when it is known (not qtyUnknown 未填). */
-  function addRestockAmount(code, delta) {
-    var c = canonicalCode(code);
-    if (!c) return false;
-    var d = Math.max(0, Math.floor(Number(delta) || 0));
-    if (!d) return true;
-    var ov = loadOverrides();
-    var keys = relatedKeys(c);
-    var hasOv = false;
-    var curOv = null;
-    for (var i = 0; i < keys.length; i++) {
-      if (Object.prototype.hasOwnProperty.call(ov, keys[i])) {
-        hasOv = true;
-        curOv = Math.max(0, Math.floor(Number(ov[keys[i]]) || 0));
-        break;
-      }
-    }
-    var map = loadRestock();
-    keys.forEach(function (k) {
-      if (k !== c) delete map[k];
-    });
-    map[c] = (Math.floor(Number(map[c]) || 0)) + d;
-    saveRestock(map);
-    if (hasOv) {
-      // Override takes precedence in getQty — bump it so newly arrived goods are sellable.
-      setQty(c, curOv + d);
-    }
-    // No override + seed known: getQty = seed + restock (auto).
-    // No override + qtyUnknown: keep 未填 (do not invent remaining).
-    return true;
-  }
-
-  function clearRestockFor(code) {
-    var c = canonicalCode(code);
-    if (!c) return;
-    var map = loadRestock();
-    relatedKeys(c).forEach(function (k) { delete map[k]; });
-    delete map[c];
-    saveRestock(map);
-  }
-
   function isQtyUnknownItem(code) {
     var c = canonicalCode(code);
     if (!c) return false;
@@ -198,6 +157,117 @@
       if (items[i] && items[i].code === c && items[i].qtyUnknown) return true;
     }
     return false;
+  }
+
+  function hasRemainingOverride(code) {
+    var c = canonicalCode(code);
+    if (!c) return false;
+    var ov = loadOverrides();
+    var keys = relatedKeys(c);
+    for (var i = 0; i < keys.length; i++) {
+      if (Object.prototype.hasOwnProperty.call(ov, keys[i])) return true;
+    }
+    return false;
+  }
+
+  function peekRemainingOverride(code) {
+    var c = canonicalCode(code);
+    if (!c) return null;
+    var ov = loadOverrides();
+    var keys = relatedKeys(c);
+    for (var i = 0; i < keys.length; i++) {
+      if (Object.prototype.hasOwnProperty.call(ov, keys[i])) {
+        return Math.max(0, Math.floor(Number(ov[keys[i]]) || 0));
+      }
+    }
+    return null;
+  }
+
+  function writeRestockTotal(code, total) {
+    var c = canonicalCode(code);
+    if (!c) return;
+    var map = loadRestock();
+    var keys = relatedKeys(c);
+    keys.forEach(function (k) {
+      if (k !== c) delete map[k];
+    });
+    var n = Math.max(0, Math.floor(Number(total) || 0));
+    if (n <= 0) delete map[c];
+    else map[c] = n;
+    saveRestock(map);
+  }
+
+  function clearRestockFor(code) {
+    writeRestockTotal(code, 0);
+  }
+
+  /**
+   * Set absolute arrived restock total.
+   * Caps at 總預 (except qtyUnknown). Cannot go below already-sold.
+   * returns { ok, error, restock, left }
+   */
+  function setRestockTotal(code, nextTotal) {
+    var c = canonicalCode(code);
+    if (!c) return { ok: false, error: "無效代號" };
+    var next = Math.max(0, Math.floor(Number(nextTotal) || 0));
+    var cur = getRestock(c);
+    var sold = getIssued(c);
+    var unknown = isQtyUnknownItem(c);
+    var seedQ = getSeedQty(c);
+
+    if (next < sold) {
+      return {
+        ok: false,
+        error: "補貨唔可以少過已售出（已售 " + sold + "；而家補貨 " + cur + "）",
+        restock: cur,
+        left: seedQ == null ? null : Math.max(0, seedQ - cur)
+      };
+    }
+
+    if (!unknown) {
+      if (seedQ == null || seedQ <= 0) {
+        return {
+          ok: false,
+          error: "已冇得補貨（未有總預數量／總預為 0）",
+          restock: cur,
+          left: 0
+        };
+      }
+      if (next > seedQ) {
+        var left0 = Math.max(0, seedQ - cur);
+        return {
+          ok: false,
+          error: left0 <= 0
+            ? ("已冇得補貨（已補齊總預 " + seedQ + "）")
+            : ("已冇得補貨。仲可到場 " + left0 + "（總預 " + seedQ + " − 已補 " + cur + "）"),
+          restock: cur,
+          left: left0
+        };
+      }
+    }
+
+    var delta = next - cur;
+    writeRestockTotal(c, next);
+
+    // Keep manual remaining override in sync when bumping/cutting arrived stock
+    var curOv = peekRemainingOverride(c);
+    if (curOv != null && delta !== 0) {
+      setQty(c, Math.max(0, curOv + delta));
+    }
+    return {
+      ok: true,
+      restock: next,
+      left: seedQ == null ? null : Math.max(0, seedQ - next)
+    };
+  }
+
+  /** Cumulative restock += N (N may be negative to undo a mistaken entry). */
+  function addRestockAmount(code, delta) {
+    var c = canonicalCode(code);
+    if (!c) return { ok: false, error: "無效代號" };
+    var d = Math.floor(Number(delta) || 0);
+    if (!d) return { ok: true, restock: getRestock(c) };
+    return setRestockTotal(c, getRestock(c) + d);
   }
 
   function getIssued(code) {
@@ -340,14 +410,12 @@
         return Math.max(0, Math.floor(Number(ov[keys[i]]) || 0));
       }
     }
+    // qtyUnknown with no staff remaining: 未填 — 唔擋結算、唔因補貨發明數字
+    if (isQtyUnknownItem(c)) return null;
+    // 到場剩餘 = 補貨 − 售出（總預只係未到場計劃上限，唔當庫存）
     var restock = getRestock(c);
-    var seedMap = buildSeedQtyMap();
-    for (var j = 0; j < keys.length; j++) {
-      if (seedMap[keys[j]] != null) return seedMap[keys[j]] + restock;
-    }
-    if (seedMap[code] != null) return seedMap[code] + restock;
-    // qtyUnknown / unknown SKU with no staff remaining: stay null (唔因補貨發明剩餘)
-    return null;
+    var sold = getIssued(c);
+    return Math.max(0, restock - sold);
   }
 
   function getSeedQty(code) {
@@ -365,13 +433,14 @@
     if (!c) return false;
     var qty = Math.max(0, Math.floor(Number(n) || 0));
     var ov = loadOverrides();
-    var seedMap = buildSeedQtyMap();
     var keys = relatedKeys(c);
     keys.forEach(function (k) {
       if (k !== c) delete ov[k];
     });
-    var seedQ = seedMap[c];
-    var baseline = seedQ == null ? null : seedQ + getRestock(c);
+    // Baseline on-hand = 補貨 − 售出（qtyUnknown 無基線，填咗就要寫覆寫）
+    var baseline = isQtyUnknownItem(c)
+      ? null
+      : Math.max(0, getRestock(c) - getIssued(c));
     if (baseline != null && qty === baseline) {
       delete ov[c];
     } else {
@@ -435,40 +504,34 @@
       if (need <= 0) return;
       var have = getQty(code);
       if (have == null) {
+        // qtyUnknown 未填：只記已送出，唔發明剩餘
         addIssued(code, need);
         return;
       }
-      setQty(code, Math.max(0, have - need));
+      var hadOv = hasRemainingOverride(code);
       addIssued(code, need);
+      // 無覆寫：剩餘自動 = 補貨 − 售出。有人手「改剩餘」先同步覆寫。
+      if (hadOv) {
+        setQty(code, Math.max(0, have - need));
+      }
     });
     return { ok: true, shorts: [] };
   }
 
   function resetToSeed() {
     try { localStorage.removeItem(LS_KEY); } catch (e) {}
-    // 清剩餘覆寫；補貨累計保留 → getQty 變回 總預+補貨。職員加貨（extra）保留。
+    // 只清人手「改剩餘」覆寫；剩餘改返跟 補貨−售出。補貨／已售／職員加貨保留。
   }
 
   function listAll() {
     return allItems().map(function (it) {
-      var rem = getQty(it.code);
       var unknown = !!it.qtyUnknown;
       var seedQ = unknown ? null : Math.max(0, Math.floor(Number(it.qty) || 0));
       var restock = getRestock(it.code);
       var issued = getIssued(it.code);
-      var remaining = rem; // null = 未填／未知
-      var sold;
-      if (unknown && rem == null) {
-        sold = issued;
-      } else if (rem == null) {
-        sold = issued;
-      } else if (unknown) {
-        sold = issued;
-      } else {
-        // 剩餘 = 總預 + 補貨 - 售出  →  售出 = 總預 + 補貨 - 剩餘
-        var base = (seedQ == null ? 0 : seedQ) + restock;
-        sold = Math.max(0, base - rem);
-      }
+      var sold = issued;
+      var remaining = getQty(it.code); // null = qtyUnknown 未填
+      var notArrived = seedQ == null ? null : Math.max(0, seedQ - restock);
       return {
         code: it.code,
         wfCode: it.wfCode || "",
@@ -478,6 +541,7 @@
         unit: it.unit || "件",
         seed: seedQ,
         restock: restock,
+        notArrived: notArrived,
         remaining: remaining,
         sold: sold,
         issued: issued,
@@ -536,7 +600,7 @@
       custom: true
     });
     saveExtras(list);
-    setQty(code, qty);
+    // 總預只係計劃上限；到場要再「補貨」先有得賣
     return { ok: true, code: code };
   }
 
@@ -557,10 +621,10 @@
     var q = getQty(code);
     if (q == null) return "";
     if (q <= 0) {
-      return '<span class="stock-badge stock-out" title="總預貨量剩餘">暫無貨</span>';
+      return '<span class="stock-badge stock-out" title="到場剩餘（補貨−售出）">暫無貨</span>';
     }
     var cls = q <= 12 ? " stock-low" : "";
-    return '<span class="stock-badge' + cls + '" title="總預貨量剩餘">庫存 ' + esc(String(q)) + "</span>";
+    return '<span class="stock-badge' + cls + '" title="到場剩餘（補貨−售出）">庫存 ' + esc(String(q)) + "</span>";
   }
 
   function ensureDrawer() {
@@ -632,7 +696,7 @@
     });
     var extraCount = loadExtras().length;
     var html =
-      '<p class="stock-meta"><strong>喺呢度更新存貨表</strong>：總預＝第一次落貨／加貨量（唔會因補貨改動）；補貨可新增（累計）；售出由結算累積；剩餘≈總預＋補貨−售出（改「剩餘」即改現場庫存）。撳「加產品」可加新款。禮品（如杯墊）剩餘未填時顯示「未填」——填剩餘後先會擋／扣數；未填亦可結算並記已送出，補貨仍可登記但唔會發明剩餘數。</p>' +
+      '<p class="stock-meta"><strong>喺呢度更新存貨表</strong>：總預＝未到場計劃量（上限）；補貨＝已到場貨，可＋／−／刪（入錯可改）；售出只由真正補貨扣；剩餘＝補貨−售出。補貨不可超過總預，超過會提示「已冇得補貨」。撳「加產品」可加新款（總預）。禮品（如杯墊）剩餘未填＝「未填」、唔擋結算；填剩餘後先會擋／扣數。</p>' +
       '<p class="stock-meta muted">來源：' + esc(s.source || "") +
       " · 版本 " + esc(s.version || "") +
       " · 截至 " + esc(s.asOf || "") +
@@ -649,7 +713,7 @@
             (showAddForm ? "收起加產品" : "＋ 加產品") +
           "</button>" +
           '<button type="button" class="btn-ghost" id="btnStockExport">匯出 CSV</button>' +
-          '<button type="button" class="btn-ghost" id="btnStockReset">重設剩餘為總預＋補貨</button>' +
+          '<button type="button" class="btn-ghost" id="btnStockReset">重設剩餘覆寫</button>' +
         "</div>" +
       "</div>";
     if (showAddForm) {
@@ -659,12 +723,12 @@
           '<div class="stock-add-grid">' +
             '<label class="field">入機代號<input id="stockAddCode" name="code" type="text" required placeholder="例如 NEW01" autocomplete="off" /></label>' +
             '<label class="field">產品名稱<input id="stockAddName" name="name" type="text" required placeholder="產品中文名" /></label>' +
-            '<label class="field">總預／數量<input id="stockAddQty" name="qty" type="number" min="0" step="1" inputmode="numeric" value="0" required /></label>' +
+            '<label class="field">總預（未到場計劃）<input id="stockAddQty" name="qty" type="number" min="0" step="1" inputmode="numeric" value="0" required /></label>' +
             '<label class="field">分類<input id="stockAddCat" name="category" type="text" placeholder="職員加貨" value="職員加貨" /></label>' +
             '<label class="field">單位<input id="stockAddUnit" name="unit" type="text" placeholder="件" value="件" /></label>' +
             '<label class="field">售價（選填）<input id="stockAddPrice" name="price" type="number" min="0" step="0.1" inputmode="decimal" placeholder="出現喺產品計數" /></label>' +
           "</div>" +
-          '<p class="muted stock-add-hint">加咗會存本機；有填售價會出現喺「產品計數 → 職員加貨」。未寫入 seed 檔前，清瀏覽器資料會冇。</p>' +
+          '<p class="muted stock-add-hint">加咗會存本機（總預＝計劃上限）；要賣先要再「補貨」登記到場。有填售價會出現喺「產品計數 → 職員加貨」。未寫入 seed 檔前，清瀏覽器資料會冇。</p>' +
           '<div class="btn-row">' +
             '<button type="submit" class="primary">確認加貨</button>' +
             '<button type="button" class="btn-ghost" id="btnStockAddCancel">取消</button>' +
@@ -710,13 +774,21 @@
                 ? ('<button type="button" class="stock-del" data-del-code="' + esc(r.code) + '">刪除加貨</button>')
                 : "") +
             "</td>" +
-            '<td class="num" title="第一次落貨／總預貨（固定）">' + esc(seedTxt) + "</td>" +
+            '<td class="num" title="未到場計劃量／總預上限">' + esc(seedTxt) +
+              (r.notArrived != null
+                ? ('<div class="muted stock-not-arrived" title="總預−補貨">未到場 ' + esc(String(r.notArrived)) + "</div>")
+                : "") +
+            "</td>" +
             '<td class="stock-restock-cell">' +
-              '<div class="num" title="累計補貨">' + esc(String(r.restock || 0)) + "</div>" +
+              '<div class="num" title="已到場補貨">' + esc(String(r.restock || 0)) + "</div>" +
               '<div class="stock-restock-add">' +
                 '<input class="stock-restock-input" type="number" min="1" step="1" inputmode="numeric" ' +
-                  'data-code="' + esc(r.code) + '" placeholder="+數量" aria-label="新增補貨 ' + esc(r.name) + '" />' +
-                '<button type="button" class="stock-restock-btn" data-restock-code="' + esc(r.code) + '" title="新增補貨">＋</button>' +
+                  'data-code="' + esc(r.code) + '" placeholder="數量" aria-label="補貨數量 ' + esc(r.name) + '" />' +
+                '<button type="button" class="stock-restock-btn" data-restock-code="' + esc(r.code) + '" data-restock-dir="1" title="新增補貨">＋</button>' +
+                '<button type="button" class="stock-restock-btn stock-restock-btn-minus" data-restock-code="' + esc(r.code) + '" data-restock-dir="-1" title="減少補貨（入錯）">−</button>' +
+                ((r.restock || 0) > 0
+                  ? ('<button type="button" class="stock-restock-del" data-restock-del="' + esc(r.code) + '" title="刪除入錯嘅補貨（降至已售）">刪</button>')
+                  : "") +
               "</div>" +
             "</td>" +
             '<td class="num" title="售出">' + esc(soldTxt) + "</td>" +
@@ -748,7 +820,7 @@
     var btnReset = $("btnStockReset");
     if (btnReset) {
       btnReset.addEventListener("click", function () {
-        if (!confirm("將全部剩餘重設為「總預＋補貨」？本機剩餘改動會清除；補貨累計會保留；職員加貨產品會保留。")) return;
+        if (!confirm("清除人手改過嘅「剩餘」覆寫，改返跟「補貨−售出」？補貨同已售會保留；職員加貨產品會保留。")) return;
         resetToSeed();
         renderPanel();
         refreshOrderUi();
@@ -825,23 +897,52 @@
         refreshOrderUi();
       });
     });
+    function flashRestockInput(inp) {
+      if (!inp) return;
+      inp.focus();
+      inp.classList.add("stock-restock-input-bad");
+      setTimeout(function () { inp.classList.remove("stock-restock-input-bad"); }, 900);
+    }
+
     root.querySelectorAll(".stock-restock-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var code = btn.getAttribute("data-restock-code");
         if (!code) return;
+        var dir = Number(btn.getAttribute("data-restock-dir") || "1");
         var row = btn.closest("tr");
         var inp = row ? row.querySelector(".stock-restock-input") : null;
         var raw = inp ? String(inp.value == null ? "" : inp.value).trim() : "";
         var n = Math.floor(Number(raw) || 0);
         if (!n || n < 1) {
-          if (inp) {
-            inp.focus();
-            inp.classList.add("stock-restock-input-bad");
-            setTimeout(function () { inp.classList.remove("stock-restock-input-bad"); }, 800);
-          }
+          flashRestockInput(inp);
           return;
         }
-        addRestockAmount(code, n);
+        var res = addRestockAmount(code, dir < 0 ? -n : n);
+        if (!res || !res.ok) {
+          alert((res && res.error) || "已冇得補貨");
+          flashRestockInput(inp);
+          return;
+        }
+        if (inp) inp.value = "";
+        renderPanel();
+        refreshOrderUi();
+      });
+    });
+    root.querySelectorAll(".stock-restock-del").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var code = btn.getAttribute("data-restock-del");
+        if (!code) return;
+        var sold = getIssued(code);
+        var cur = getRestock(code);
+        var msg = sold > 0
+          ? ("刪除入錯補貨「" + code + "」？會將補貨由 " + cur + " 降至已售 " + sold + "（剩餘變 0）。")
+          : ("刪除入錯補貨「" + code + "」？會將補貨由 " + cur + " 清為 0。");
+        if (!confirm(msg)) return;
+        var res = setRestockTotal(code, sold);
+        if (!res || !res.ok) {
+          alert((res && res.error) || "唔可以刪呢筆補貨");
+          return;
+        }
         renderPanel();
         refreshOrderUi();
       });
@@ -851,7 +952,7 @@
         if (e.key === "Enter") {
           e.preventDefault();
           var row = inp.closest("tr");
-          var btn = row ? row.querySelector(".stock-restock-btn") : null;
+          var btn = row ? row.querySelector('.stock-restock-btn[data-restock-dir="1"]') : null;
           if (btn) btn.click();
         }
       });
@@ -889,6 +990,7 @@
     getQty: getQty,
     getSeedQty: getSeedQty,
     getRestock: getRestock,
+    setRestockTotal: setRestockTotal,
     setQty: setQty,
     addQty: addQty,
     addRestockAmount: addRestockAmount,

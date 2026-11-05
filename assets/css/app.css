@@ -1074,6 +1074,12 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
   display: grid; place-items: center; padding: 0; cursor: pointer;
 }
 .stock-restock-btn:active { background: var(--purple); color: #fff; }
+.stock-restock-btn-minus { background: #fff; }
+.stock-restock-del {
+  border: 0; background: transparent; color: #b91c1c; font-size: .72rem; font-weight: 700;
+  padding: 2px 4px; cursor: pointer; text-decoration: underline;
+}
+.stock-not-arrived { font-size: .68rem; margin-top: 2px; }
 .stock-wf, .stock-cat { font-size: .68rem; margin-top: 2px; }
 .stock-custom-tag {
   display: inline-block;
