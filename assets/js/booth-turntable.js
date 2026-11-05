@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  var V = "20261106a";
+  var V = "20261106b";
   var FRAME_COUNT = 8;
   var STRIP_W = 12800;
   var STRIP_H = 900;
@@ -142,7 +142,11 @@
     var vh = viewer.clientHeight;
     if (vw < 2 || vh < 2) return;
 
-    var scale = Math.max(vw / FRAME_W, vh / STRIP_H);
+    /* contain: show full 16:9 frame (no crop); modest letterbox OK */
+    var padX = 6;
+    var padY = 6;
+    var scale = Math.min((vw - padX * 2) / FRAME_W, (vh - padY * 2) / STRIP_H);
+    if (scale <= 0) return;
     var dw = FRAME_W * scale;
     var dh = STRIP_H * scale;
     var stripCssW = dw * FRAME_COUNT;

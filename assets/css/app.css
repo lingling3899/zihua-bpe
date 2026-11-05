@@ -720,10 +720,10 @@ body[data-view="order"] .floating-login .login-dropdown {
   .bottom-nav { left: 50%; right: auto; width: 560px; transform: translateX(-50%); border-radius: 16px 16px 0 0; }
 }
 
-/* ——— 3D 展位 Three.js 立體模型 ——— */
+/* ——— 3D 展位 360° turntable ——— */
 #view-booth3d {
   margin: 0;
-  min-height: calc(100vh - var(--nav-h) - var(--safe-bottom));
+  min-height: calc(100dvh - var(--nav-h) - var(--safe-bottom));
   display: flex;
   flex-direction: column;
 }
@@ -787,8 +787,14 @@ body[data-view="order"] .floating-login .login-dropdown {
 }
 .booth3d-stage {
   position: relative;
-  flex: 1;
-  min-height: 440px;
+  flex: 0 0 auto;
+  width: min(
+    100%,
+    calc(min(52vh, calc(100dvh - var(--nav-h) - var(--safe-bottom) - 100px)) * 16 / 9)
+  );
+  aspect-ratio: 16 / 9;
+  max-height: min(52vh, calc(100dvh - var(--nav-h) - var(--safe-bottom) - 100px));
+  margin: 0 auto;
   background: #d9e8f4;
   overflow: hidden;
   touch-action: none;
@@ -982,7 +988,13 @@ body[data-view="order"] .floating-login .login-dropdown {
 body.view-booth3d .floating-login { display: none; }
 body.view-booth3d .wrap { padding-bottom: 8px; }
 @media (min-width: 560px) {
-  .booth3d-stage { min-height: 540px; }
+  .booth3d-stage {
+    width: min(
+      100%,
+      calc(min(56vh, calc(100dvh - var(--nav-h) - var(--safe-bottom) - 100px)) * 16 / 9)
+    );
+    max-height: min(56vh, calc(100dvh - var(--nav-h) - var(--safe-bottom) - 100px));
+  }
 }
 
 /* ——— 庫存 badge / staff panel ——— */
