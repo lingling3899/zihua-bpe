@@ -49,11 +49,45 @@
     if (name === "roster" && window.BPE_Roster) window.BPE_Roster.render();
   }
 
+  function showLoginMsg(text, isError) {
+    var msg = $("loginMsg");
+    if (!msg) return;
+    if (!text) {
+      msg.classList.add("hidden");
+      msg.textContent = "";
+      return;
+    }
+    msg.textContent = text;
+    msg.classList.remove("hidden");
+    msg.classList.toggle("login-msg-error", !!isError);
+  }
+
   function openLogin() {
     var modal = $("loginModal");
     if (modal) modal.classList.remove("hidden");
-    var msg = $("loginMsg");
-    if (msg) { msg.classList.add("hidden"); msg.textContent = ""; }
+    showLoginMsg("");
+    var slot = $("googleSignInSlot");
+    if (window.ZihuaAdminAuth && window.ZihuaAdminAuth.renderGoogleButton) {
+      window.ZihuaAdminAuth.renderGoogleButton(slot, {
+        onSuccess: function () {
+          closeLogin();
+          setAdminVisible(true);
+          if (window.BPE_DimsumOrderUI && window.BPE_DimsumOrderUI.render) {
+            window.BPE_DimsumOrderUI.render();
+          }
+          if (window.BPE_Roster && window.BPE_Roster.render) {
+            window.BPE_Roster.render();
+          }
+          showView(document.body.getAttribute("data-view") || "order");
+        },
+        onError: function (err) {
+          showLoginMsg(err || "登入失敗", true);
+        }
+      });
+    } else if (slot) {
+      slot.innerHTML = "";
+      showLoginMsg("登入模組未載入，請刷新頁面。", true);
+    }
   }
   function closeLogin() {
     var modal = $("loginModal");
@@ -156,37 +190,8 @@
       });
     });
 
-    var loginForm = $("loginForm");
-    if (loginForm) {
-      loginForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-        var user = ($("loginUser") || {}).value || "";
-        var pass = ($("loginPass") || {}).value || "";
-        var msg = $("loginMsg");
-        if (!window.ZihuaAdminAuth) return;
-        window.ZihuaAdminAuth.login(user, pass).then(function (ok) {
-          if (ok) {
-            closeLogin();
-            setAdminVisible(true);
-            showView("roster");
-          } else if (msg) {
-            msg.textContent = "帳號或密碼唔正確";
-            msg.classList.remove("hidden");
-          }
-        });
-      });
-    }
     var cancel = $("btnCancelLogin");
     if (cancel) cancel.addEventListener("click", closeLogin);
-
-    qsa("[data-toggle-pass]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        var id = btn.getAttribute("data-toggle-pass");
-        var inp = $(id);
-        if (!inp) return;
-        inp.type = inp.type === "password" ? "text" : "password";
-      });
-    });
 
     var closeGifts = $("btnCloseGifts");
     if (closeGifts) {

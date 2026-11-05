@@ -1,54 +1,16 @@
+/* 職員登入：只准 Google 帳戶 cherry3899@gmail.com（已驗證電郵） */
 (function () {
   "use strict";
 
-  var CREDS_KEY = "zihua_bpe_admin_creds_v1";
   var SESSION_KEY = "zihua_bpe_admin_session";
-  var DEFAULT_USER = "zihua";
-  // SHA-256 hex of "office2026"
-  var DEFAULT_PASS_HASH =
-    "5278374f8a2f6c0bcbb4da91e38acadef155ac20964dad6f4d3f6edede34e74e";
+  var EMAIL_KEY = "zihua_bpe_admin_email";
+  var ALLOWED_EMAIL = "cherry3899@gmail.com";
+  var gisReady = false;
+  var gisInitDone = false;
 
-  function toHex(buffer) {
-    var bytes = new Uint8Array(buffer);
-    var out = "";
-    for (var i = 0; i < bytes.length; i++) {
-      out += bytes[i].toString(16).padStart(2, "0");
-    }
-    return out;
-  }
-
-  async function sha256Hex(str) {
-    var data = new TextEncoder().encode(String(str));
-    var digest = await crypto.subtle.digest("SHA-256", data);
-    return toHex(digest);
-  }
-
-  function getCreds() {
-    try {
-      var raw = localStorage.getItem(CREDS_KEY);
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        if (
-          parsed &&
-          typeof parsed.user === "string" &&
-          typeof parsed.passHash === "string" &&
-          parsed.user &&
-          parsed.passHash
-        ) {
-          return { user: parsed.user, passHash: parsed.passHash };
-        }
-      }
-    } catch (e) {
-      /* ignore */
-    }
-    return { user: DEFAULT_USER, passHash: DEFAULT_PASS_HASH };
-  }
-
-  function setCreds(user, passHash) {
-    localStorage.setItem(
-      CREDS_KEY,
-      JSON.stringify({ user: String(user), passHash: String(passHash) })
-    );
+  function getClientId() {
+    var id = window.ZIHUA_GOOGLE_CLIENT_ID;
+    return typeof id === "string" ? id.trim() : "";
   }
 
   function isLoggedIn() {
@@ -59,55 +21,210 @@
     }
   }
 
-  function setSession(on) {
+  function getSessionEmail() {
     try {
-      if (on) sessionStorage.setItem(SESSION_KEY, "1");
-      else sessionStorage.removeItem(SESSION_KEY);
+      return sessionStorage.getItem(EMAIL_KEY) || "";
     } catch (e) {
-      /* private mode */
+      return "";
     }
   }
 
-  async function verifyLogin(user, pass) {
-    var creds = getCreds();
-    if (String(user) !== creds.user) return false;
-    var hash = await sha256Hex(pass);
-    return hash === creds.passHash;
-  }
-
-  async function login(user, pass) {
-    var ok = await verifyLogin(user, pass);
-    if (ok) setSession(true);
-    return ok;
+  function setSession(on, email) {
+    try {
+      if (on) {
+        sessionStorage.setItem(SESSION_KEY, "1");
+        if (email) sessionStorage.setItem(EMAIL_KEY, String(email));
+      } else {
+        sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(EMAIL_KEY);
+      }
+    } catch (e) {
+      /* private mode */
+    }
   }
 
   function logout() {
     setSession(false);
   }
 
-  async function changeCredentials(currentPass, newUser, newPass) {
-    var creds = getCreds();
-    var curHash = await sha256Hex(currentPass);
-    if (curHash !== creds.passHash) {
-      return { ok: false, error: "而家密碼唔正確" };
+  function b64urlDecode(str) {
+    var s = String(str || "").replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    try {
+      return decodeURIComponent(
+        Array.prototype.map
+          .call(atob(s), function (c) {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join("")
+      );
+    } catch (e) {
+      try {
+        return atob(s);
+      } catch (e2) {
+        return "";
+      }
     }
-    var nu = String(newUser || "").trim();
-    var np = String(newPass || "");
-    if (!nu) return { ok: false, error: "請填新帳號" };
-    if (np.length < 4) return { ok: false, error: "新密碼至少 4 個字" };
-    var newHash = await sha256Hex(np);
-    setCreds(nu, newHash);
-    return { ok: true };
+  }
+
+  function decodeJwtPayload(credential) {
+    var parts = String(credential || "").split(".");
+    if (parts.length < 2) return null;
+    try {
+      return JSON.parse(b64urlDecode(parts[1]));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function loginWithGoogleCredential(credential) {
+    var payload = decodeJwtPayload(credential);
+    if (!payload) {
+      return { ok: false, error: "Google 登入資料無效，請再試。" };
+    }
+    var email = String(payload.email || "")
+      .trim()
+      .toLowerCase();
+    var verified = payload.email_verified === true || payload.email_verified === "true";
+    if (!email || !verified) {
+      return {
+        ok: false,
+        error: "呢個 Google 帳戶電郵未驗證，唔可以登入修改。"
+      };
+    }
+    if (email !== ALLOWED_EMAIL) {
+      return {
+        ok: false,
+        error: "只准 " + ALLOWED_EMAIL + " 登入修改庫存／加產品等。呢個帳戶唔獲授權。"
+      };
+    }
+    setSession(true, email);
+    return { ok: true, email: email };
+  }
+
+  /* 舊密碼登入已停用；保留 stub 以免其他檔案呼叫時爆 */
+  function login() {
+    return Promise.resolve(false);
+  }
+  function verifyLogin() {
+    return Promise.resolve(false);
+  }
+  function changeCredentials() {
+    return Promise.resolve({
+      ok: false,
+      error: "已改用 Google 登入，唔再支援改帳密。"
+    });
+  }
+
+  function ensureGisScript(cb) {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      gisReady = true;
+      cb(null);
+      return;
+    }
+    var existing = document.querySelector('script[data-zihua-gsi="1"]');
+    if (existing) {
+      existing.addEventListener("load", function () {
+        gisReady = true;
+        cb(null);
+      });
+      existing.addEventListener("error", function () {
+        cb(new Error("load"));
+      });
+      return;
+    }
+    var s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.defer = true;
+    s.setAttribute("data-zihua-gsi", "1");
+    s.onload = function () {
+      gisReady = true;
+      cb(null);
+    };
+    s.onerror = function () {
+      cb(new Error("load"));
+    };
+    document.head.appendChild(s);
+  }
+
+  function renderGoogleButton(slotEl, handlers) {
+    handlers = handlers || {};
+    var onSuccess = handlers.onSuccess || function () {};
+    var onError = handlers.onError || function () {};
+    var clientId = getClientId();
+
+    if (!slotEl) {
+      onError("登入畫面未就緒。");
+      return;
+    }
+
+    slotEl.innerHTML = "";
+
+    if (!clientId) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "google-signin-btn";
+      btn.innerHTML =
+        '<span class="google-g" aria-hidden="true">G</span> 用 Google 登入';
+      btn.addEventListener("click", function () {
+        onError(
+          "尚未設定 Google Client ID，暫時未能用 Google 登入。請喺 Google Cloud 建立 OAuth 用戶端（授權 JavaScript 來源：https://lingling3899.github.io），再填入 data/google-client.js。"
+        );
+      });
+      slotEl.appendChild(btn);
+      return;
+    }
+
+    ensureGisScript(function (err) {
+      if (err || !window.google || !window.google.accounts || !window.google.accounts.id) {
+        onError("未能載入 Google 登入服務，請檢查網絡後再試。");
+        return;
+      }
+      try {
+        if (!gisInitDone) {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: function (resp) {
+              if (!resp || !resp.credential) {
+                onError("Google 登入冇回應，請再試。");
+                return;
+              }
+              var result = loginWithGoogleCredential(resp.credential);
+              if (result.ok) onSuccess(result);
+              else onError(result.error || "登入失敗");
+            },
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+          gisInitDone = true;
+        }
+        window.google.accounts.id.renderButton(slotEl, {
+          theme: "outline",
+          size: "large",
+          text: "signin_with",
+          shape: "pill",
+          width: 280,
+          locale: "zh-HK"
+        });
+      } catch (e) {
+        onError("Google 登入掣未能啟動，請稍後再試。");
+      }
+    });
   }
 
   window.ZihuaAdminAuth = {
-    sha256Hex: sha256Hex,
-    getCreds: getCreds,
-    setCreds: setCreds,
+    ALLOWED_EMAIL: ALLOWED_EMAIL,
+    getClientId: getClientId,
     isLoggedIn: isLoggedIn,
-    verifyLogin: verifyLogin,
-    login: login,
+    getSessionEmail: getSessionEmail,
+    setSession: setSession,
     logout: logout,
-    changeCredentials: changeCredentials
+    login: login,
+    verifyLogin: verifyLogin,
+    changeCredentials: changeCredentials,
+    decodeJwtPayload: decodeJwtPayload,
+    loginWithGoogleCredential: loginWithGoogleCredential,
+    renderGoogleButton: renderGoogleButton
   };
 })();

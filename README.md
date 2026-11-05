@@ -4,7 +4,7 @@
 
 ## 預覽
 
-GitHub Pages：<https://lingling3899.github.io/zihua-bpe/?v=20261105a>
+GitHub Pages：<https://lingling3899.github.io/zihua-bpe/?v=20261105l>
 
 本機：
 
@@ -24,12 +24,17 @@ python3 -m http.server 8766
 
 ## 職員登入
 
-| 項目 | 值 |
-|------|-----|
-| 帳號 | `zihua` |
-| 密碼 | `office2026` |
+用 **Google 帳戶**認證；只准 `cherry3899@gmail.com`（已驗證電郵）登入後修改庫存／加產品／禮遇等。
 
-資料存瀏覽器 `localStorage`。禮遇／預訂／宅配／更表均可本機保存。
+Client ID 放喺 `data/google-client.js`（`window.ZIHUA_GOOGLE_CLIENT_ID`）。授權 JavaScript 來源：`https://lingling3899.github.io`。未填 Client ID 時登入掣會提示尚未設定。
+
+### POS 機同單號
+
+- 產品計數頂欄 **POS** 掣喺 POS1／POS2 之間切換（預設 POS1）
+- 結算單號格式：`pos1-20261105-0001`（前綴＝邊部機；流水號全日共用，跟住落）
+- 同一部機切換 POS1／POS2 共用當日流水；兩部實體機暫時各自計
+
+資料存瀏覽器 `localStorage`／`sessionStorage`。禮遇／預訂／宅配／更表均可本機保存。
 
 ## 禮遇（送完即止）
 

@@ -80,22 +80,72 @@
     return !!(a && a.isLoggedIn && a.isLoggedIn());
   }
   var POS_LS = "zihua_bpe_pos_station_v1";
+  var ORDER_SEQ_LS = "zihua_bpe_order_seq_v1";
   function getPosStation() {
     try {
       var n = Math.floor(Number(localStorage.getItem(POS_LS)) || 1);
-      if (n < 1 || n > 8) n = 1;
+      if (n !== 1 && n !== 2) n = 1;
       return n;
     } catch (e) {
       return 1;
     }
   }
   function setPosStation(n) {
-    var v = Math.max(1, Math.min(8, Math.floor(Number(n) || 1)));
+    var v = Math.floor(Number(n) || 1);
+    if (v !== 1 && v !== 2) v = 1;
     try { localStorage.setItem(POS_LS, String(v)); } catch (e) {}
     return v;
   }
   function cyclePosStation() {
-    return setPosStation((getPosStation() % 8) + 1);
+    return setPosStation(getPosStation() === 1 ? 2 : 1);
+  }
+  function hkYmd() {
+    try {
+      var s = new Date().toLocaleString("en-CA", {
+        timeZone: "Asia/Hong_Kong",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+      return String(s).slice(0, 10).replace(/-/g, "");
+    } catch (e) {
+      var d = new Date();
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, "0");
+      var day = String(d.getDate()).padStart(2, "0");
+      return "" + y + m + day;
+    }
+  }
+  function nextOrderNo(posN) {
+    var date = hkYmd();
+    var state = { date: date, seq: 0 };
+    try {
+      var raw = localStorage.getItem(ORDER_SEQ_LS);
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && o.date === date && typeof o.seq === "number" && o.seq >= 0) {
+          state = { date: date, seq: o.seq };
+        }
+      }
+    } catch (e) {}
+    state.seq = (Number(state.seq) || 0) + 1;
+    state.date = date;
+    try {
+      localStorage.setItem(ORDER_SEQ_LS, JSON.stringify(state));
+    } catch (e2) {}
+    var seqStr = String(state.seq).padStart(4, "0");
+    var n = posN === 2 ? 2 : 1;
+    return "pos" + n + "-" + date + "-" + seqStr;
+  }
+  function loadRecentOrders(limit) {
+    try {
+      var raw = localStorage.getItem("zihua_bpe_preorders_v1");
+      var list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) return [];
+      return list.slice(0, limit || 8);
+    } catch (e) {
+      return [];
+    }
   }
   function bogoDiscount(prices) {
     if (!prices.length) return 0;
@@ -278,15 +328,43 @@
     );
   }
 
+  function renderRecentOrdersHtml() {
+    if (!isAdmin()) return "";
+    var list = loadRecentOrders(8);
+    if (!list.length) {
+      return (
+        '<div class="pc-recent-orders admin-only">' +
+          "<h4>最近單據</h4>" +
+          '<p class="muted">未有本機結算紀錄。</p>' +
+        "</div>"
+      );
+    }
+    var rows = list.map(function (o) {
+      var no = o.orderNo || o.id || "—";
+      var pay = o.paymentLabel || o.paymentMethod || "";
+      var amt = o.payable != null ? ("$" + money(o.payable)) : "";
+      return (
+        '<li><strong class="pc-order-no">' + esc(no) + "</strong>" +
+        '<span>' + esc(pay) + (amt ? " · " + esc(amt) : "") + "</span></li>"
+      );
+    }).join("");
+    return (
+      '<div class="pc-recent-orders admin-only">' +
+        "<h4>最近單據</h4>" +
+        "<ul>" + rows + "</ul>" +
+      "</div>"
+    );
+  }
+
   function renderHero() {
     var pos = getPosStation();
     return (
       '<div class="pc-topbar">' +
-        '<button type="button" class="pc-pos-btn" id="btnPcPos" aria-label="POS 機位">' +
+        '<button type="button" class="pc-pos-btn" id="btnPcPos" aria-label="切換 POS1 或 POS2" title="撳一下切換 POS1／POS2">' +
           "[ POS " + esc(String(pos)) + " ]" +
         "</button>" +
         '<div class="pc-logo-wrap">' +
-          '<img class="pc-logo" src="assets/img/zihua-logo.png?v=20261105k" width="200" height="84" alt="紫花油 ZIHUA EMBROCATION" decoding="async" />' +
+          '<img class="pc-logo" src="assets/img/zihua-logo.png?v=20261105l" width="200" height="84" alt="紫花油 ZIHUA EMBROCATION" decoding="async" />' +
         "</div>" +
         '<button type="button" class="pc-gear-btn" id="btnPcGear" aria-label="職員設定" aria-haspopup="true">' +
           '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">' +
@@ -294,6 +372,7 @@
           "</svg>" +
         "</button>" +
       "</div>" +
+      '<p class="pc-pos-note">撳左上 POS 掣喺 <strong>POS1／POS2</strong> 之間切換（預設 POS1）。同一部機切換 POS1／POS2 共用當日流水號；兩部實體機暫時各自計（之後可加雲端同步）。</p>' +
       '<header class="pc-hero">' +
         '<p class="pc-hero-kicker">2026 工展會 · 會場購物禮遇</p>' +
         "<h2>產品計數 · 預訂</h2>" +
@@ -301,6 +380,7 @@
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
         '<p class="pc-hero-note">套裝價自動計算 · 花香套／5 支花香油送杯墊 · 任何消費送 2027 年曆卡 · 買6支26ml送1支12ml（扣庫存）· 滿額贈品以最高一級計 · 先減優惠券，再銀髮 95 折，以最終實付計禮遇 · 送完即止</p>' +
+        renderRecentOrdersHtml() +
       "</header>"
     );
   }
@@ -524,8 +604,8 @@
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105k" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105k" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105l" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105l" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
         '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
         (st.paymentMethod
@@ -623,8 +703,12 @@
     if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
       giftTitles = window.BPE_Gifts.evaluate(calc.total, st).reached.map(function (t) { return t.title; });
     }
+    var pos = getPosStation();
+    var orderNo = nextOrderNo(pos);
     var order = {
       id: "po-" + Date.now(),
+      orderNo: orderNo,
+      pos: pos,
       t: new Date().toISOString(),
       count: calc.count,
       subtotal: pr.subtotal,
@@ -781,7 +865,9 @@
           giftLine += "\n套裝 Z0004C × " + calcS.z4cQty + "（已含送12ml，已扣套裝庫存）";
         }
         alert(
-          "已結算（本機）\n" +
+          "已結算（本機）\n\n" +
+          "單號\n" + (order.orderNo || "") + "\n\n" +
+          "POS " + (order.pos || getPosStation()) + "\n" +
           "付款：" + order.paymentLabel + "\n" +
           "共 " + order.count + " 件\n" +
           "合計 $" + money(order.subtotal) + "\n" +
