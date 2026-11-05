@@ -1061,6 +1061,19 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
 }
 .stock-row-low .stock-rem { color: #e65100; font-weight: 700; }
 .stock-row-out .stock-rem { color: #9e9e9e; font-weight: 700; }
+.stock-restock-cell { min-width: 92px; }
+.stock-restock-add { display: flex; gap: 4px; align-items: center; margin-top: 4px; }
+.stock-restock-input {
+  width: 58px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 8px;
+  font-size: .78rem; font-variant-numeric: tabular-nums;
+}
+.stock-restock-input-bad { border-color: #e11d48; background: #fff1f2; }
+.stock-restock-btn {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--purple-soft); color: var(--purple-dark); font-weight: 800; font-size: .95rem;
+  display: grid; place-items: center; padding: 0; cursor: pointer;
+}
+.stock-restock-btn:active { background: var(--purple); color: #fff; }
 .stock-wf, .stock-cat { font-size: .68rem; margin-top: 2px; }
 .stock-custom-tag {
   display: inline-block;
