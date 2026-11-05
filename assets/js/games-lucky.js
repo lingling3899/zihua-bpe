@@ -3,15 +3,15 @@
   "use strict";
 
   var WHEEL = [
-    { id: "grand", label: "大獎", weight: 1, color: "#f5c542" },
-    { id: "calendar", label: "年曆卡", weight: 8, color: "#9b6bd6" },
-    { id: "coaster", label: "杯墊", weight: 12, color: "#c4a3e8" },
-    { id: "again", label: "下次再來", weight: 18, color: "#7c4dbd" },
-    { id: "pen", label: "原子筆", weight: 14, color: "#a67ce0" },
-    { id: "95off", label: "95折", weight: 10, color: "#8e5cc9" },
-    { id: "mystery", label: "神秘禮品", weight: 6, color: "#b58eef" },
-    { id: "minus10", label: "再買減$10", weight: 12, color: "#6f3fb0" },
-    { id: "m200", label: "滿200減20", weight: 9, color: "#d4b6f5" }
+    { id: "grand", label: "大獎", weight: 1, color: "#D4A53C" },
+    { id: "calendar", label: "年曆卡", weight: 8, color: "#5B21B6" },
+    { id: "coaster", label: "杯墊", weight: 12, color: "#DDD4F4" },
+    { id: "again", label: "下次再來", weight: 18, color: "#5B21B6" },
+    { id: "pen", label: "原子筆", weight: 14, color: "#DDD4F4" },
+    { id: "95off", label: "95折", weight: 10, color: "#5B21B6" },
+    { id: "mystery", label: "神秘禮品", weight: 6, color: "#DDD4F4" },
+    { id: "minus10", label: "再買減$10", weight: 12, color: "#5B21B6" },
+    { id: "m200", label: "滿200減20", weight: 9, color: "#DDD4F4" }
   ];
   var PLINKO = [
     { id: "coaster", label: "杯墊" },
@@ -104,19 +104,17 @@
       var mid = ((i + 0.5) / segs) * 360;
       var text = String(w.label);
       var len = Array.from(text).length;
-      var chars = Array.from(text).map(function (ch) {
-        return '<span class="wheel-ch">' + esc(ch) + "</span>";
-      }).join("");
+      var flip = (mid > 90 && mid < 270) ? "180deg" : "0deg";
       var cls = "wheel-label";
       if (len <= 3) cls += " is-short";
       else if (len >= 6) cls += " is-long";
       if (sliceNeedsDarkText(w.color)) cls += " is-dark";
-      return '<span class="' + cls + '" style="--a:' + mid + 'deg">' + chars + "</span>";
+      return '<span class="' + cls + '" style="--a:' + mid + 'deg;--flip:' + flip + '">' + esc(text) + "</span>";
     }).join("");
     return (
       '<div class="wheel-wrap">' +
         '<div class="wheel-pointer" aria-hidden="true">▼</div>' +
-        '<div class="wheel" id="luckyWheel" style="background: conic-gradient(' + grad + '); transform: rotate(' + wheelAngle + 'deg); --spin: ' + wheelAngle + 'deg">' +
+        '<div class="wheel" id="luckyWheel" style="background: conic-gradient(' + grad + '); transform: rotate(' + wheelAngle + 'deg)">' +
           '<div class="wheel-center">紫花油</div>' +
           '<div class="wheel-labels">' + labels + "</div>" +
         "</div>" +
@@ -255,7 +253,6 @@
       if (wheel) {
         wheel.style.transition = "none";
         wheel.style.transform = "rotate(" + wheelAngle + "deg)";
-        wheel.style.setProperty("--spin", wheelAngle + "deg");
       }
       if (t < 1) {
         wheelRaf = requestAnimationFrame(frame);
@@ -263,7 +260,6 @@
         wheelAngle = startAngle + delta;
         if (wheel) {
           wheel.style.transform = "rotate(" + wheelAngle + "deg)";
-          wheel.style.setProperty("--spin", wheelAngle + "deg");
         }
         spinning = false;
         wheelRaf = 0;
