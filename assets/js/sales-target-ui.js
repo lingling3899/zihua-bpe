@@ -141,9 +141,18 @@
     var map = loadSalesMap();
     var cur = map[key];
     if (!cur || typeof cur !== "object") {
-      // Seed from residual preorders so we don't undercount if bucket was missing
+      // Seed from today's preorders (saveSettle writes the order first, so seed
+      // already includes this sale). Do not add amt again or the first order
+      // of each day would be counted twice.
       var seed = sumTodayFromPreorders(key);
-      cur = { total: seed.total, count: seed.count };
+      if (seed.count > 0) {
+        cur = { total: seed.total, count: seed.count };
+      } else {
+        cur = { total: amt, count: 1 };
+      }
+      map[key] = cur;
+      saveSalesMap(map);
+      return { total: cur.total, count: cur.count, fromAccumulator: true, dateKey: key };
     }
     cur.total = round2((Number(cur.total) || 0) + amt);
     cur.count = Math.max(0, Math.floor(Number(cur.count) || 0) + 1);
