@@ -60,6 +60,44 @@
     if (modal) modal.classList.add("hidden");
   }
 
+  function positionStaffDropdown(anchor) {
+    var dd = $("loginDropdown");
+    if (!dd) return;
+    if (!anchor) {
+      dd.style.position = "";
+      dd.style.top = "";
+      dd.style.right = "";
+      dd.style.left = "";
+      return;
+    }
+    var r = anchor.getBoundingClientRect();
+    dd.style.position = "fixed";
+    dd.style.top = Math.round(r.bottom + 8) + "px";
+    dd.style.right = Math.round(Math.max(8, window.innerWidth - r.right)) + "px";
+    dd.style.left = "auto";
+    dd.style.zIndex = "80";
+  }
+
+  function toggleStaffMenu(anchor) {
+    var loginBtn = $("headerLoginBtn");
+    if (!isAdmin()) {
+      openLogin();
+      return;
+    }
+    var dd = $("loginDropdown");
+    if (!dd) return;
+    var opening = dd.classList.contains("hidden");
+    if (opening) {
+      dd.classList.remove("hidden");
+      positionStaffDropdown(anchor || loginBtn);
+      if (loginBtn) loginBtn.setAttribute("aria-expanded", "true");
+    } else {
+      dd.classList.add("hidden");
+      positionStaffDropdown(null);
+      if (loginBtn) loginBtn.setAttribute("aria-expanded", "false");
+    }
+  }
+
   function bind() {
     qsa(".bottom-nav [data-view]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -75,27 +113,27 @@
     var loginBtn = $("headerLoginBtn");
     if (loginBtn) {
       loginBtn.addEventListener("click", function () {
-        if (isAdmin()) {
-          var dd = $("loginDropdown");
-          if (dd) {
-            dd.classList.toggle("hidden");
-            loginBtn.setAttribute("aria-expanded", dd.classList.contains("hidden") ? "false" : "true");
-          }
-        } else {
-          openLogin();
-        }
+        toggleStaffMenu(loginBtn);
       });
     }
     document.addEventListener("click", function (e) {
-      if (!e.target.closest(".header-login-wrap")) {
+      if (
+        !e.target.closest(".header-login-wrap") &&
+        !e.target.closest("#btnPcGear") &&
+        !e.target.closest("#loginDropdown")
+      ) {
         var dd = $("loginDropdown");
-        if (dd) dd.classList.add("hidden");
+        if (dd) {
+          dd.classList.add("hidden");
+          positionStaffDropdown(null);
+        }
       }
     });
     qsa("#loginDropdown [data-dd-action]").forEach(function (b) {
       b.addEventListener("click", function () {
         var act = b.getAttribute("data-dd-action");
         $("loginDropdown").classList.add("hidden");
+        positionStaffDropdown(null);
         if (act === "logout" && window.ZihuaAdminAuth) {
           window.ZihuaAdminAuth.logout();
           setAdminVisible(false);
@@ -169,6 +207,7 @@
   window.BPE_Shell = {
     showView: showView,
     openLogin: openLogin,
+    toggleStaffMenu: toggleStaffMenu,
     isAdmin: isAdmin,
     refreshAdmin: function () { setAdminVisible(isAdmin()); }
   };

@@ -79,6 +79,24 @@
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
   }
+  var POS_LS = "zihua_bpe_pos_station_v1";
+  function getPosStation() {
+    try {
+      var n = Math.floor(Number(localStorage.getItem(POS_LS)) || 1);
+      if (n < 1 || n > 8) n = 1;
+      return n;
+    } catch (e) {
+      return 1;
+    }
+  }
+  function setPosStation(n) {
+    var v = Math.max(1, Math.min(8, Math.floor(Number(n) || 1)));
+    try { localStorage.setItem(POS_LS, String(v)); } catch (e) {}
+    return v;
+  }
+  function cyclePosStation() {
+    return setPosStation((getPosStation() % 8) + 1);
+  }
   function bogoDiscount(prices) {
     if (!prices.length) return 0;
     var sorted = prices.slice().sort(function (a, b) { return a - b; });
@@ -89,7 +107,7 @@
   }
 
   function calcTotals(st) {
-    var sheets = data().sheets || [];
+    var sheets = allSheets();
     var total = 0;
     var lines = [];
     var pieceCount = 0;
@@ -192,7 +210,7 @@
       if (!c || q <= 0) return;
       demand[c] = (demand[c] || 0) + q;
     }
-    var sheets = data().sheets || [];
+    var sheets = allSheets();
     sheets.forEach(function (sheet) {
       (sheet.sections || []).forEach(function (sec) {
         (sec.items || []).forEach(function (it) {
@@ -261,10 +279,24 @@
   }
 
   function renderHero() {
+    var pos = getPosStation();
     return (
+      '<div class="pc-topbar">' +
+        '<button type="button" class="pc-pos-btn" id="btnPcPos" aria-label="POS 機位">' +
+          "[ POS " + esc(String(pos)) + " ]" +
+        "</button>" +
+        '<div class="pc-logo-wrap">' +
+          '<img class="pc-logo" src="assets/img/zihua-logo.png?v=20261105k" width="200" height="84" alt="紫花油 ZIHUA EMBROCATION" decoding="async" />' +
+        "</div>" +
+        '<button type="button" class="pc-gear-btn" id="btnPcGear" aria-label="職員設定" aria-haspopup="true">' +
+          '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">' +
+            '<path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.05 7.05 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.68.22l2.39-.96c.5.39 1.04.71 1.63.94l.36 2.54c.05.24.26.42.49.42h3.8c.24 0 .44-.18.49-.42l.36-2.54c.59-.24 1.13-.55 1.63-.94l2.39.96c.25.12.54.02.68-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/>' +
+          "</svg>" +
+        "</button>" +
+      "</div>" +
       '<header class="pc-hero">' +
         '<p class="pc-hero-kicker">2026 工展會 · 會場購物禮遇</p>' +
-        "<h2>產品計數 · 結算</h2>" +
+        "<h2>產品計數 · 預訂</h2>" +
         (window.BPE_Gifts && window.BPE_Gifts.renderGiftCardsHtml
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
@@ -273,8 +305,32 @@
     );
   }
 
+  function staffExtraSheet() {
+    var items = (window.BPE_Stock && window.BPE_Stock.listOrderExtras)
+      ? window.BPE_Stock.listOrderExtras() : [];
+    if (!items.length) return null;
+    return {
+      id: "staff-extra",
+      title: "職員加貨",
+      short: "職員加貨",
+      sections: [{
+        id: "staff-extra-sec",
+        title: "職員加貨（本機存貨表）",
+        note: "喺職員選單「庫存／存貨表」加嘅產品；售價未填會顯示待填。",
+        items: items
+      }]
+    };
+  }
+
+  function allSheets() {
+    var sheets = (data().sheets || []).slice();
+    var extra = staffExtraSheet();
+    if (extra) sheets.push(extra);
+    return sheets;
+  }
+
   function renderSearchChips(st) {
-    var sheets = data().sheets || [];
+    var sheets = allSheets();
     var chips = sheets.map(function (s) {
       var c = sheetCount(st, s);
       var on = s.id === activeSheet ? " active" : "";
@@ -468,8 +524,8 @@
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105g" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105g" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261105k" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261105k" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
         '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
         (st.paymentMethod
@@ -483,7 +539,7 @@
     var root = $("dimsumOrderRoot");
     if (!root) return;
     var st = loadState();
-    var sheets = data().sheets || [];
+    var sheets = allSheets();
     var sheet = sheets.filter(function (s) { return s.id === activeSheet; })[0] || sheets[0];
     if (sheet) activeSheet = sheet.id;
     var calc = calcTotals(st);
@@ -597,6 +653,19 @@
     if (!root || root._pcBound) return;
     root._pcBound = true;
     root.addEventListener("click", function (e) {
+      if (e.target.closest("#btnPcPos")) {
+        cyclePosStation();
+        render();
+        return;
+      }
+      if (e.target.closest("#btnPcGear")) {
+        if (window.BPE_Shell && window.BPE_Shell.toggleStaffMenu) {
+          window.BPE_Shell.toggleStaffMenu($("btnPcGear"));
+        } else if (window.BPE_Shell && window.BPE_Shell.openLogin) {
+          window.BPE_Shell.openLogin();
+        }
+        return;
+      }
       var tab = e.target.closest("[data-sheet]");
       if (tab) {
         activeSheet = tab.getAttribute("data-sheet");
