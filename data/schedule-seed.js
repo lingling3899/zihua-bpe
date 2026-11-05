@@ -1,5 +1,5 @@
 window.BPE_SCHEDULE_SEED = {
-  "version": "20261105",
+  "version": "20261105p",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "roles": [
@@ -903,11 +903,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-100",
       "date": "2026-12-22",
-      "start": "10:45",
-      "end": "19:45",
+      "start": "12:00",
+      "end": "21:00",
       "role": "紫花油推廣員",
       "name": "Katherine",
-      "note": "後補 · 早更"
+      "note": "後補 · 晏更"
     },
     {
       "id": "seed-101",
