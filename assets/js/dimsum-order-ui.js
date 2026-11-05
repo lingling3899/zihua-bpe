@@ -204,14 +204,15 @@
   function z4cGiftLabel(z4cQty) {
     var n = Math.max(0, Math.floor(Number(z4cQty) || 0));
     if (n <= 0) return "";
-    if (n === 1) return "26ml × 6 送 12ml × 1";
-    return "26ml × 6 送 12ml × 1 × " + n + "套";
+    if (n === 1) return "一套 6支26ml 送 1支12ml";
+    return n + "套（每套6支26ml）送 " + n + "支12ml";
   }
 
   function freeCo99GiftLabel(freeCo99) {
     var n = Math.max(0, Math.floor(Number(freeCo99) || 0));
     if (n <= 0) return "";
-    return "26ml × " + (n * 6) + " 送 12ml × " + n;
+    if (n === 1) return "一套 6支26ml 送 1支12ml";
+    return n + "套（每套6支26ml）送 " + n + "支12ml";
   }
 
   function calcTotals(st) {
