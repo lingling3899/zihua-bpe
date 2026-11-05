@@ -45,6 +45,7 @@
         return {
           items: o.items || {},
           sets: o.sets || {},
+          setPicks: o.setPicks || {},
           overrides: o.overrides || {},
           senior: !!o.senior,
           paymentMethod: o.paymentMethod || "",
@@ -52,7 +53,7 @@
         };
       }
     } catch (e) {}
-    return { items: {}, sets: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 };
+    return { items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 };
   }
   function saveState(st) {
     try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
@@ -75,6 +76,451 @@
     var q = Number(st.sets[id] || 0);
     return q > 0 ? q : 0;
   }
+
+  function normCode(c) {
+    return String(c == null ? "" : c).trim().toUpperCase();
+  }
+
+  function getSetPicks(st, id) {
+    var arr = st.setPicks && st.setPicks[id];
+    return Array.isArray(arr) ? arr : [];
+  }
+
+  function findBundleContext(bundleId) {
+    var sheets = allSheets();
+    for (var si = 0; si < sheets.length; si++) {
+      var sheet = sheets[si];
+      var secs = sheet.sections || [];
+      for (var i = 0; i < secs.length; i++) {
+        var sec = secs[i];
+        var bundles = sec.bundles || [];
+        for (var j = 0; j < bundles.length; j++) {
+          if (bundles[j].id === bundleId) {
+            return { sheet: sheet, section: sec, bundle: bundles[j] };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /** 本區可揀貨號（含 displayOnly，方便職員睇選項） */
+  function eligiblePickItems(sec) {
+    return (sec.items || []).filter(function (it) {
+      return it && it.code;
+    });
+  }
+
+  function isPickAnyBundle(bundle, sec) {
+    if (!bundle || !(Number(bundle.setSize) >= 2)) return false;
+    return eligiblePickItems(sec).length >= 2;
+  }
+
+  function isPickAnyId(bundleId) {
+    var ctx = findBundleContext(bundleId);
+    return !!(ctx && isPickAnyBundle(ctx.bundle, ctx.section));
+  }
+
+  function aggregateCodes(codes) {
+    var map = {};
+    var order = [];
+    (codes || []).forEach(function (c) {
+      var k = normCode(c);
+      if (!k) return;
+      if (!map[k]) {
+        map[k] = 0;
+        order.push(k);
+      }
+      map[k] += 1;
+    });
+    return order.map(function (k) {
+      return map[k] > 1 ? (k + "×" + map[k]) : k;
+    }).join("、");
+  }
+
+  function flattenPicks(picks) {
+    var out = [];
+    (picks || []).forEach(function (set) {
+      (set || []).forEach(function (c) { out.push(normCode(c)); });
+    });
+    return out;
+  }
+
+  function formatPicksForLine(picks) {
+    if (!picks || !picks.length) return "";
+    if (picks.length === 1) {
+      return (picks[0] || []).map(normCode).filter(Boolean).join("、");
+    }
+    return picks.map(function (set, i) {
+      return "①②③④⑤⑥⑦⑧⑨⑩".charAt(i) + " " + (set || []).map(normCode).filter(Boolean).join("、");
+    }).join("　");
+  }
+
+  function picksSummaryHtml(st, bundleId, qty) {
+    var picks = getSetPicks(st, bundleId);
+    if (qty <= 0) return "";
+    if (!picks.length) {
+      return '<button type="button" class="pc-picks-summary pc-picks-missing" data-edit-picks="' +
+        esc(bundleId) + '">未入實際貨號</button>';
+    }
+    var flat = flattenPicks(picks);
+    var agg = aggregateCodes(flat);
+    var miss = qty - picks.length;
+    var extra = miss > 0 ? (' · 尚欠 ' + miss + ' 套') : "";
+    return (
+      '<button type="button" class="pc-picks-summary" data-edit-picks="' + esc(bundleId) + '">' +
+        "已選：" + esc(agg) + esc(extra) +
+      "</button>"
+    );
+  }
+
+  function adjustItemQtys(st, codes, deltaSign) {
+    (codes || []).forEach(function (c) {
+      var k = normCode(c);
+      if (!k) return;
+      var cur = Math.max(0, Math.floor(Number(st.items[k] || 0)));
+      var next = cur + (deltaSign > 0 ? 1 : -1);
+      if (next <= 0) delete st.items[k];
+      else st.items[k] = next;
+    });
+  }
+
+  function incompletePickAnyBundles(st) {
+    var bad = [];
+    var sheets = allSheets();
+    sheets.forEach(function (sheet) {
+      (sheet.sections || []).forEach(function (sec) {
+        (sec.bundles || []).forEach(function (b) {
+          if (!isPickAnyBundle(b, sec)) return;
+          var q = setQty(st, b.id);
+          if (q <= 0) return;
+          var picks = getSetPicks(st, b.id);
+          if (picks.length !== q) {
+            bad.push(b.label || b.id);
+          }
+        });
+      });
+    });
+    return bad;
+  }
+
+  var pickModalState = null;
+
+  function ensurePickModal() {
+    var el = $("pickAnyModal");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "pickAnyModal";
+    el.className = "modal-backdrop hidden";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-labelledby", "pickAnyTitle");
+    el.innerHTML =
+      '<div class="modal pick-any-modal">' +
+        '<div class="pick-any-head">' +
+          '<h3 id="pickAnyTitle">任選</h3>' +
+          '<button type="button" class="pick-any-x" id="pickAnyClose" aria-label="關閉">✕</button>' +
+        "</div>" +
+        '<p class="pick-any-sub" id="pickAnySub"></p>' +
+        '<div class="pick-any-slots" id="pickAnySlots"></div>' +
+        '<label class="pick-any-filter-wrap">' +
+          '<span class="sr-only">篩選</span>' +
+          '<input type="search" id="pickAnyFilter" class="pick-any-filter" placeholder="篩選貨號／名稱" autocomplete="off" />' +
+        "</label>" +
+        '<div class="pick-any-chips" id="pickAnyChips"></div>' +
+        '<p class="pick-any-err" id="pickAnyErr" role="status"></p>' +
+        '<div class="btn-row pick-any-actions">' +
+          '<button type="button" class="btn-ghost" id="pickAnyCancel">取消</button>' +
+          '<button type="button" class="primary" id="pickAnyConfirm" disabled>確認</button>' +
+        "</div>" +
+      "</div>";
+    document.body.appendChild(el);
+    el.addEventListener("click", function (e) {
+      if (e.target === el) closePickModal();
+    });
+    el.querySelector("#pickAnyClose").addEventListener("click", closePickModal);
+    el.querySelector("#pickAnyCancel").addEventListener("click", closePickModal);
+    el.querySelector("#pickAnyConfirm").addEventListener("click", confirmPickModal);
+    el.querySelector("#pickAnyFilter").addEventListener("input", function () {
+      if (!pickModalState) return;
+      pickModalState.filter = el.querySelector("#pickAnyFilter").value || "";
+      renderPickChips();
+    });
+    el.querySelector("#pickAnySlots").addEventListener("input", function (e) {
+      var t = e.target;
+      if (!t || !t.classList.contains("pick-any-slot")) return;
+      var idx = Number(t.getAttribute("data-slot"));
+      if (!pickModalState || isNaN(idx)) return;
+      pickModalState.slots[idx] = t.value;
+      validatePickSlots(false);
+    });
+    el.querySelector("#pickAnyChips").addEventListener("click", function (e) {
+      var chip = e.target.closest("[data-pick-code]");
+      if (!chip || !pickModalState) return;
+      var code = chip.getAttribute("data-pick-code");
+      var slots = pickModalState.slots;
+      var filled = -1;
+      for (var i = 0; i < slots.length; i++) {
+        if (!normCode(slots[i])) { filled = i; break; }
+      }
+      if (filled < 0) return;
+      pickModalState.slots[filled] = code;
+      syncPickSlotInputs();
+      validatePickSlots(false);
+    });
+    return el;
+  }
+
+  function closePickModal() {
+    var el = $("pickAnyModal");
+    if (el) el.classList.add("hidden");
+    pickModalState = null;
+  }
+
+  function syncPickSlotInputs() {
+    var wrap = $("pickAnySlots");
+    if (!wrap || !pickModalState) return;
+    var inputs = wrap.querySelectorAll(".pick-any-slot");
+    for (var i = 0; i < inputs.length; i++) {
+      inputs[i].value = pickModalState.slots[i] || "";
+    }
+  }
+
+  function renderPickChips() {
+    var box = $("pickAnyChips");
+    if (!box || !pickModalState) return;
+    var q = String(pickModalState.filter || "").trim().toLowerCase();
+    var html = pickModalState.eligible.map(function (it) {
+      var hay = (it.code + " " + (it.name || "")).toLowerCase();
+      if (q && hay.indexOf(q) < 0) return "";
+      return (
+        '<button type="button" class="pick-any-chip" data-pick-code="' + esc(it.code) + '">' +
+          "<strong>" + esc(it.code) + "</strong>" +
+          "<span>" + esc(it.name || "") + "</span>" +
+        "</button>"
+      );
+    }).join("");
+    box.innerHTML = html || '<p class="muted">冇符合篩選嘅貨號</p>';
+  }
+
+  function validatePickSlots(showErr) {
+    if (!pickModalState) return false;
+    var allowed = {};
+    pickModalState.eligible.forEach(function (it) { allowed[normCode(it.code)] = true; });
+    var ok = true;
+    var err = "";
+    var normalized = [];
+    for (var i = 0; i < pickModalState.slots.length; i++) {
+      var c = normCode(pickModalState.slots[i]);
+      if (!c) {
+        ok = false;
+        break;
+      }
+      if (!allowed[c]) {
+        ok = false;
+        err = "貨號「" + c + "」唔喺呢套可揀清單";
+        break;
+      }
+      normalized.push(c);
+    }
+    var btn = $("pickAnyConfirm");
+    if (btn) btn.disabled = !ok;
+    var errEl = $("pickAnyErr");
+    if (errEl) errEl.textContent = (showErr || err) ? err : "";
+    if (ok) pickModalState._normalized = normalized;
+    else pickModalState._normalized = null;
+    return ok;
+  }
+
+  function openPickModal(bundleId, opts) {
+    opts = opts || {};
+    var ctx = findBundleContext(bundleId);
+    if (!ctx || !isPickAnyBundle(ctx.bundle, ctx.section)) return;
+    var size = Math.max(2, Math.floor(Number(ctx.bundle.setSize) || 2));
+    var eligible = eligiblePickItems(ctx.section).map(function (it) {
+      return { code: normCode(it.code), name: it.name || "" };
+    });
+    var seed = opts.seed || [];
+    var slots = [];
+    for (var i = 0; i < size; i++) slots.push(seed[i] ? normCode(seed[i]) : "");
+    pickModalState = {
+      bundleId: bundleId,
+      label: ctx.bundle.label || bundleId,
+      setSize: size,
+      eligible: eligible,
+      mode: opts.mode || "add",
+      editIndex: opts.editIndex == null ? null : opts.editIndex,
+      slots: slots,
+      filter: "",
+      useItemPrices: !!ctx.bundle.useItemPrices
+    };
+    var el = ensurePickModal();
+    $("pickAnyTitle").textContent = pickModalState.label;
+    $("pickAnySub").textContent = "請入實際要哪 " + size + " 款貨號";
+    $("pickAnyFilter").value = "";
+    var filterWrap = el.querySelector(".pick-any-filter-wrap");
+    if (filterWrap) filterWrap.style.display = eligible.length > 8 ? "" : "none";
+    var slotsHtml = "";
+    for (var s = 0; s < size; s++) {
+      slotsHtml +=
+        '<label class="pick-any-slot-wrap">' +
+          '<span class="pick-any-slot-n">' + (s + 1) + "</span>" +
+          '<input type="text" class="pick-any-slot" data-slot="' + s +
+            '" inputmode="text" autocomplete="off" autocapitalize="characters" ' +
+            'spellcheck="false" placeholder="入機代號" value="' + esc(slots[s]) + '" />' +
+        "</label>";
+    }
+    $("pickAnySlots").innerHTML = slotsHtml;
+    $("pickAnyErr").textContent = "";
+    var chipsEl = $("pickAnyChips");
+    if (chipsEl) chipsEl.onclick = null;
+    renderPickChips();
+    validatePickSlots(false);
+    el.classList.remove("hidden");
+    var first = $("pickAnySlots").querySelector(".pick-any-slot");
+    if (first) {
+      try { first.focus(); first.select(); } catch (e) {}
+    }
+  }
+
+  function confirmPickModal() {
+    if (!validatePickSlots(true) || !pickModalState || !pickModalState._normalized) return;
+    var codes = pickModalState._normalized.slice();
+    var id = pickModalState.bundleId;
+    var mode = pickModalState.mode;
+    var editIndex = pickModalState.editIndex;
+    var useItemPrices = pickModalState.useItemPrices;
+    var st = loadState();
+    if (!st.setPicks) st.setPicks = {};
+    var picks = getSetPicks(st, id).slice();
+
+    if (mode === "edit" && editIndex != null && editIndex >= 0 && editIndex < picks.length) {
+      var old = picks[editIndex] || [];
+      if (useItemPrices) {
+        adjustItemQtys(st, old, -1);
+        adjustItemQtys(st, codes, 1);
+      }
+      picks[editIndex] = codes;
+      st.setPicks[id] = picks;
+      saveState(st);
+      closePickModal();
+      render();
+      return;
+    }
+
+    if (mode === "fill") {
+      // 舊車／尚欠：只補 setPicks，唔再加套數
+      var qFill = setQty(st, id);
+      if (picks.length >= qFill) {
+        closePickModal();
+        render();
+        return;
+      }
+      picks.push(codes);
+      st.setPicks[id] = picks;
+      if (useItemPrices) adjustItemQtys(st, codes, 1);
+      saveState(st);
+      closePickModal();
+      render();
+      // 若仲欠，自動再開下一套
+      if (picks.length < qFill) {
+        setTimeout(function () { openPickModal(id, { mode: "fill" }); }, 0);
+      }
+      return;
+    }
+
+    // add：追加一套並 +1 set qty
+    picks.push(codes);
+    st.setPicks[id] = picks;
+    st.sets[id] = (Number(st.sets[id]) || 0) + 1;
+    if (useItemPrices) adjustItemQtys(st, codes, 1);
+    saveState(st);
+    closePickModal();
+    // 任選唔自動開結算
+    render();
+  }
+
+  function decrementPickAny(bundleId) {
+    var ctx = findBundleContext(bundleId);
+    if (!ctx) return;
+    var st = loadState();
+    var q = setQty(st, bundleId);
+    if (q <= 0) return;
+    var picks = getSetPicks(st, bundleId).slice();
+    var popped = picks.length ? picks.pop() : null;
+    if (ctx.bundle.useItemPrices && popped) adjustItemQtys(st, popped, -1);
+    var n = q - 1;
+    if (n <= 0) {
+      delete st.sets[bundleId];
+      if (st.setPicks) delete st.setPicks[bundleId];
+    } else {
+      st.sets[bundleId] = n;
+      if (st.setPicks) {
+        if (picks.length) st.setPicks[bundleId] = picks;
+        else delete st.setPicks[bundleId];
+      }
+    }
+    saveState(st);
+    render();
+  }
+
+  function openEditPicksFlow(bundleId) {
+    var ctx = findBundleContext(bundleId);
+    if (!ctx || !isPickAnyBundle(ctx.bundle, ctx.section)) return;
+    var st = loadState();
+    var q = setQty(st, bundleId);
+    if (q <= 0) {
+      openPickModal(bundleId, { mode: "add" });
+      return;
+    }
+    var picks = getSetPicks(st, bundleId);
+    if (picks.length < q) {
+      openPickModal(bundleId, { mode: "fill" });
+      return;
+    }
+    if (picks.length === 1) {
+      openPickModal(bundleId, { mode: "edit", editIndex: 0, seed: picks[0] });
+      return;
+    }
+    // 多套：簡易清單揀邊套改
+    openPickSetsList(bundleId, picks);
+  }
+
+  function openPickSetsList(bundleId, picks) {
+    var ctx = findBundleContext(bundleId);
+    if (!ctx) return;
+    var el = ensurePickModal();
+    pickModalState = { bundleId: bundleId, mode: "list" };
+    $("pickAnyTitle").textContent = ctx.bundle.label || bundleId;
+    $("pickAnySub").textContent = "揀一套改實際貨號（套數不變）";
+    $("pickAnySlots").innerHTML = "";
+    var filterWrap = el.querySelector(".pick-any-filter-wrap");
+    if (filterWrap) filterWrap.style.display = "none";
+    $("pickAnyFilter").value = "";
+    var chips = $("pickAnyChips");
+    chips.innerHTML = (picks || []).map(function (set, i) {
+      return (
+        '<button type="button" class="pick-any-set-row" data-edit-set="' + i + '">' +
+          "<strong>第 " + (i + 1) + " 套</strong>" +
+          "<span>" + esc((set || []).map(normCode).join("、")) + "</span>" +
+          '<em>改</em>' +
+        "</button>"
+      );
+    }).join("");
+    $("pickAnyErr").textContent = "";
+    var btn = $("pickAnyConfirm");
+    if (btn) btn.disabled = true;
+    chips.onclick = function (e) {
+      var row = e.target.closest("[data-edit-set]");
+      if (!row) return;
+      var idx = Number(row.getAttribute("data-edit-set"));
+      var st2 = loadState();
+      var p2 = getSetPicks(st2, bundleId);
+      openPickModal(bundleId, { mode: "edit", editIndex: idx, seed: p2[idx] || [] });
+    };
+    el.classList.remove("hidden");
+  }
+
   function isAdmin() {
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
@@ -228,14 +674,26 @@
           var q = setQty(st, b.id);
           if (q <= 0) return;
           pieceCount += q;
+          var picksTxt = "";
+          if (isPickAnyBundle(b, sec)) {
+            picksTxt = formatPicksForLine(getSetPicks(st, b.id));
+          }
           if (b.useItemPrices) {
-            lines.push({ kind: "set-note", label: sec.title + " · " + b.label + " × " + q, amount: null });
+            lines.push({
+              kind: "set-note",
+              label: sec.title + " · " + b.label + " × " + q + (picksTxt ? ("　" + picksTxt) : ""),
+              amount: null
+            });
             return;
           }
           if (b.setPrice == null) return;
           var amt = q * Number(b.setPrice);
           total += amt;
-          lines.push({ kind: "set", label: b.label + " × " + q, amount: amt });
+          lines.push({
+            kind: "set",
+            label: b.label + " × " + q + (picksTxt ? ("　" + picksTxt) : ""),
+            amount: amt
+          });
         });
         var bogoPrices = [];
         (sec.items || []).forEach(function (it) {
@@ -331,6 +789,12 @@
         (sec.items || []).forEach(function (it) {
           if (it.displayOnly) return;
           add(it.code, itemQty(st, it.code));
+        });
+        (sec.bundles || []).forEach(function (b) {
+          if (!isPickAnyBundle(b, sec)) return;
+          // useItemPrices：庫存已由 st.items 計；有價任選先由 setPicks 扣實際貨號
+          if (b.useItemPrices) return;
+          flattenPicks(getSetPicks(st, b.id)).forEach(function (c) { add(c, 1); });
         });
       });
     });
@@ -511,12 +975,14 @@
       if (searchQ && !matchQ(b.label) && !matchQ(b.id)) return;
       var q = setQty(st, b.id);
       var priceLabel = b.useItemPrices ? "按單品／買3送1" : ("$" + money(b.setPrice) + "／套");
+      var picksLine = isPickAnyBundle(b, sec) ? picksSummaryHtml(st, b.id, q) : "";
       html +=
         '<div class="pc-card">' +
           '<div class="pc-thumb" aria-hidden="true">📦</div>' +
           '<div class="pc-card-body">' +
             "<strong>" + esc(b.label) + "</strong>" +
             '<div class="pc-meta"><span title="X＝入機代號">入機代號 <code>' + esc(b.id) + "</code></span> · " + esc(priceLabel) + "</div>" +
+            picksLine +
           "</div>" +
           qtyCtrl("set", b.id, q) +
         "</div>";
@@ -741,8 +1207,10 @@
       if (Math.floor(afterSingles / 5) > Math.floor(beforeSingles / 5)) shouldOpen = true;
     }
     if (kind === "set") {
-      if (n <= 0) delete st.sets[id];
-      else st.sets[id] = n;
+      if (n <= 0) {
+        delete st.sets[id];
+        if (st.setPicks) delete st.setPicks[id];
+      } else st.sets[id] = n;
     } else {
       if (n <= 0) delete st.items[id];
       else st.items[id] = n;
@@ -866,12 +1334,25 @@
         render();
         return;
       }
+      var editPicksBtn = e.target.closest("[data-edit-picks]");
+      if (editPicksBtn) {
+        openEditPicksFlow(editPicksBtn.getAttribute("data-edit-picks"));
+        return;
+      }
       var btn = e.target.closest(".qty-btn");
       if (btn) {
         var wrap = btn.closest(".qty-ctrl");
         if (!wrap) return;
+        var kind = wrap.getAttribute("data-kind");
+        var id = wrap.getAttribute("data-id");
+        var delta = Number(btn.getAttribute("data-delta"));
         var cur = Math.max(0, Math.floor(Number((wrap.querySelector(".qty-val") || {}).textContent) || 0));
-        setQtyValue(wrap.getAttribute("data-kind"), wrap.getAttribute("data-id"), cur + Number(btn.getAttribute("data-delta")));
+        if (kind === "set" && isPickAnyId(id)) {
+          if (delta > 0) openPickModal(id, { mode: "add" });
+          else decrementPickAny(id);
+          return;
+        }
+        setQtyValue(kind, id, cur + delta);
         return;
       }
       if (e.target.closest("#btnPcExpand") || e.target.closest("#btnPcExpandHint")) {
@@ -890,6 +1371,7 @@
         saveState({
           items: {},
           sets: {},
+          setPicks: {},
           overrides: st.overrides,
           senior: st.senior,
           paymentMethod: st.paymentMethod,
@@ -922,6 +1404,13 @@
         if (calcS.count <= 0) {
           alert("未有產品，請先加數量。");
           return;
+        }
+        var incomplete = incompletePickAnyBundles(stS);
+        if (incomplete.length) {
+          alert(
+            "以下任選尚未入齊全部實際貨號（仍可結算；只會扣已入嘅貨號庫存）：\n\n" +
+            incomplete.join("\n")
+          );
         }
         var demand = buildStockDemand(stS);
         if (window.BPE_Stock && window.BPE_Stock.canFulfill) {
@@ -1000,7 +1489,7 @@
   window.BPE_DimsumOrderUI = {
     render: function () { bindRoot(); render(); },
     clear: function () {
-      saveState({ items: {}, sets: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 });
+      saveState({ items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 });
       render();
     },
     pricing: function () {
