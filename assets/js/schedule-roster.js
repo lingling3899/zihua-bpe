@@ -14,6 +14,7 @@
       roles: ["Senior Promoter", "Promoter", "紫花油推廣員"],
       shifts: [
         { key: "am", label: "早更", start: "10:45", end: "19:45" },
+        { key: "full", label: "全日 FULL", start: "11:00", end: "20:00" },
         { key: "pm", label: "晏更", start: "12:00", end: "21:00" }
       ]
     },
@@ -22,9 +23,10 @@
       title: "CUPAL 推廣員",
       roles: ["CUPAL", "CUPAL 推廣員"],
       shifts: [
-        { key: "11", label: "11點更", start: "11:00", end: "20:00" },
+        { key: "11v", label: "場時更", start: "11:00", end: "21:00" },
         { key: "12", label: "12點更", start: "12:00", end: "20:00" },
-        { key: "13", label: "1點更", start: "13:00", end: "21:00" }
+        { key: "13", label: "1點更", start: "13:00", end: "21:00" },
+        { key: "14", label: "2點更", start: "14:00", end: "21:00" }
       ]
     },
     {
@@ -33,6 +35,7 @@
       roles: ["Cashier", "收銀"],
       shifts: [
         { key: "am", label: "早更", start: "11:00", end: "15:00" },
+        { key: "full", label: "全日 FULL", start: "11:00", end: "20:00" },
         { key: "pm", label: "晏更", start: "15:00", end: "21:00" }
       ]
     },
@@ -46,20 +49,6 @@
     }
   ];
 
-  /* 截圖示例人名 — 標待確認，職員可改 */
-  var DEMO = [
-    { date: "2026-12-12", start: "10:45", end: "19:45", role: "紫花油推廣員", name: "Candy", note: "待確認／可改", tag: "" },
-    { date: "2026-12-12", start: "10:45", end: "19:45", role: "紫花油推廣員", name: "Sophia", note: "待確認／可改", tag: "" },
-    { date: "2026-12-12", start: "10:45", end: "19:45", role: "紫花油推廣員", name: "Kato", note: "待確認／可改", tag: "" },
-    { date: "2026-12-12", start: "12:00", end: "21:00", role: "紫花油推廣員", name: "Neko", note: "待確認／可改", tag: "" },
-    { date: "2026-12-12", start: "12:00", end: "21:00", role: "紫花油推廣員", name: "Connie", note: "待確認／可改", tag: "" },
-    { date: "2026-12-12", start: "11:00", end: "20:00", role: "CUPAL 推廣員", name: "秋姐", note: "待確認／可改", tag: "長工" },
-    { date: "2026-12-12", start: "13:00", end: "21:00", role: "CUPAL 推廣員", name: "Ken", note: "待確認／可改", tag: "" },
-    { date: "2026-12-12", start: "11:00", end: "15:00", role: "Cashier", name: "Ching", note: "待確認／可改", tag: "" },
-    { date: "2026-12-12", start: "15:00", end: "21:00", role: "Cashier", name: "Cathy", note: "待確認／可改", tag: "" },
-    { date: "2026-12-12", start: "12:00", end: "20:00", role: "宅配會員招募助理", name: "Janice", note: "待確認／可改", tag: "" }
-  ];
-
   function esc(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -71,10 +60,27 @@
   }
   function uid() { return "sh-" + Date.now() + "-" + Math.floor(Math.random() * 999); }
 
+  function seedObj() {
+    return window.BPE_SCHEDULE_SEED || null;
+  }
+  function seedVersion() {
+    var seed = seedObj();
+    return seed && seed.version != null ? String(seed.version) : "0";
+  }
+  function seedShifts() {
+    var seed = seedObj();
+    return seed && Array.isArray(seed.shifts) ? seed.shifts.slice() : [];
+  }
+
   function fairDates() {
     var out = [];
-    var d = new Date(2026, 11, 12);
-    var end = new Date(2027, 0, 4);
+    var seed = seedObj();
+    var startIso = (seed && seed.fairStart) || "2026-12-12";
+    var endIso = (seed && seed.fairEnd) || "2027-01-04";
+    var sp = startIso.split("-").map(Number);
+    var ep = endIso.split("-").map(Number);
+    var d = new Date(sp[0], sp[1] - 1, sp[2]);
+    var end = new Date(ep[0], ep[1] - 1, ep[2]);
     while (d <= end) {
       var y = d.getFullYear();
       var m = String(d.getMonth() + 1).padStart(2, "0");
@@ -91,43 +97,50 @@
     return "週" + map[d.getDay()] + " " + iso.slice(5).replace("-", "/");
   }
 
+  function minutesOf(hhmm) {
+    var p = String(hhmm || "0:0").split(":");
+    return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0);
+  }
+
   function getShifts() {
     try {
       var raw = localStorage.getItem(LS);
       if (raw) {
         var o = JSON.parse(raw);
-        if (Array.isArray(o)) return o;
-        if (o && Array.isArray(o.shifts)) return o.shifts;
+        if (o && Array.isArray(o.shifts) && String(o.version) === seedVersion()) {
+          return o.shifts;
+        }
+        // 舊版陣列／版本唔同 → 用新種子（職員之後改會帶新 version 存返）
       }
     } catch (e) {}
-    var seed = window.BPE_SCHEDULE_SEED;
-    return seed && Array.isArray(seed.shifts) ? seed.shifts.slice() : [];
-  }
-  function setShifts(list) {
-    try { localStorage.setItem(LS, JSON.stringify(list)); } catch (e) {}
+    return seedShifts();
   }
 
-  function ensureDemo() {
+  function setShifts(list) {
     try {
-      if (localStorage.getItem(LS_DEMO) === "1") return;
-      var list = getShifts().filter(function (s) {
-        return !(s.date === "2026-12-12" && (s.name === "待填" || !s.name));
-      });
-      DEMO.forEach(function (d) {
-        list.push({
-          id: uid(),
-          date: d.date,
-          start: d.start,
-          end: d.end,
-          role: d.role,
-          name: d.name,
-          note: d.note,
-          tag: d.tag || ""
-        });
-      });
-      setShifts(list);
-      localStorage.setItem(LS_DEMO, "1");
+      localStorage.setItem(LS, JSON.stringify({
+        version: seedVersion(),
+        shifts: list
+      }));
     } catch (e) {}
+  }
+
+  function ensureSeedApplied() {
+    try {
+      // 清走舊 Dec-12 示例標記；唔再疊 DEMO 人名
+      if (localStorage.getItem(LS_DEMO)) localStorage.removeItem(LS_DEMO);
+      var raw = localStorage.getItem(LS);
+      var ver = seedVersion();
+      if (!raw) {
+        setShifts(seedShifts());
+        return;
+      }
+      var o = JSON.parse(raw);
+      var outdated = Array.isArray(o) || !o || String(o.version) !== ver || !Array.isArray(o.shifts);
+      if (outdated) setShifts(seedShifts());
+    } catch (e) {
+      try { setShifts(seedShifts()); } catch (e2) {}
+    }
   }
 
   function matchGroupRole(group, role) {
@@ -135,13 +148,18 @@
   }
 
   function classifyShift(s, group) {
-    // match by start time proximity to group shift defs
-    var best = null, bestDiff = 99;
+    // Prefer exact start+end, then exact start, then nearest start
+    var best = null, bestScore = 1e9;
+    var sStart = minutesOf(s.start);
+    var sEnd = minutesOf(s.end);
     (group.shifts || []).forEach(function (def) {
-      var a = parseInt(String(s.start || "0").replace(":", ""), 10);
-      var b = parseInt(String(def.start || "0").replace(":", ""), 10);
-      var diff = Math.abs(a - b);
-      if (diff < bestDiff) { bestDiff = diff; best = def; }
+      var dStart = minutesOf(def.start);
+      var dEnd = minutesOf(def.end);
+      var score;
+      if (dStart === sStart && dEnd === sEnd) score = 0;
+      else if (dStart === sStart) score = 1 + Math.abs(dEnd - sEnd);
+      else score = 1000 + Math.abs(dStart - sStart);
+      if (score < bestScore) { bestScore = score; best = def; }
     });
     return best;
   }
@@ -153,7 +171,7 @@
   }
 
   function renderDateMode() {
-    var dates = fairDates().slice(0, 14);
+    var dates = fairDates();
     if (dates.indexOf(selectedDate) < 0) selectedDate = dates[0];
     var chips = dates.map(function (d) {
       var n = peopleOnDate(d).length;
@@ -166,31 +184,25 @@
     var groupsHtml = ROLE_GROUPS.map(function (g) {
       var blocks = (g.shifts || []).map(function (def) {
         var members = people.filter(function (s) {
-          if (!matchGroupRole(g, s.role) && !(g.id === "zihua" && (s.role === "Promoter" || s.role === "Senior Promoter"))) return false;
-          // for zihua also accept Promoter roles
+          var roleOk = matchGroupRole(g, s.role) ||
+            (g.id === "zihua" && (s.role === "Promoter" || s.role === "Senior Promoter"));
+          if (!roleOk) return false;
           var c = classifyShift(s, g);
           return c && c.key === def.key;
         });
-        // fallback: if role matches group but time unmatched, show under first shift? skip
-        if (g.id === "zihua") {
-          members = people.filter(function (s) {
-            var roleOk = matchGroupRole(g, s.role) || s.role === "Promoter" || s.role === "Senior Promoter";
-            if (!roleOk) return false;
-            var c = classifyShift(s, g);
-            return c && c.key === def.key;
-          });
-        }
-        var pills = members.length
-          ? members.map(function (m) {
-              var letter = (m.name || "?").charAt(0);
-              var tag = m.tag ? '<span class="pill-tag">' + esc(m.tag) + "</span>" : "";
-              var rm = isAdmin()
-                ? '<button type="button" class="pill-x" data-del="' + esc(m.id) + '" aria-label="移除">×</button>'
-                : "";
-              return '<span class="name-pill"><span class="pill-av">' + esc(letter) + "</span>" +
-                esc(m.name) + tag + rm + "</span>";
-            }).join("")
-          : '<span class="muted">未有人返呢更</span>';
+        if (!members.length) return "";
+        var pills = members.map(function (m) {
+          var letter = (m.name || "?").charAt(0);
+          var tag = m.tag ? '<span class="pill-tag">' + esc(m.tag) + "</span>" : "";
+          if (m.note && /後補|WS|FULL|Call Time/.test(m.note)) {
+            tag += '<span class="pill-tag">' + esc(m.note.split("·")[0].trim()) + "</span>";
+          }
+          var rm = isAdmin()
+            ? '<button type="button" class="pill-x" data-del="' + esc(m.id) + '" aria-label="移除">×</button>'
+            : "";
+          return '<span class="name-pill"><span class="pill-av">' + esc(letter) + "</span>" +
+            esc(m.name) + tag + rm + "</span>";
+        }).join("");
         var add = isAdmin()
           ? '<button type="button" class="btn-ghost btn-add-shift" data-add-role="' + esc(g.roles[0]) +
             '" data-add-start="' + esc(def.start) + '" data-add-end="' + esc(def.end) + '">＋ 加入</button>'
@@ -202,8 +214,22 @@
           "</div>"
         );
       }).join("");
+      if (!blocks && isAdmin()) {
+        // still show empty group with first shift add for staff
+        var def0 = (g.shifts || [])[0];
+        if (def0) {
+          blocks =
+            '<div class="roster-shift">' +
+              "<h4>" + esc(def0.label) + " " + esc(def0.start) + " – " + esc(def0.end) + "</h4>" +
+              '<div class="name-pills"><span class="muted">未有人返呢更</span>' +
+              '<button type="button" class="btn-ghost btn-add-shift" data-add-role="' + esc(g.roles[0]) +
+              '" data-add-start="' + esc(def0.start) + '" data-add-end="' + esc(def0.end) + '">＋ 加入</button></div>' +
+            "</div>";
+        }
+      }
+      if (!blocks) return "";
       return '<section class="roster-card"><h3>' + esc(g.title) + "</h3>" + blocks + "</section>";
-    }).join("");
+    }).join("") || '<p class="muted">呢日未有排更</p>';
 
     return (
       '<div class="date-chips">' + chips + "</div>" +
@@ -240,19 +266,27 @@
       var list = byName[name];
       var g = groupFor(list[0].role) || { id: "other", title: "其他" };
       if (!sections[g.id]) sections[g.id] = { title: g.title, people: [] };
-      var am = 0, pm = 0, full = 0;
+      var am = 0, pm = 0;
       var chips = list.slice().sort(function (a, b) {
         return String(a.date).localeCompare(b.date) || String(a.start).localeCompare(b.start);
       }).map(function (s) {
         var label = s.date.slice(5).replace("-", "/") + " ";
-        var hh = parseInt(String(s.start).split(":")[0], 10);
-        if (hh < 12) { am++; label += "早"; }
-        else { pm++; label += (hh === 11 ? "11點" : hh === 12 ? "12點" : hh === 13 ? "1點" : "晏"); }
-        var cls = hh < 12 ? "chip-am" : "chip-pm";
+        var startM = minutesOf(s.start);
+        var endM = minutesOf(s.end);
+        var isFull = startM === 11 * 60 && endM === 20 * 60;
+        if (isFull) { pm++; label += "FULL"; }
+        else if (startM < 12 * 60) { am++; label += "早"; }
+        else {
+          pm++;
+          var hh = Math.floor(startM / 60);
+          label += (hh === 11 ? "場" : hh === 12 ? "12點" : hh === 13 ? "1點" : hh === 14 ? "2點" : "晏");
+        }
+        var cls = isFull ? "chip-pm" : (startM < 12 * 60 ? "chip-am" : "chip-pm");
         return '<span class="shift-chip ' + cls + '">' + esc(label) + "</span>";
       }).join("");
       var tag = list[0].tag ? '<span class="pill-tag">' + esc(list[0].tag) + "</span>" : "";
-      if (list[0].note && list[0].note.indexOf("替假") >= 0) tag += '<span class="pill-tag">替假</span>';
+      if (list[0].note && list[0].note.indexOf("後補") >= 0) tag += '<span class="pill-tag">後補</span>';
+      if (list[0].note && list[0].note.indexOf("WS") >= 0) tag += '<span class="pill-tag">WS</span>';
       sections[g.id].people.push(
         '<div class="person-card">' +
           '<div class="person-head">' +
@@ -266,7 +300,8 @@
       );
     });
 
-    var body = Object.keys(sections).map(function (id) {
+    var order = ["zihua", "cupal", "cashier", "recruit", "other"];
+    var body = order.filter(function (id) { return sections[id]; }).map(function (id) {
       var sec = sections[id];
       return '<section class="roster-card"><h3>' + esc(sec.title) + "</h3>" + sec.people.join("") + "</section>";
     }).join("") || '<p class="muted">未有更表資料</p>';
@@ -282,16 +317,19 @@
 
   function copyWhatsApp() {
     var people = peopleOnDate(selectedDate);
-    var lines = ["📅 " + weekdayLabel(selectedDate) + " 推廣員更表", "（待確認／可改）", ""];
+    var lines = ["📅 " + weekdayLabel(selectedDate) + " 推廣員更表", ""];
     ROLE_GROUPS.forEach(function (g) {
       var mem = people.filter(function (s) {
         return matchGroupRole(g, s.role) ||
           (g.id === "zihua" && (s.role === "Promoter" || s.role === "Senior Promoter"));
+      }).sort(function (a, b) {
+        return String(a.start).localeCompare(b.start) || String(a.name).localeCompare(b.name);
       });
       if (!mem.length) return;
       lines.push("【" + g.title + "】");
       mem.forEach(function (m) {
-        lines.push("· " + m.name + " " + m.start + "-" + m.end + (m.tag ? "（" + m.tag + "）" : ""));
+        var extra = m.note ? "（" + m.note + "）" : (m.tag ? "（" + m.tag + "）" : "");
+        lines.push("· " + m.name + " " + m.start + "-" + m.end + extra);
       });
       lines.push("");
     });
@@ -308,12 +346,12 @@
   function render() {
     var root = document.getElementById("rosterRoot");
     if (!root) return;
-    ensureDemo();
+    ensureSeedApplied();
     var body = mode === "date" ? renderDateMode() : renderPersonMode();
     root.innerHTML =
       '<header class="roster-hero">' +
         '<div class="roster-hero-top">' +
-          "<div><p class=\"pc-hero-kicker\">2026 工展會</p><h2>推廣員更表</h2></div>" +
+          "<div><p class=\"pc-hero-kicker\">2026 工展會 · 12/12–1/4</p><h2>推廣員更表</h2></div>" +
           '<div class="roster-hero-actions">' +
             '<button type="button" class="btn-ghost" id="btnRosterLogin">🔒 職員登入</button>' +
           "</div>" +
@@ -325,9 +363,9 @@
       "</header>" +
       '<div class="roster-body">' + body + "</div>" +
       (isAdmin()
-        ? '<div class="btn-row" style="margin:12px 0"><button type="button" class="btn-ghost" id="btnResetRoster">還原範本＋示例</button></div>'
+        ? '<div class="btn-row" style="margin:12px 0"><button type="button" class="btn-ghost" id="btnResetRoster">還原官方更表</button></div>'
         : "") +
-      '<p class="claim-safe">示例人名標「待確認／可改」；真名時間表請職員登入後更新。</p>';
+      '<p class="claim-safe">已按最新更表載入；職員登入後可加減／改更。本機改動會跟種子版本保存。</p>';
   }
 
   function bind() {
@@ -371,10 +409,10 @@
         return;
       }
       if (e.target.closest("#btnResetRoster") && isAdmin()) {
-        if (!confirm("還原更表（清本機改動，再套示例）？")) return;
+        if (!confirm("還原官方更表（清本機改動）？")) return;
         localStorage.removeItem(LS);
         localStorage.removeItem(LS_DEMO);
-        ensureDemo();
+        ensureSeedApplied();
         render();
       }
     });
