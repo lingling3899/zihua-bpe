@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  var V = "20261106b";
+  var V = "20261106c";
   var FRAME_COUNT = 8;
   var STRIP_W = 12800;
   var STRIP_H = 900;
@@ -115,9 +115,6 @@
   }
 
   function updateChrome() {
-    if (angleHint) {
-      angleHint.textContent = "慢轉 360° · 可拖動";
-    }
     if (dots) {
       var idx = nearestFrame();
       var buttons = dots.querySelectorAll("button");
@@ -243,22 +240,56 @@
 
   function ensureOverlays() {
     if (!stage || overlaysBuilt) return;
+    var chrome = $("boothChrome");
+    if (!chrome) {
+      chrome = document.createElement("div");
+      chrome.id = "boothChrome";
+      chrome.className = "booth3d-chrome";
+      chrome.setAttribute("aria-label", "展位資訊與控制");
+      if (stage.parentNode) stage.parentNode.appendChild(chrome);
+    }
+    chrome.innerHTML = "";
+
+    var caps = document.createElement("div");
+    caps.className = "booth3d-caption-row";
 
     var mtr = document.createElement("div");
     mtr.className = "booth3d-floor-hint hint-mtr";
-    mtr.innerHTML = "銅鑼灣<small>港鐵銅鑼灣站 E 出口</small>";
-    stage.appendChild(mtr);
+    mtr.innerHTML =
+      "銅鑼灣<span class=\"booth3d-cap-sep\" aria-hidden=\"true\">·</span>" +
+      "<small>港鐵銅鑼灣站 E 出口</small>";
+    caps.appendChild(mtr);
 
     var stg = document.createElement("div");
     stg.className = "booth3d-floor-hint hint-stage";
-    stg.innerHTML = "舞台<small>主舞台方向</small>";
-    stage.appendChild(stg);
+    stg.innerHTML =
+      "舞台<span class=\"booth3d-cap-sep\" aria-hidden=\"true\">·</span>" +
+      "<small>主舞台方向</small>";
+    caps.appendChild(stg);
+    chrome.appendChild(caps);
 
-    angleHint = document.createElement("div");
-    angleHint.className = "booth3d-angle-hint";
-    angleHint.setAttribute("aria-live", "polite");
-    angleHint.textContent = "慢轉 360° · 可拖動";
-    stage.appendChild(angleHint);
+    /* No on-image 「慢轉 360°」 badge — header chip already says it */
+    angleHint = null;
+
+    var toolbar = document.createElement("div");
+    toolbar.className = "booth3d-toolbar";
+
+    var ctrls = document.createElement("div");
+    ctrls.className = "booth3d-controls";
+    var play = document.createElement("button");
+    play.type = "button";
+    play.id = "boothPlayBtn";
+    play.className = "booth3d-ctrl";
+    play.setAttribute("aria-pressed", "true");
+    play.setAttribute("aria-label", "暫停自動旋轉");
+    play.title = "暫停";
+    play.textContent = "⏸";
+    play.addEventListener("click", function (e) {
+      e.stopPropagation();
+      setPlaying(!playing);
+    });
+    ctrls.appendChild(play);
+    toolbar.appendChild(ctrls);
 
     dots = document.createElement("div");
     dots.className = "booth3d-dots booth3d-dots--orbit";
@@ -280,33 +311,20 @@
         dots.appendChild(b);
       })(i);
     }
-    stage.appendChild(dots);
+    toolbar.appendChild(dots);
+    chrome.appendChild(toolbar);
 
-    var ctrls = document.createElement("div");
-    ctrls.className = "booth3d-controls";
-    var play = document.createElement("button");
-    play.type = "button";
-    play.id = "boothPlayBtn";
-    play.className = "booth3d-ctrl";
-    play.setAttribute("aria-pressed", "true");
-    play.setAttribute("aria-label", "暫停自動旋轉");
-    play.title = "暫停";
-    play.textContent = "⏸";
-    play.addEventListener("click", function (e) {
-      e.stopPropagation();
-      setPlaying(!playing);
-    });
-    ctrls.appendChild(play);
-    stage.appendChild(ctrls);
-
-    stage.addEventListener("mousedown", onDown);
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    stage.addEventListener("touchstart", onDown, { passive: false });
-    stage.addEventListener("touchmove", onMove, { passive: false });
-    stage.addEventListener("touchend", onUp);
-    stage.addEventListener("touchcancel", onUp);
-    window.addEventListener("resize", onResize);
+    if (!stage.getAttribute("data-drag-bound")) {
+      stage.setAttribute("data-drag-bound", "1");
+      stage.addEventListener("mousedown", onDown);
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+      stage.addEventListener("touchstart", onDown, { passive: false });
+      stage.addEventListener("touchmove", onMove, { passive: false });
+      stage.addEventListener("touchend", onUp);
+      stage.addEventListener("touchcancel", onUp);
+      window.addEventListener("resize", onResize);
+    }
 
     var login = $("boothStaffLogin");
     if (login && !login.getAttribute("data-bound")) {
@@ -406,6 +424,8 @@
         );
         for (var i = 0; i < leftovers.length; i++) leftovers[i].remove();
       }
+      var chromeEl = $("boothChrome");
+      if (chromeEl) chromeEl.innerHTML = "";
       buildViewer();
       if (visible && playing && !dragging) startLoop();
     }
