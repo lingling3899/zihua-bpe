@@ -1138,11 +1138,6 @@
       '<header class="pc-hero">' +
         '<p class="pc-hero-kicker">2026 工展會 · 會場購物禮遇</p>' +
         "<h2>產品計數 · 預訂</h2>" +
-        '<div class="gifts-flyer-panel">' +
-          '<a class="gifts-flyer-open" href="assets/img/gifts/venue-gifts.jpg?v=20261106t" target="_blank" rel="noopener" title="開大圖">' +
-            '<img class="gifts-flyer-img" src="assets/img/gifts/venue-gifts.jpg?v=20261106t" width="716" height="1132" loading="lazy" decoding="async" alt="紫花油會場購物禮遇：滿$168額外驚喜、滿$328磁石貼／雨傘、滿$488手提袋；送完即止" />' +
-          "</a>" +
-        "</div>" +
         (window.BPE_Gifts && window.BPE_Gifts.renderGiftCardsHtml
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
@@ -1382,8 +1377,8 @@
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261106t" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261106t" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261106u" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261106u" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
         '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
         (st.paymentMethod

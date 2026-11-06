@@ -403,7 +403,8 @@
     } else if (isAdmin()) {
       footerNote = '<p class="claim-safe">暫定 Office roster · 內部參考 · 唔係正式 claim 金額。Set Up 12/10–11 不計入合計；Ben 12/12 拍野暫不計入（工時未定）。</p>';
     } else {
-      footerNote = '<p class="claim-safe">暫定 Office roster · 訪客版只顯示邊個返。補鐘統計要職員登入先睇到。</p>';
+      /* 訪客唔顯示 Office 說明／remark；職員後台先有 */
+      footerNote = "";
     }
 
     var adminReset = (kind === "promoter" && isAdmin())

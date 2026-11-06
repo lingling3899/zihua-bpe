@@ -215,13 +215,12 @@
         '<div class="roster-stats">' +
           "<div><strong>" + summary.length + "</strong><span>Office 同事</span></div>" +
           "<div><strong>" + totalDays + "</strong><span>全部人次</span></div>" +
-          "<div><strong>邊個返</strong><span>訪客版</span></div>" +
         "</div>"
       );
 
     return (
       stats +
-      '<section class="roster-card"><h3>按人 · 暫定 roster</h3>' + cards + "</section>"
+      '<section class="roster-card"><h3>' + (staff ? "按人 · 暫定 roster" : "按人") + "</h3>" + cards + "</section>"
     );
   }
 
@@ -229,7 +228,7 @@
     return (
       '<section class="roster-card office-buchong-lock">' +
         "<h3>補鐘統計 · 職員專用</h3>" +
-        '<p class="muted">補鐘時數只喺職員登入後先睇到。訪客版只顯示邊個返。</p>' +
+        '<p class="muted">請職員登入後查看。</p>' +
         '<div class="btn-row" style="margin-top:12px">' +
           '<button type="button" class="btn-primary" data-office-login="1">🔒 職員登入</button>' +
         "</div>" +
@@ -360,7 +359,8 @@
 
   function heroKicker(kind) {
     if (kind === "promoter") return "2026 工展會 · 12/12–1/4";
-    if (!isStaff() && kind === "office") return "暫定 roster · 顯示邊個返";
+    /* 訪客只顯示簡潔標題；暫定／內部參考 remark 留俾職員 */
+    if (!isStaff() && kind === "office") return "2026 工展會 · Office";
     return "暫定 roster · 內部參考 · 非正式 claim";
   }
 

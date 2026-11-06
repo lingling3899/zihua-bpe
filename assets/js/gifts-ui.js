@@ -221,9 +221,12 @@
     return (
       '<div class="gift-tier-cards" aria-label="滿額贈品">' +
       spend.map(function (t) {
+        var icon = t.img
+          ? '<img class="gift-tier-img" src="' + esc(t.img) + '?v=20261106u" width="128" height="128" alt="" loading="lazy" decoding="async" />'
+          : '<div class="gift-tier-emoji" aria-hidden="true">' + esc(t.emoji) + "</div>";
         return (
           '<div class="gift-tier-card' + (t.soldOut ? " sold" : "") + '">' +
-            '<div class="gift-tier-emoji" aria-hidden="true">' + esc(t.emoji) + "</div>" +
+            icon +
             '<div class="gift-tier-text">' + esc(t.cardLabel || ("滿 $" + t.amount + " " + t.title)) + "</div>" +
             (t.soldOut ? '<span class="gift-tag sold">已送完</span>' : "") +
           "</div>"
@@ -255,13 +258,6 @@
     var html = "";
     html += "<h3>" + esc(cfg.title) + ' <span class="badge">送完即止</span></h3>';
     html += '<p class="muted">' + esc(cfg.subtitle) + "</p>";
-    /* Flyer shows $168「額外驚喜」/$328磁石+雨傘/$488手挽袋; seed tiers stay magnet168/umbrella328/bag488 — image only, rules unchanged. */
-    html +=
-      '<div class="gifts-flyer-panel">' +
-        '<a class="gifts-flyer-open" href="assets/img/gifts/venue-gifts.jpg?v=20261106t" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="gifts-flyer-img" src="assets/img/gifts/venue-gifts.jpg?v=20261106t" width="716" height="1132" loading="lazy" decoding="async" alt="紫花油會場購物禮遇：滿$168額外驚喜、滿$328磁石貼／雨傘、滿$488手提袋；送完即止" />' +
-        "</a>" +
-      "</div>";
     html += renderGiftCardsHtml();
     html += renderRulesHtml();
     if (isAdmin()) {
