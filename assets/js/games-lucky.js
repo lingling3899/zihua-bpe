@@ -141,22 +141,25 @@
   }
 
   function plinkoHtml() {
+    // 7 rows staggered 8/9 like Lovable Plinko board
     var pegs = "";
-    for (var r = 0; r < 8; r++) {
-      pegs += '<div class="plinko-row">';
-      for (var c = 0; c < r + 3; c++) pegs += '<span class="plinko-peg"></span>';
+    for (var r = 0; r < 7; r++) {
+      var count = r % 2 === 0 ? 8 : 9;
+      pegs += '<div class="plinko-row' + (r % 2 ? " is-offset" : "") + '">';
+      for (var c = 0; c < count; c++) pegs += '<span class="plinko-peg"></span>';
       pegs += "</div>";
     }
     var slots = PLINKO.map(function (s, i) {
       return '<div class="plinko-slot' + (s.highlight ? " gold" : "") + '" data-slot="' + i + '">' +
         '<span class="plinko-slot-n">' + (i + 1) + "</span>" +
-        esc(s.label) + "</div>";
+        '<span class="plinko-slot-label">' + esc(s.label) + "</span></div>";
     }).join("");
     return (
       '<div class="plinko-wrap">' +
         '<div class="plinko-board" id="plinkoBoard">' +
-          '<div class="plinko-ball" id="plinkoBall" hidden></div>' +
-          pegs +
+          '<div class="plinko-chute" aria-hidden="true"></div>' +
+          '<div class="plinko-ball" id="plinkoBall"></div>' +
+          '<div class="plinko-pegs">' + pegs + "</div>" +
           '<div class="plinko-slots">' + slots + "</div>" +
         "</div>" +
         '<button type="button" class="primary" id="btnDropBall"' + (plinkoBusy ? " disabled" : "") + ">" +
@@ -311,7 +314,8 @@
 
     var slot = Math.floor(Math.random() * PLINKO.length);
     if (slot === 4 && Math.random() > 0.15) slot = Math.floor(Math.random() * 4);
-    var endLeft = 10 + slot * 18 + (Math.random() * 4 - 2);
+    // 5 equal columns → centers at 10/30/50/70/90%
+    var endLeft = (slot + 0.5) * 20 + (Math.random() * 3 - 1.5);
     var duration = 2000 + Math.floor(Math.random() * 400);
     var t0 = performance.now();
     var wiggles = [
@@ -321,9 +325,9 @@
       { t: 0.72, dx: -(6 + Math.random() * 8) }
     ];
 
-    ball.hidden = false;
-    ball.classList.remove("drop");
-    ball.style.top = "8px";
+    // ball leaves chute → board-absolute positioning for the drop
+    ball.classList.add("is-dropping");
+    ball.style.top = "6%";
     ball.style.left = "50%";
     ball.style.transition = "none";
     if (plinkoRaf) cancelAnimationFrame(plinkoRaf);
@@ -348,14 +352,14 @@
     function frame(now) {
       var t = Math.min(1, (now - t0) / duration);
       var e = easeInOutCubic(t);
-      var topPct = 8 + e * 70; // 8px-ish → ~78%
+      var topPct = 6 + e * 78; // chute → slot band ~84%
       var leftPct = lerpWiggle(t);
       ball.style.top = topPct + "%";
       ball.style.left = leftPct + "%";
       if (t < 1) {
         plinkoRaf = requestAnimationFrame(frame);
       } else {
-        ball.style.top = "78%";
+        ball.style.top = "84%";
         ball.style.left = endLeft + "%";
         plinkoBusy = false;
         plinkoRaf = 0;
@@ -371,6 +375,13 @@
           b.disabled = false;
           b.textContent = "放下乒乓球";
         }
+        // reset ball into chute after a short beat
+        setTimeout(function () {
+          if (plinkoBusy) return;
+          ball.classList.remove("is-dropping");
+          ball.style.top = "";
+          ball.style.left = "";
+        }, 900);
       }
     }
     plinkoRaf = requestAnimationFrame(frame);
