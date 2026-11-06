@@ -1,5 +1,5 @@
 window.BPE_SCHEDULE_SEED = {
-  "version": "20261105q",
+  "version": "20261106n",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "roles": [
@@ -84,11 +84,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-9",
       "date": "2026-12-12",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-10",
@@ -183,11 +183,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-20",
       "date": "2026-12-13",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-21",
@@ -273,11 +273,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-30",
       "date": "2026-12-14",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-31",
@@ -285,7 +285,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -363,11 +363,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-40",
       "date": "2026-12-15",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-41",
@@ -375,7 +375,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -435,11 +435,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-48",
       "date": "2026-12-16",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-49",
@@ -516,11 +516,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-57",
       "date": "2026-12-17",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-58",
@@ -597,11 +597,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-66",
       "date": "2026-12-18",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-67",
@@ -678,11 +678,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-75",
       "date": "2026-12-19",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-76",
@@ -690,7 +690,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -768,11 +768,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-85",
       "date": "2026-12-20",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-86",
@@ -780,7 +780,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -840,11 +840,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-93",
       "date": "2026-12-21",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-94",
@@ -852,7 +852,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -930,11 +930,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-103",
       "date": "2026-12-22",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-104",
@@ -1020,11 +1020,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-113",
       "date": "2026-12-23",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-114",
@@ -1119,11 +1119,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-124",
       "date": "2026-12-24",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-125",
@@ -1131,7 +1131,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -1209,11 +1209,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-134",
       "date": "2026-12-25",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-135",
@@ -1221,7 +1221,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -1299,11 +1299,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-144",
       "date": "2026-12-26",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-145",
@@ -1311,7 +1311,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -1389,11 +1389,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-154",
       "date": "2026-12-27",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-155",
@@ -1470,11 +1470,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-163",
       "date": "2026-12-28",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-164",
@@ -1482,7 +1482,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -1551,11 +1551,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-172",
       "date": "2026-12-29",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-173",
@@ -1632,11 +1632,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-181",
       "date": "2026-12-30",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-182",
@@ -1722,11 +1722,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-191",
       "date": "2026-12-31",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-192",
@@ -1734,7 +1734,7 @@ window.BPE_SCHEDULE_SEED = {
       "start": "15:00",
       "end": "21:00",
       "role": "Cashier",
-      "name": "Elaine",
+      "name": "Elain",
       "note": "後補"
     },
     {
@@ -1794,11 +1794,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-199",
       "date": "2027-01-01",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-200",
@@ -1875,11 +1875,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-208",
       "date": "2027-01-02",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-209",
@@ -1956,11 +1956,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-217",
       "date": "2027-01-03",
-      "start": "11:00",
-      "end": "15:00",
+      "start": "10:45",
+      "end": "19:45",
       "role": "Cashier",
       "name": "晴",
-      "note": "早"
+      "note": "早更"
     },
     {
       "id": "seed-218",
