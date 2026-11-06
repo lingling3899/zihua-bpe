@@ -1,5 +1,5 @@
 window.BPE_SCHEDULE_SEED = {
-  "version": "20261106n",
+  "version": "20261106o",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "roles": [
@@ -93,11 +93,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-10",
       "date": "2026-12-12",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-11",
@@ -192,11 +192,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-21",
       "date": "2026-12-13",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-22",
@@ -282,7 +282,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-31",
       "date": "2026-12-14",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -372,7 +372,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-41",
       "date": "2026-12-15",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -444,11 +444,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-49",
       "date": "2026-12-16",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-50",
@@ -525,11 +525,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-58",
       "date": "2026-12-17",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-59",
@@ -606,11 +606,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-67",
       "date": "2026-12-18",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-68",
@@ -687,7 +687,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-76",
       "date": "2026-12-19",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -777,7 +777,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-86",
       "date": "2026-12-20",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -849,7 +849,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-94",
       "date": "2026-12-21",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -939,11 +939,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-104",
       "date": "2026-12-22",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-105",
@@ -1029,11 +1029,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-114",
       "date": "2026-12-23",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-115",
@@ -1128,7 +1128,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-125",
       "date": "2026-12-24",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -1218,7 +1218,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-135",
       "date": "2026-12-25",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -1308,7 +1308,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-145",
       "date": "2026-12-26",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -1398,11 +1398,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-155",
       "date": "2026-12-27",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-156",
@@ -1479,7 +1479,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-164",
       "date": "2026-12-28",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -1560,11 +1560,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-173",
       "date": "2026-12-29",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-174",
@@ -1641,11 +1641,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-182",
       "date": "2026-12-30",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-183",
@@ -1731,7 +1731,7 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-192",
       "date": "2026-12-31",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Elain",
@@ -1803,11 +1803,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-200",
       "date": "2027-01-01",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-201",
@@ -1884,11 +1884,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-209",
       "date": "2027-01-02",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-210",
@@ -1965,11 +1965,11 @@ window.BPE_SCHEDULE_SEED = {
     {
       "id": "seed-218",
       "date": "2027-01-03",
-      "start": "15:00",
+      "start": "12:00",
       "end": "21:00",
       "role": "Cashier",
       "name": "Cathy",
-      "note": "晏"
+      "note": "晏更"
     },
     {
       "id": "seed-219",

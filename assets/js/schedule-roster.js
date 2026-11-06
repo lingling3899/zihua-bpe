@@ -37,7 +37,7 @@
       shifts: [
         { key: "am", label: "早更", start: "10:45", end: "19:45" },
         { key: "full", label: "全日 FULL", start: "11:00", end: "20:00" },
-        { key: "pm", label: "晏更", start: "15:00", end: "21:00" }
+        { key: "pm", label: "晏更", start: "12:00", end: "21:00" }
       ]
     },
     {
