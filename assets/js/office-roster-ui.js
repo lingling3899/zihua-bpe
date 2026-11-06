@@ -39,6 +39,15 @@
     return String(Math.round(x * 10) / 10);
   }
 
+
+  function splitBuchong(hours) {
+    var h = Number(hours) || 0;
+    var whole = Math.floor(h / 9);
+    var rem = Math.round((h - whole * 9) * 10) / 10;
+    if (Math.abs(rem) < 1e-9) rem = 0;
+    return { wholeDays: whole, remainHours: rem };
+  }
+
   function daysList() {
     var s = seed();
     return s && Array.isArray(s.days) ? s.days : [];
@@ -158,9 +167,10 @@
       if (staff && s.name === "Ben") {
         footnote = '<p class="office-footnote">※ Ben 12/12 拍野暫不計入（工時未定）</p>';
       }
+      var split = splitBuchong(s.buchongHours);
       var headRight = staff
-        ? ('<div class="person-count">' + esc(fmtHours(s.buchongHours)) + "h<br><span class=\"muted\">≈" +
-            esc(Number(s.buchongDays).toFixed(3)) + " 日</span></div>")
+        ? ('<div class="person-count">' + esc(fmtHours(s.buchongHours)) + "h<br><span class=\"muted\">應補 " +
+            split.wholeDays + " 日 · 剩 " + esc(fmtHours(split.remainHours)) + "h</span></div>")
         : ('<div class="person-count">' + s.days + " 日</div>");
       var sub = staff
         ? ('平日 ' + s.weekdayDays + " · 週末／假 " + s.holidayWeekendDays + " · 共 " + s.days + " 日")
@@ -223,15 +233,17 @@
 
     var rows = summary.map(function (r) {
       var note = r.name === "Ben" ? ' <span class="pill-tag">12/12 唔計</span>' : "";
+      var split = splitBuchong(r.buchongHours);
       return (
         "<tr>" +
           "<td><strong>" + esc(r.name) + "</strong>" + note + "</td>" +
           "<td>" + r.days + "</td>" +
           "<td>" + r.weekdayDays + "</td>" +
           "<td>" + r.holidayWeekendDays + "</td>" +
-          "<td>" + esc(fmtHours(r.totalFairHours)) + "</td>" +
-          "<td><strong>" + esc(fmtHours(r.buchongHours)) + "</strong></td>" +
-          "<td>" + esc(Number(r.buchongDays).toFixed(3)) + "</td>" +
+          "<td><strong>" + esc(fmtHours(r.buchongHours)) + "h</strong></td>" +
+          "<td><strong>" + split.wholeDays + " 日</strong></td>" +
+          "<td><strong>" + esc(fmtHours(split.remainHours)) + "h</strong></td>" +
+          '<td class="muted">' + esc(Number(r.buchongDays).toFixed(3)) + "</td>" +
         "</tr>"
       );
     }).join("");
@@ -254,18 +266,18 @@
     return (
       '<div class="roster-stats">' +
         "<div><strong>" + summary.length + "</strong><span>同事</span></div>" +
-        "<div><strong>÷9</strong><span>折合日數</span></div>" +
+        "<div><strong>1日＝9h</strong><span>應補日數</span></div>" +
         "<div><strong>暫定</strong><span>內部參考</span></div>" +
       "</div>" +
       '<section class="roster-card">' +
         "<h3>補鐘統計</h3>" +
         '<div class="buchong-table-wrap"><table class="buchong-table">' +
           "<thead><tr>" +
-            "<th>同事</th><th>日數</th><th>平日</th><th>週末／假</th><th>總工時</th><th>補鐘</th><th>÷9</th>" +
+            "<th>同事</th><th>出勤日</th><th>平日</th><th>週末／假</th><th>補鐘時數</th><th>應補日數</th><th>剩返小時</th><th class=\"muted\">÷9</th>" +
           "</tr></thead>" +
           "<tbody>" + rows + "</tbody>" +
         "</table></div>" +
-        '<p class="office-footnote">※ Ben 12/12 拍野暫不計入（工時未定）。唔係正式 claim 金額。</p>' +
+        '<p class="office-footnote">※ 應補日數＝floor(補鐘÷9)；剩返小時＝餘數（可再補／湊日）。Ben 12/12 拍野暫不計入。唔係正式 claim 金額。</p>' +
       "</section>" +
       '<section class="roster-card">' +
         "<h3>計法說明</h3>" +

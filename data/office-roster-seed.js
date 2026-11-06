@@ -1,5 +1,5 @@
 window.BPE_OFFICE_ROSTER_SEED = {
-  "version": "20261106k-office",
+  "version": "20261106l-office",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "label": "暫定 Office 同事更表（內部參考）",
@@ -10,6 +10,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
     "冬至 12/22 當平日",
     "12/10–11 Set Up：列出但不計入補鐘合計（無 Call Time）",
     "Ben 12/12 拍野暫不計入（工時未定）",
+    "1 補鐘日＝9 小時：應補日數＝floor(補鐘時數÷9)；剩返可補小時＝餘數",
     "此為暫定 roster／內部參考，唔係正式 claim 金額"
   ],
   "people": [
@@ -755,7 +756,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "holidayWeekendDays": 3,
       "totalFairHours": 153.5,
       "buchongHours": 54.5,
-      "buchongDays": 6.056
+      "buchongDays": 6.056,
+      "buchongWholeDays": 6,
+      "buchongRemainHours": 0.5
     },
     {
       "name": "Andrew",
@@ -764,7 +767,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "holidayWeekendDays": 5,
       "totalFairHours": 98.5,
       "buchongHours": 62.5,
-      "buchongDays": 6.944
+      "buchongDays": 6.944,
+      "buchongWholeDays": 6,
+      "buchongRemainHours": 8.5
     },
     {
       "name": "Cherry",
@@ -773,7 +778,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "holidayWeekendDays": 4,
       "totalFairHours": 54.5,
       "buchongHours": 45.5,
-      "buchongDays": 5.056
+      "buchongDays": 5.056,
+      "buchongWholeDays": 5,
+      "buchongRemainHours": 0.5
     },
     {
       "name": "Ben",
@@ -782,7 +789,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "holidayWeekendDays": 3,
       "totalFairHours": 43.5,
       "buchongHours": 34.5,
-      "buchongDays": 3.833
+      "buchongDays": 3.833,
+      "buchongWholeDays": 3,
+      "buchongRemainHours": 7.5
     },
     {
       "name": "Bessy",
@@ -791,7 +800,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "holidayWeekendDays": 3,
       "totalFairHours": 43.5,
       "buchongHours": 34.5,
-      "buchongDays": 3.833
+      "buchongDays": 3.833,
+      "buchongWholeDays": 3,
+      "buchongRemainHours": 7.5
     },
     {
       "name": "Angel",
@@ -800,7 +811,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "holidayWeekendDays": 1,
       "totalFairHours": 21.5,
       "buchongHours": 12.5,
-      "buchongDays": 1.389
+      "buchongDays": 1.389,
+      "buchongWholeDays": 1,
+      "buchongRemainHours": 3.5
     },
     {
       "name": "Wing",
@@ -809,7 +822,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "holidayWeekendDays": 1,
       "totalFairHours": 21.5,
       "buchongHours": 12.5,
-      "buchongDays": 1.389
+      "buchongDays": 1.389,
+      "buchongWholeDays": 1,
+      "buchongRemainHours": 3.5
     }
   ]
 };
