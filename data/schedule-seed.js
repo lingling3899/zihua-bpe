@@ -1,5 +1,5 @@
 window.BPE_SCHEDULE_SEED = {
-  "version": "20261106o",
+  "version": "20261106p",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "roles": [
@@ -53,15 +53,6 @@ window.BPE_SCHEDULE_SEED = {
       "role": "紫花油推廣員",
       "name": "Connie",
       "note": "晏更"
-    },
-    {
-      "id": "seed-6",
-      "date": "2026-12-12",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
     },
     {
       "id": "seed-7",
@@ -154,15 +145,6 @@ window.BPE_SCHEDULE_SEED = {
       "note": "晏更"
     },
     {
-      "id": "seed-17",
-      "date": "2026-12-13",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
-    },
-    {
       "id": "seed-18",
       "date": "2026-12-13",
       "start": "13:00",
@@ -253,15 +235,6 @@ window.BPE_SCHEDULE_SEED = {
       "note": "晏更"
     },
     {
-      "id": "seed-28",
-      "date": "2026-12-14",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
-    },
-    {
       "id": "seed-29",
       "date": "2026-12-14",
       "start": "12:00",
@@ -343,15 +316,6 @@ window.BPE_SCHEDULE_SEED = {
       "note": "晏更"
     },
     {
-      "id": "seed-38",
-      "date": "2026-12-15",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
-    },
-    {
       "id": "seed-39",
       "date": "2026-12-15",
       "start": "12:00",
@@ -413,15 +377,6 @@ window.BPE_SCHEDULE_SEED = {
       "role": "紫花油推廣員",
       "name": "Connie",
       "note": "晏更"
-    },
-    {
-      "id": "seed-46",
-      "date": "2026-12-16",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
     },
     {
       "id": "seed-47",
@@ -494,15 +449,6 @@ window.BPE_SCHEDULE_SEED = {
       "role": "紫花油推廣員",
       "name": "Connie",
       "note": "晏更"
-    },
-    {
-      "id": "seed-55",
-      "date": "2026-12-17",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
     },
     {
       "id": "seed-56",
@@ -901,15 +847,6 @@ window.BPE_SCHEDULE_SEED = {
       "note": "晏更"
     },
     {
-      "id": "seed-100",
-      "date": "2026-12-22",
-      "start": "12:00",
-      "end": "21:00",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 晏更"
-    },
-    {
       "id": "seed-101",
       "date": "2026-12-22",
       "start": "14:00",
@@ -1000,15 +937,6 @@ window.BPE_SCHEDULE_SEED = {
       "note": "晏更"
     },
     {
-      "id": "seed-111",
-      "date": "2026-12-23",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
-    },
-    {
       "id": "seed-112",
       "date": "2026-12-23",
       "start": "12:00",
@@ -1090,15 +1018,6 @@ window.BPE_SCHEDULE_SEED = {
       "note": "晏更"
     },
     {
-      "id": "seed-121",
-      "date": "2026-12-24",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
-    },
-    {
       "id": "seed-122",
       "date": "2026-12-24",
       "start": "12:00",
@@ -1178,15 +1097,6 @@ window.BPE_SCHEDULE_SEED = {
       "role": "紫花油推廣員",
       "name": "Neko",
       "note": "晏更"
-    },
-    {
-      "id": "seed-131",
-      "date": "2026-12-25",
-      "start": "10:45",
-      "end": "19:45",
-      "role": "紫花油推廣員",
-      "name": "Katherine",
-      "note": "後補 · 早更"
     },
     {
       "id": "seed-132",
