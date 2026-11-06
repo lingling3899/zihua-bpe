@@ -9,6 +9,11 @@
     return window.BPE_OFFICE_ROSTER_SEED || null;
   }
 
+  function isStaff() {
+    var a = window.ZihuaAdminAuth;
+    return !!(a && a.isLoggedIn && a.isLoggedIn());
+  }
+
   function esc(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -34,15 +39,6 @@
     return String(Math.round(x * 10) / 10);
   }
 
-  function fmtDays(n) {
-    var x = Number(n);
-    if (isNaN(x)) return "—";
-    return x.toFixed(3).replace(/\.?0+$/, function (m) {
-      // keep 3 decimals as seeded; just trim trailing zeros lightly
-      return m;
-    });
-  }
-
   function daysList() {
     var s = seed();
     return s && Array.isArray(s.days) ? s.days : [];
@@ -66,14 +62,6 @@
       .slice().sort(function (a, b) { return String(a.date).localeCompare(b.date); });
   }
 
-  function summaryFor(name) {
-    var list = summaryList();
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].name === name) return list[i];
-    }
-    return null;
-  }
-
   function ensureSelectedDate() {
     var days = daysList();
     if (!days.length) return;
@@ -82,7 +70,11 @@
     }
   }
 
-  function renderOfficeDate() {
+  function openLogin() {
+    if (window.BPE_Shell && window.BPE_Shell.openLogin) window.BPE_Shell.openLogin();
+  }
+
+  function renderOfficeDate(staff) {
     ensureSelectedDate();
     var days = daysList();
     var chips = days.map(function (d) {
@@ -98,24 +90,39 @@
     if (!day) return '<div class="date-chips">' + chips + '</div><p class="muted">呢日未有 Office 同事</p>';
 
     var rows = assignmentsFor(selectedDate);
-    var pills = rows.map(function (a) {
-      var letter = (a.name || "?").charAt(0);
-      var tag = "";
-      if (a.notes) {
-        var short = a.notes.split("；")[0].trim();
-        if (short) tag = '<span class="pill-tag">' + esc(short) + "</span>";
-      }
-      tag += '<span class="pill-tag">補 ' + esc(fmtHours(a.buchongHours)) + "h</span>";
-      return '<span class="name-pill"><span class="pill-av">' + esc(letter) + "</span>" +
-        esc(a.name) + tag + "</span>";
-    }).join("");
+    var pills;
+    if (rows.length) {
+      pills = rows.map(function (a) {
+        var letter = (a.name || "?").charAt(0);
+        var tag = "";
+        if (staff) {
+          if (a.notes) {
+            var short = a.notes.split("；")[0].trim();
+            if (short) tag = '<span class="pill-tag">' + esc(short) + "</span>";
+          }
+          tag += '<span class="pill-tag">補 ' + esc(fmtHours(a.buchongHours)) + "h</span>";
+        }
+        return '<span class="name-pill"><span class="pill-av">' + esc(letter) + "</span>" +
+          esc(a.name) + tag + "</span>";
+      }).join("");
+    } else {
+      // fallback to onDuty names (e.g. if assignment filtered)
+      pills = (day.onDuty || []).map(function (name) {
+        var letter = (name || "?").charAt(0);
+        return '<span class="name-pill"><span class="pill-av">' + esc(letter) + "</span>" +
+          esc(name) + "</span>";
+      }).join("");
+    }
 
     var callLabel = day.callStart + " – " + day.callEnd;
+    var shiftMeta = staff
+      ? ("Call Time " + esc(callLabel) + " · 工時 " + esc(fmtHours(day.fairHours)) + "h")
+      : ("Call Time " + esc(callLabel));
     var card =
       '<section class="roster-card">' +
         "<h3>Office 同事 " + dayTypeBadge(day.dayType) + "</h3>" +
         '<div class="roster-shift">' +
-          "<h4>Call Time " + esc(callLabel) + " · 工時 " + esc(fmtHours(day.fairHours)) + "h</h4>" +
+          "<h4>" + shiftMeta + "</h4>" +
           '<div class="name-pills">' + (pills || '<span class="muted">未有人</span>') + "</div>" +
         "</div>" +
       "</section>";
@@ -123,7 +130,7 @@
     return '<div class="date-chips">' + chips + "</div>" + card;
   }
 
-  function renderOfficePerson() {
+  function renderOfficePerson(staff) {
     var summary = summaryList();
     var totalBuchong = 0;
     var totalDays = 0;
@@ -137,28 +144,34 @@
       var chips = list.map(function (a) {
         var label = a.date.slice(5).replace("-", "/") + " ";
         var cls = "chip-pm";
-        if (a.dayType === "平日") {
-          cls = "chip-am";
+        if (a.dayType === "平日") cls = "chip-am";
+        else if (a.dayType === "公眾假期") cls = "chip-holiday";
+        else cls = "chip-weekend";
+        if (staff) {
           label += "補" + fmtHours(a.buchongHours) + "h";
         } else {
-          cls = a.dayType === "公眾假期" ? "chip-holiday" : "chip-weekend";
-          label += "補" + fmtHours(a.buchongHours) + "h";
+          label += a.dayType;
         }
         return '<span class="shift-chip ' + cls + '">' + esc(label) + "</span>";
       }).join("");
       var footnote = "";
-      if (s.name === "Ben") {
-        footnote = '<p class="office-footnote">※ 含 12/12 拍野；表底寫 3 日，如唔計請再改</p>';
+      if (staff && s.name === "Ben") {
+        footnote = '<p class="office-footnote">※ Ben 12/12 拍野暫不計入（工時未定）</p>';
       }
+      var headRight = staff
+        ? ('<div class="person-count">' + esc(fmtHours(s.buchongHours)) + "h<br><span class=\"muted\">≈" +
+            esc(Number(s.buchongDays).toFixed(3)) + " 日</span></div>")
+        : ('<div class="person-count">' + s.days + " 日</div>");
+      var sub = staff
+        ? ('平日 ' + s.weekdayDays + " · 週末／假 " + s.holidayWeekendDays + " · 共 " + s.days + " 日")
+        : ("共 " + s.days + " 日 · 週末／假 " + s.holidayWeekendDays + " · 平日 " + s.weekdayDays);
       return (
         '<div class="person-card">' +
           '<div class="person-head">' +
             '<span class="pill-av">' + esc(s.name.charAt(0)) + "</span>" +
             "<div><strong>" + esc(s.name) + "</strong>" +
-            '<div class="muted">平日 ' + s.weekdayDays + " · 週末／假 " + s.holidayWeekendDays +
-            " · 共 " + s.days + " 日</div></div>" +
-            '<div class="person-count">' + esc(fmtHours(s.buchongHours)) + "h<br><span class=\"muted\">≈" +
-            esc(Number(s.buchongDays).toFixed(3)) + " 日</span></div>" +
+            '<div class="muted">' + sub + "</div></div>" +
+            headRight +
           "</div>" +
           '<div class="shift-chips">' + chips + "</div>" +
           footnote +
@@ -166,24 +179,50 @@
       );
     }).join("");
 
+    var stats = staff
+      ? (
+        '<div class="roster-stats">' +
+          "<div><strong>" + summary.length + "</strong><span>Office 同事</span></div>" +
+          "<div><strong>" + totalDays + "</strong><span>全部人次</span></div>" +
+          "<div><strong>" + esc(fmtHours(totalBuchong)) + "h</strong><span>補鐘合計</span></div>" +
+        "</div>"
+      )
+      : (
+        '<div class="roster-stats">' +
+          "<div><strong>" + summary.length + "</strong><span>Office 同事</span></div>" +
+          "<div><strong>" + totalDays + "</strong><span>全部人次</span></div>" +
+          "<div><strong>邊個返</strong><span>訪客版</span></div>" +
+        "</div>"
+      );
+
     return (
-      '<div class="roster-stats">' +
-        "<div><strong>" + summary.length + "</strong><span>Office 同事</span></div>" +
-        "<div><strong>" + totalDays + "</strong><span>全部人次</span></div>" +
-        "<div><strong>" + esc(fmtHours(totalBuchong)) + "h</strong><span>補鐘合計</span></div>" +
-      "</div>" +
+      stats +
       '<section class="roster-card"><h3>按人 · 暫定 roster</h3>' + cards + "</section>"
     );
   }
 
+  function renderBuchongLock() {
+    return (
+      '<section class="roster-card office-buchong-lock">' +
+        "<h3>補鐘統計 · 職員專用</h3>" +
+        '<p class="muted">補鐘時數只喺職員登入後先睇到。訪客版只顯示邊個返。</p>' +
+        '<div class="btn-row" style="margin-top:12px">' +
+          '<button type="button" class="btn-primary" data-office-login="1">🔒 職員登入</button>' +
+        "</div>" +
+      "</section>"
+    );
+  }
+
   function renderBuchong() {
+    if (!isStaff()) return renderBuchongLock();
+
     var summary = summaryList();
     var s = seed();
     var rules = (s && s.rulesNote) || [];
     var setup = (s && s.setupUncertain) || [];
 
     var rows = summary.map(function (r) {
-      var note = r.name === "Ben" ? ' <span class="pill-tag">含拍野</span>' : "";
+      var note = r.name === "Ben" ? ' <span class="pill-tag">12/12 唔計</span>' : "";
       return (
         "<tr>" +
           "<td><strong>" + esc(r.name) + "</strong>" + note + "</td>" +
@@ -226,7 +265,7 @@
           "</tr></thead>" +
           "<tbody>" + rows + "</tbody>" +
         "</table></div>" +
-        '<p class="office-footnote">※ Ben 含 12/12 拍野；表底寫 3 日，如唔計請再改。唔係正式 claim 金額。</p>' +
+        '<p class="office-footnote">※ Ben 12/12 拍野暫不計入（工時未定）。唔係正式 claim 金額。</p>' +
       "</section>" +
       '<section class="roster-card">' +
         "<h3>計法說明</h3>" +
@@ -240,6 +279,7 @@
   }
 
   function renderBody(kind) {
+    var staff = isStaff();
     if (kind === "buchong") return renderBuchong();
     if (kind === "office") {
       return (
@@ -249,13 +289,18 @@
           '<button type="button" class="mode-btn' + (officeMode === "person" ? " active" : "") +
             '" data-office-mode="person">👤 按人</button>' +
         "</div>" +
-        (officeMode === "date" ? renderOfficeDate() : renderOfficePerson())
+        (officeMode === "date" ? renderOfficeDate(staff) : renderOfficePerson(staff))
       );
     }
     return "";
   }
 
   function handleClick(e) {
+    var loginBtn = e.target.closest("[data-office-login]");
+    if (loginBtn) {
+      openLogin();
+      return true;
+    }
     var om = e.target.closest("[data-office-mode]");
     if (om) {
       officeMode = om.getAttribute("data-office-mode");
@@ -277,6 +322,7 @@
 
   function heroKicker(kind) {
     if (kind === "promoter") return "2026 工展會 · 12/12–1/4";
+    if (!isStaff() && kind === "office") return "暫定 roster · 顯示邊個返";
     return "暫定 roster · 內部參考 · 非正式 claim";
   }
 
@@ -286,6 +332,7 @@
     heroTitle: heroTitle,
     heroKicker: heroKicker,
     getOfficeMode: function () { return officeMode; },
-    setOfficeMode: function (m) { officeMode = m; }
+    setOfficeMode: function (m) { officeMode = m; },
+    isStaff: isStaff
   };
 })();

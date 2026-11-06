@@ -349,6 +349,9 @@
     if (!root) return;
     ensureSeedApplied();
 
+    // 訪客唔顯示補鐘分頁；若仍停喺 buchong 就退返 Office
+    if (!isAdmin() && kind === "buchong") kind = "office";
+
     var office = window.BPE_OfficeRoster;
     var title = office && office.heroTitle ? office.heroTitle(kind) : "推廣員更表";
     var kicker = office && office.heroKicker ? office.heroKicker(kind) : "2026 工展會 · 12/12–1/4";
@@ -371,12 +374,21 @@
         "</div>";
     }
 
-    var footerNote = kind === "promoter"
-      ? '<p class="claim-safe">已按最新更表載入；職員登入後可加減／改更。本機改動會跟種子版本保存。</p>'
-      : '<p class="claim-safe">暫定 Office roster · 內部參考 · 唔係正式 claim 金額。Set Up 12/10–11 不計入合計；Ben 含 12/12 拍野。</p>';
+    var footerNote;
+    if (kind === "promoter") {
+      footerNote = '<p class="claim-safe">已按最新更表載入；職員登入後可加減／改更。本機改動會跟種子版本保存。</p>';
+    } else if (isAdmin()) {
+      footerNote = '<p class="claim-safe">暫定 Office roster · 內部參考 · 唔係正式 claim 金額。Set Up 12/10–11 不計入合計；Ben 12/12 拍野暫不計入（工時未定）。</p>';
+    } else {
+      footerNote = '<p class="claim-safe">暫定 Office roster · 訪客版只顯示邊個返。補鐘統計要職員登入先睇到。</p>';
+    }
 
     var adminReset = (kind === "promoter" && isAdmin())
       ? '<div class="btn-row" style="margin:12px 0"><button type="button" class="btn-ghost" id="btnResetRoster">還原官方更表</button></div>'
+      : "";
+
+    var buchongTab = isAdmin()
+      ? ('<button type="button" class="mode-btn' + (kind === "buchong" ? " active" : "") + '" data-kind="buchong">⏱ 補鐘統計</button>')
       : "";
 
     root.innerHTML =
@@ -390,7 +402,7 @@
         '<div class="mode-toggle kind-toggle">' +
           '<button type="button" class="mode-btn' + (kind === "promoter" ? " active" : "") + '" data-kind="promoter">📣 推廣員</button>' +
           '<button type="button" class="mode-btn' + (kind === "office" ? " active" : "") + '" data-kind="office">🏢 Office</button>' +
-          '<button type="button" class="mode-btn' + (kind === "buchong" ? " active" : "") + '" data-kind="buchong">⏱ 補鐘統計</button>' +
+          buchongTab +
         "</div>" +
         subToggle +
       "</header>" +

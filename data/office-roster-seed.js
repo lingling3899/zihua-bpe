@@ -1,5 +1,5 @@
 window.BPE_OFFICE_ROSTER_SEED = {
-  "version": "20261106j-office",
+  "version": "20261106k-office",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "label": "暫定 Office 同事更表（內部參考）",
@@ -9,7 +9,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
     "平日補鐘＝工時−9；週末／公眾假（聖誕 12/25、Boxing Day 12/26、元旦 1/1）全日計",
     "冬至 12/22 當平日",
     "12/10–11 Set Up：列出但不計入補鐘合計（無 Call Time）",
-    "Ben 暫計 5 日（含 12/12 拍野）；表底寫 3 日——如唔計請再改",
+    "Ben 12/12 拍野暫不計入（工時未定）",
     "此為暫定 roster／內部參考，唔係正式 claim 金額"
   ],
   "people": [
@@ -31,8 +31,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11.0,
       "onDuty": [
         "MeiMei",
-        "Wing",
-        "Ben"
+        "Wing"
       ],
       "notes": ""
     },
@@ -348,16 +347,6 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11.0,
       "buchongHours": 11.0,
       "notes": "Day1"
-    },
-    {
-      "name": "Ben",
-      "date": "2026-12-12",
-      "weekday": "六",
-      "dayType": "週末",
-      "callTime": "1030-2130",
-      "fairHours": 11.0,
-      "buchongHours": 11.0,
-      "notes": "Day1；拍野"
     },
     {
       "name": "Andrew",
@@ -788,12 +777,12 @@ window.BPE_OFFICE_ROSTER_SEED = {
     },
     {
       "name": "Ben",
-      "days": 5,
+      "days": 4,
       "weekdayDays": 1,
-      "holidayWeekendDays": 4,
-      "totalFairHours": 54.5,
-      "buchongHours": 45.5,
-      "buchongDays": 5.056
+      "holidayWeekendDays": 3,
+      "totalFairHours": 43.5,
+      "buchongHours": 34.5,
+      "buchongDays": 3.833
     },
     {
       "name": "Bessy",
