@@ -1341,6 +1341,17 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
   border: 1px solid #e8dff3;
   background: #fff;
 }
+.gifts-flyer-panel { margin: 10px 0 12px; }
+.gifts-flyer-open { display: block; line-height: 0; }
+.gifts-flyer-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid #e8dff3;
+  background: #fff;
+}
+
 .pc-pay {
   margin: 4px 14px calc(var(--nav-h) + var(--safe-bottom) + 88px);
 }
