@@ -15,9 +15,9 @@ window.BPE_DIMSUM_ORDER = {
           items: [
             { code: "Z0001A", name: "Set A（1小＋1中＋1大）", orig: 105, special: 70, unit: "套" },
             { code: "Z0005", name: "Set B（2中＋2大）", orig: 172, special: 106, unit: "套" },
-            { code: "Z0007A", name: "芳香紅薇 set", orig: 88, special: 70, unit: "套" },
-            { code: "Z0007B", name: "淡花甜香 set", orig: 88, special: 70, unit: "套" },
-            { code: "Z0007C", name: "馥郁白木 set", orig: 88, special: 70, unit: "套" }
+            { code: "Z0007A", name: "2小＋1花香玫＋杯墊", orig: 88, special: 70, unit: "套" },
+            { code: "Z0007B", name: "2小＋1花香橙＋杯墊", orig: 88, special: 70, unit: "套" },
+            { code: "Z0007C", name: "2小＋1花香白木＋杯墊", orig: 88, special: 70, unit: "套" }
           ]
         },
         {

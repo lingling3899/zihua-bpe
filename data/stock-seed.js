@@ -1,14 +1,15 @@
 /* 2026 工展會 總預貨量 — HKBPE seed；散裝 CO98/CO99/ZE01/ZE05–07 用獨立大數表 */
 window.BPE_STOCK_SEED = {
-  version: "20261105r",
-  asOf: "2026-11-05",
+  version: "20261106s",
+  asOf: "2026-11-06",
   source: "HKBPE 2026 總預貨量",
   notes: [
     "紫花油散裝 CO98/CO99/ZE01/ZE05/ZE06/ZE07 採用獨立摘要表較大數量，非 sheet1 散裝欄較小數。",
     "Pack 套裝列 CO98/CO99/ZE01·Z4C 分別存為 Z0004／Z0004B／Z0004C（與散裝同 WF 碼但不同 SKU）。",
     "CPW021JS1 對應 app 碼 CPW021JS。",
     "X／入機代號：優先 xCode，否則 wfCode，再係 app code（職員庫存／補貨表顯示）。",
-    "CUPAL-B088 陶瓷杯墊：總預貨量未填（qtyUnknown）；職員輸入「剩餘」後先會按數扣／擋結算；未填時唔擋結算但會記已送出。"
+    "CUPAL-B088 陶瓷杯墊：總預貨量未填（qtyUnknown）；職員輸入「剩餘」後先會按數扣／擋結算；未填時唔擋結算但會記已送出。",
+    "ZHMA02 WeArmask LV3 成人獨立包裝（白）：總預只計工展會 160 件（生產批次 2025.12 46pcs／2026.10 680pcs 另計）。"
   ],
   aliases: {
     Z1A: "Z0001A",
@@ -23,9 +24,9 @@ window.BPE_STOCK_SEED = {
     /* —— 紫花油套裝 —— */
     { code: "Z0001A", wfCode: "Z1A", xCode: "Z1A", name: "Set A（1小＋1中＋1大）", category: "紫花油套裝", qty: 3744, unit: "套" },
     { code: "Z0005", wfCode: "Z5", xCode: "Z5", name: "Set B（2中＋2大）", category: "紫花油套裝", qty: 4500, unit: "套" },
-    { code: "Z0007A", wfCode: "Z7A", xCode: "Z7A", name: "芳香紅薇 set", category: "紫花油套裝", qty: 1440, unit: "套" },
-    { code: "Z0007B", wfCode: "Z7B", xCode: "Z7B", name: "淡花甜香 set", category: "紫花油套裝", qty: 1224, unit: "套" },
-    { code: "Z0007C", wfCode: "Z7C", xCode: "Z7C", name: "馥郁白木 set", category: "紫花油套裝", qty: 1224, unit: "套" },
+    { code: "Z0007A", wfCode: "Z7A", xCode: "Z7A", name: "2小＋1花香玫＋杯墊", category: "紫花油套裝", qty: 1440, unit: "套" },
+    { code: "Z0007B", wfCode: "Z7B", xCode: "Z7B", name: "2小＋1花香橙＋杯墊", category: "紫花油套裝", qty: 1224, unit: "套" },
+    { code: "Z0007C", wfCode: "Z7C", xCode: "Z7C", name: "2小＋1花香白木＋杯墊", category: "紫花油套裝", qty: 1224, unit: "套" },
     { code: "Z0004", wfCode: "CO98-PACK", xCode: "CO98-PACK", name: "紫花油 6ml（6件裝）pack", category: "紫花油套裝", qty: 1440, unit: "套" },
     { code: "Z0004B", wfCode: "CO99-PACK", xCode: "CO99-PACK", name: "紫花油 12ml（6件裝）pack", category: "紫花油套裝", qty: 3744, unit: "套" },
     { code: "Z0004C", wfCode: "ZE01-PACK", xCode: "ZE01-PACK", name: "紫花油 26ml（6件裝）送 12ml 1支 pack", category: "紫花油套裝", qty: 1080, unit: "套" },
@@ -45,6 +46,8 @@ window.BPE_STOCK_SEED = {
     { code: "CUPAL-B088", wfCode: "CUPAL-B088", xCode: "CUPAL-B088", name: "紫花油陶瓷杯墊", category: "禮品", qtyUnknown: true, unit: "件" },
 
     /* —— 口罩 —— */
+    { code: "ZHMA02", wfCode: "ZHMA02", xCode: "ZHMA02", name: "WeArmask LV3 成人獨立包裝（白）", category: "口罩", qty: 160, unit: "件",
+      note: "生產批次：2025.12 46pcs；2026.10 680pcs（總預只計工展會 160）" },
     { code: "ZHMA17", name: "小童立體口罩（紫）WeArmask 3D (V) Kids", category: "口罩", qty: 80, unit: "件" },
     { code: "ZHMA18", name: "小童立體口罩（白）WeArmask 3D (W) Kids", category: "口罩", qty: 40, unit: "件" },
     { code: "ZHMA19", name: "小童立體口罩（卡通）WeArmask 3D Kids", category: "口罩", qty: 40, unit: "件" },
