@@ -174,6 +174,16 @@
   function renderDateMode() {
     var dates = fairDates();
     if (dates.indexOf(selectedDate) < 0) selectedDate = dates[0];
+    var opts = dates.map(function (d) {
+      var n = peopleOnDate(d).length;
+      return '<option value="' + d + '"' + (d === selectedDate ? " selected" : "") + ">" +
+        esc(weekdayLabel(d)) + " · " + n + "人</option>";
+    }).join("");
+    var pick =
+      '<div class="roster-date-pick">' +
+        '<label for="promoterDateSelect">選擇日子</label>' +
+        '<select id="promoterDateSelect" data-promoter-date-select>' + opts + "</select>" +
+      "</div>";
     var chips = dates.map(function (d) {
       var n = peopleOnDate(d).length;
       return '<button type="button" class="date-chip' + (d === selectedDate ? " active" : "") +
@@ -233,6 +243,7 @@
     }).join("") || '<p class="muted">呢日未有排更</p>';
 
     return (
+      pick +
       '<div class="date-chips">' + chips + "</div>" +
       groupsHtml +
       '<button type="button" class="btn-ghost roster-copy" id="btnCopyRoster">複製當日更表 (WhatsApp)</button>'
@@ -344,6 +355,18 @@
     }
   }
 
+  function scrollActiveDateChip() {
+    var root = document.getElementById("rosterRoot");
+    if (!root) return;
+    var active = root.querySelector(".date-chip.active");
+    if (!active || !active.scrollIntoView) return;
+    try {
+      active.scrollIntoView({ inline: "center", block: "nearest" });
+    } catch (e) {
+      active.scrollIntoView(false);
+    }
+  }
+
   function render() {
     var root = document.getElementById("rosterRoot");
     if (!root) return;
@@ -409,12 +432,32 @@
       '<div class="roster-body">' + body + "</div>" +
       adminReset +
       footerNote;
+
+    // keep selected date chip visible after re-render (e.g. 18 號唔跳返 12 號)
+    requestAnimationFrame(function () {
+      scrollActiveDateChip();
+    });
   }
 
   function bind() {
     var root = document.getElementById("rosterRoot");
     if (!root || root._rosterBound) return;
     root._rosterBound = true;
+    root.addEventListener("change", function (e) {
+      if (window.BPE_OfficeRoster && window.BPE_OfficeRoster.handleChange &&
+          window.BPE_OfficeRoster.handleChange(e)) {
+        render();
+        return;
+      }
+      var t = e.target;
+      if (t && (t.id === "promoterDateSelect" ||
+          (t.getAttribute && t.getAttribute("data-promoter-date-select") != null))) {
+        if (t.value) {
+          selectedDate = t.value;
+          render();
+        }
+      }
+    });
     root.addEventListener("click", function (e) {
       var k = e.target.closest("[data-kind]");
       if (k) { kind = k.getAttribute("data-kind"); render(); return; }

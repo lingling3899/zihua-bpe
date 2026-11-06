@@ -83,9 +83,23 @@
     if (window.BPE_Shell && window.BPE_Shell.openLogin) window.BPE_Shell.openLogin();
   }
 
+  function datePickHtml(days) {
+    var opts = days.map(function (d) {
+      return '<option value="' + esc(d.date) + '"' + (d.date === selectedDate ? " selected" : "") + ">" +
+        esc(fmtDateChip(d.date, d.weekday)) + " · " + d.onDuty.length + "人 · " + esc(d.dayType) + "</option>";
+    }).join("");
+    return (
+      '<div class="roster-date-pick">' +
+        '<label for="officeDateSelect">選擇日子</label>' +
+        '<select id="officeDateSelect" data-office-date-select>' + opts + "</select>" +
+      "</div>"
+    );
+  }
+
   function renderOfficeDate(staff) {
     ensureSelectedDate();
     var days = daysList();
+    var pick = datePickHtml(days);
     var chips = days.map(function (d) {
       return '<button type="button" class="date-chip' + (d.date === selectedDate ? " active" : "") +
         '" data-office-date="' + esc(d.date) + '">' + esc(fmtDateChip(d.date, d.weekday)) +
@@ -96,7 +110,7 @@
     for (var i = 0; i < days.length; i++) {
       if (days[i].date === selectedDate) { day = days[i]; break; }
     }
-    if (!day) return '<div class="date-chips">' + chips + '</div><p class="muted">呢日未有 Office 同事</p>';
+    if (!day) return pick + '<div class="date-chips">' + chips + '</div><p class="muted">呢日未有 Office 同事</p>';
 
     var rows = assignmentsFor(selectedDate);
     var pills;
@@ -136,7 +150,7 @@
         "</div>" +
       "</section>";
 
-    return '<div class="date-chips">' + chips + "</div>" + card;
+    return pick + '<div class="date-chips">' + chips + "</div>" + card;
   }
 
   function renderOfficePerson(staff) {
@@ -326,6 +340,18 @@
     return false;
   }
 
+  function handleChange(e) {
+    var t = e.target;
+    if (!t) return false;
+    if (t.id === "officeDateSelect" || (t.getAttribute && t.getAttribute("data-office-date-select") != null)) {
+      if (t.value) {
+        selectedDate = t.value;
+        return true;
+      }
+    }
+    return false;
+  }
+
   function heroTitle(kind) {
     if (kind === "buchong") return "Office 補鐘統計";
     if (kind === "office") return "Office 同事更表";
@@ -341,6 +367,7 @@
   window.BPE_OfficeRoster = {
     renderBody: renderBody,
     handleClick: handleClick,
+    handleChange: handleChange,
     heroTitle: heroTitle,
     heroKicker: heroKicker,
     getOfficeMode: function () { return officeMode; },

@@ -729,6 +729,18 @@ body[data-view="order"] .floating-login .login-dropdown {
 }
 .mode-btn.active { background: #fff; color: var(--purple-dark); }
 .roster-body { padding: 12px 14px 20px; }
+.roster-date-pick {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;
+}
+.roster-date-pick label {
+  flex: 0 0 auto; font-weight: 800; color: var(--purple-dark); font-size: .88rem; white-space: nowrap;
+}
+.roster-date-pick select {
+  flex: 1 1 160px; min-width: 0; width: 100%;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 10px 12px; font-weight: 700; font-size: .9rem;
+  color: var(--purple-dark); background: #fff;
+}
 .date-chips {
   display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none;
 }
