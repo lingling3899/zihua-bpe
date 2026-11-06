@@ -4,7 +4,8 @@
 
   var LS = "zihua_bpe_shifts_v1";
   var LS_DEMO = "zihua_bpe_roster_demo_applied_v1";
-  var mode = "date"; // date | person
+  var kind = "promoter"; // promoter | office | buchong
+  var mode = "date"; // date | person (promoter)
   var selectedDate = "2026-12-12";
 
   var ROLE_GROUPS = [
@@ -347,25 +348,55 @@
     var root = document.getElementById("rosterRoot");
     if (!root) return;
     ensureSeedApplied();
-    var body = mode === "date" ? renderDateMode() : renderPersonMode();
+
+    var office = window.BPE_OfficeRoster;
+    var title = office && office.heroTitle ? office.heroTitle(kind) : "推廣員更表";
+    var kicker = office && office.heroKicker ? office.heroKicker(kind) : "2026 工展會 · 12/12–1/4";
+
+    var body;
+    if (kind === "promoter") {
+      body = mode === "date" ? renderDateMode() : renderPersonMode();
+    } else if (office && office.renderBody) {
+      body = office.renderBody(kind);
+    } else {
+      body = '<p class="muted">Office 更表種子未載入</p>';
+    }
+
+    var subToggle = "";
+    if (kind === "promoter") {
+      subToggle =
+        '<div class="mode-toggle">' +
+          '<button type="button" class="mode-btn' + (mode === "date" ? " active" : "") + '" data-mode="date">📅 按日期</button>' +
+          '<button type="button" class="mode-btn' + (mode === "person" ? " active" : "") + '" data-mode="person">👤 按人</button>' +
+        "</div>";
+    }
+
+    var footerNote = kind === "promoter"
+      ? '<p class="claim-safe">已按最新更表載入；職員登入後可加減／改更。本機改動會跟種子版本保存。</p>'
+      : '<p class="claim-safe">暫定 Office roster · 內部參考 · 唔係正式 claim 金額。Set Up 12/10–11 不計入合計；Ben 含 12/12 拍野。</p>';
+
+    var adminReset = (kind === "promoter" && isAdmin())
+      ? '<div class="btn-row" style="margin:12px 0"><button type="button" class="btn-ghost" id="btnResetRoster">還原官方更表</button></div>'
+      : "";
+
     root.innerHTML =
       '<header class="roster-hero">' +
         '<div class="roster-hero-top">' +
-          "<div><p class=\"pc-hero-kicker\">2026 工展會 · 12/12–1/4</p><h2>推廣員更表</h2></div>" +
+          "<div><p class=\"pc-hero-kicker\">" + kicker + "</p><h2>" + title + "</h2></div>" +
           '<div class="roster-hero-actions">' +
             '<button type="button" class="btn-ghost" id="btnRosterLogin">🔒 職員登入</button>' +
           "</div>" +
         "</div>" +
-        '<div class="mode-toggle">' +
-          '<button type="button" class="mode-btn' + (mode === "date" ? " active" : "") + '" data-mode="date">📅 按日期</button>' +
-          '<button type="button" class="mode-btn' + (mode === "person" ? " active" : "") + '" data-mode="person">👤 按人</button>' +
+        '<div class="mode-toggle kind-toggle">' +
+          '<button type="button" class="mode-btn' + (kind === "promoter" ? " active" : "") + '" data-kind="promoter">📣 推廣員</button>' +
+          '<button type="button" class="mode-btn' + (kind === "office" ? " active" : "") + '" data-kind="office">🏢 Office</button>' +
+          '<button type="button" class="mode-btn' + (kind === "buchong" ? " active" : "") + '" data-kind="buchong">⏱ 補鐘統計</button>' +
         "</div>" +
+        subToggle +
       "</header>" +
       '<div class="roster-body">' + body + "</div>" +
-      (isAdmin()
-        ? '<div class="btn-row" style="margin:12px 0"><button type="button" class="btn-ghost" id="btnResetRoster">還原官方更表</button></div>'
-        : "") +
-      '<p class="claim-safe">已按最新更表載入；職員登入後可加減／改更。本機改動會跟種子版本保存。</p>';
+      adminReset +
+      footerNote;
   }
 
   function bind() {
@@ -373,6 +404,13 @@
     if (!root || root._rosterBound) return;
     root._rosterBound = true;
     root.addEventListener("click", function (e) {
+      var k = e.target.closest("[data-kind]");
+      if (k) { kind = k.getAttribute("data-kind"); render(); return; }
+      if (window.BPE_OfficeRoster && window.BPE_OfficeRoster.handleClick &&
+          window.BPE_OfficeRoster.handleClick(e)) {
+        render();
+        return;
+      }
       var m = e.target.closest("[data-mode]");
       if (m) { mode = m.getAttribute("data-mode"); render(); return; }
       var d = e.target.closest("[data-date]");
@@ -420,6 +458,8 @@
 
   window.BPE_Roster = {
     render: function () { bind(); render(); },
-    getShifts: getShifts
+    getShifts: getShifts,
+    setKind: function (k) { kind = k || "promoter"; render(); },
+    getKind: function () { return kind; }
   };
 })();
