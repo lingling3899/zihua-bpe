@@ -53,6 +53,7 @@
           title: t.title != null ? String(t.title) : (sb.title || ""),
           desc: t.desc != null ? String(t.desc) : (sb.desc || ""),
           emoji: t.emoji != null ? String(t.emoji) : (sb.emoji || "🎁"),
+          img: (t.img != null && String(t.img).trim() !== "") ? String(t.img) : (sb.img || ""),
           applyNote: t.applyNote != null ? String(t.applyNote) : (sb.applyNote || ""),
           cardLabel: t.cardLabel != null ? String(t.cardLabel) : (sb.cardLabel || ""),
           soldOut: !!t.soldOut,
@@ -221,8 +222,10 @@
     return (
       '<div class="gift-tier-cards" aria-label="滿額贈品">' +
       spend.map(function (t) {
-        var icon = t.img
-          ? '<img class="gift-tier-img" src="' + esc(t.img) + '?v=20261106u" width="128" height="128" alt="" loading="lazy" decoding="async" />'
+        var fallbackImg = ({ magnet168: "assets/img/gifts/magnet.jpg", umbrella328: "assets/img/gifts/umbrella.jpg", bag488: "assets/img/gifts/bag.jpg" })[t.id] || "";
+        var imgSrc = (t.img && String(t.img).trim()) || fallbackImg;
+        var icon = imgSrc
+          ? '<img class="gift-tier-img" src="' + esc(imgSrc) + '?v=20261106v" width="128" height="128" alt="" loading="lazy" decoding="async" />'
           : '<div class="gift-tier-emoji" aria-hidden="true">' + esc(t.emoji) + "</div>";
         return (
           '<div class="gift-tier-card' + (t.soldOut ? " sold" : "") + '">' +
