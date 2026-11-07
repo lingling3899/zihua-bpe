@@ -20,7 +20,7 @@
     { id: "unionpay", label: "銀聯" }
   ];
 
-  var COUPON_CHIPS = [0, 50, 100];
+  var COUPON_CHIPS = [0, 15, 20, 50];
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
