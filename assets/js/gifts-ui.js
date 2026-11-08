@@ -15,6 +15,9 @@
     return (x % 1 === 0) ? String(x) : x.toFixed(2);
   }
   function isAdmin() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.isAdmin) {
+      return !!window.ZihuaStaffAuth.isAdmin();
+    }
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
   }
@@ -225,7 +228,7 @@
         var fallbackImg = ({ magnet168: "assets/img/gifts/magnet.jpg", umbrella328: "assets/img/gifts/umbrella.jpg", bag488: "assets/img/gifts/bag.jpg" })[t.id] || "";
         var imgSrc = (t.img && String(t.img).trim()) || fallbackImg;
         var icon = imgSrc
-          ? '<img class="gift-tier-img" src="' + esc(imgSrc) + '?v=20261106w" width="128" height="128" alt="" loading="lazy" decoding="async" />'
+          ? '<img class="gift-tier-img" src="' + esc(imgSrc) + '?v=20261108a" width="128" height="128" alt="" loading="lazy" decoding="async" />'
           : '<div class="gift-tier-emoji" aria-hidden="true">' + esc(t.emoji) + "</div>";
         return (
           '<div class="gift-tier-card' + (t.soldOut ? " sold" : "") + '">' +

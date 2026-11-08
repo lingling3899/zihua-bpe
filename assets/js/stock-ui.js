@@ -19,8 +19,17 @@
     return window.BPE_STOCK_SEED || { version: "", aliases: {}, items: [] };
   }
   function isAdmin() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.isAdmin) {
+      return !!window.ZihuaStaffAuth.isAdmin();
+    }
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
+  }
+  function canOperate() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.canOperate) {
+      return !!window.ZihuaStaffAuth.canOperate();
+    }
+    return isAdmin();
   }
 
   /** X／入機代號：優先 xCode，其次 wfCode，再係 app code */
@@ -682,8 +691,8 @@
     ensureDrawer();
     var root = $("stockRoot");
     if (!root) return;
-    if (!isAdmin()) {
-      root.innerHTML = '<p class="muted">請先職員登入後先可以改存貨表／庫存。</p>';
+    if (!canOperate()) {
+      root.innerHTML = '<p class="muted">請先職員登入後先可以睇／改存貨表／庫存。</p>';
       return;
     }
     var s = seed();
@@ -964,7 +973,7 @@
   }
 
   function openPanel() {
-    if (!isAdmin()) {
+    if (!canOperate()) {
       if (window.BPE_Shell && window.BPE_Shell.openLogin) window.BPE_Shell.openLogin();
       return;
     }

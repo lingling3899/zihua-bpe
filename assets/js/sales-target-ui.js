@@ -18,6 +18,9 @@
     return (x % 1 === 0) ? String(x) : x.toFixed(2);
   }
   function isAdmin() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.isAdmin) {
+      return !!window.ZihuaStaffAuth.isAdmin();
+    }
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
   }

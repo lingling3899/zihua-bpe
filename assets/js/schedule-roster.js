@@ -56,6 +56,9 @@
       .replace(/"/g, "&quot;");
   }
   function isAdmin() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.isAdmin) {
+      return !!window.ZihuaStaffAuth.isAdmin();
+    }
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
   }

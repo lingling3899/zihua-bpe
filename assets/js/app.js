@@ -1,4 +1,4 @@
-/* 2026 紫花油工展會 — 底欄六頁殼＋登入 */
+/* 2026 紫花油工展會 — 底欄六頁殼＋職員／管理員登入 */
 (function () {
   "use strict";
 
@@ -7,24 +7,81 @@
   function $(id) { return document.getElementById(id); }
   function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 
+  function staffAuth() {
+    return window.ZihuaStaffAuth || null;
+  }
+
   function isAdmin() {
+    var s = staffAuth();
+    if (s && s.isAdmin) return !!s.isAdmin();
     return !!(window.ZihuaAdminAuth && window.ZihuaAdminAuth.isLoggedIn && window.ZihuaAdminAuth.isLoggedIn());
   }
 
-  function setAdminVisible(on) {
+  function isStaff() {
+    var s = staffAuth();
+    return !!(s && s.isStaff && s.isStaff());
+  }
+
+  function canOperate() {
+    var s = staffAuth();
+    if (s && s.canOperate) return !!s.canOperate();
+    return isAdmin();
+  }
+
+  function rebuildDropdown() {
+    var dd = $("loginDropdown");
+    if (!dd) return;
+    var html = "";
+    if (isAdmin()) {
+      html =
+        '<button type="button" role="menuitem" data-dd-action="gifts">🎁 禮遇設定</button>' +
+        '<button type="button" role="menuitem" data-dd-action="stock">📦 庫存／存貨表</button>' +
+        '<button type="button" role="menuitem" data-dd-action="restock">📋 補貨表</button>' +
+        '<button type="button" role="menuitem" data-dd-action="target">🎯 營業目標</button>' +
+        '<button type="button" role="menuitem" data-dd-action="export-cupal">⬇ 匯出宅配 CSV</button>' +
+        '<button type="button" role="menuitem" data-dd-action="staff-roster">👥 職員帳號一覽</button>' +
+        '<button type="button" role="menuitem" data-dd-action="staff-switch">🔄 切換經手職員</button>' +
+        '<button type="button" role="menuitem" data-dd-action="logout" class="dd-logout">🚪 登出</button>';
+    } else if (isStaff() || canOperate()) {
+      html =
+        '<button type="button" role="menuitem" data-dd-action="stock">📦 庫存／存貨表</button>' +
+        '<button type="button" role="menuitem" data-dd-action="restock">📋 補貨表</button>' +
+        '<button type="button" role="menuitem" data-dd-action="staff-switch">🔄 切換經手職員</button>' +
+        '<button type="button" role="menuitem" data-dd-action="staff-logout" class="dd-logout">🚪 職員登出</button>';
+    }
+    dd.innerHTML = html;
+    qsa("#loginDropdown [data-dd-action]").forEach(function (b) {
+      b.addEventListener("click", onDropdownAction);
+    });
+  }
+
+  function setAuthVisible() {
+    var adminOn = isAdmin();
+    var opOn = canOperate();
     qsa(".admin-only").forEach(function (el) {
-      el.classList.toggle("hidden", !on);
+      el.classList.toggle("hidden", !adminOn);
+    });
+    qsa(".staff-only").forEach(function (el) {
+      el.classList.toggle("hidden", !opOn);
     });
     var btn = $("headerLoginBtn");
     if (btn) {
-      btn.classList.toggle("is-in", on);
+      btn.classList.toggle("is-in", opOn);
       var out = btn.querySelector(".hdr-icon-out");
       var inn = btn.querySelector(".hdr-icon-in");
       var dot = btn.querySelector(".hdr-login-dot");
-      if (out) out.classList.toggle("hidden", on);
-      if (inn) inn.classList.toggle("hidden", !on);
-      if (dot) dot.classList.toggle("hidden", !on);
+      if (out) out.classList.toggle("hidden", opOn);
+      if (inn) inn.classList.toggle("hidden", !opOn);
+      if (dot) dot.classList.toggle("hidden", !opOn);
+      var label = "職員登入";
+      if (adminOn) label = "管理員選單";
+      else if (isStaff()) {
+        var st = staffAuth() && staffAuth().getStaff && staffAuth().getStaff();
+        label = st && st.label ? ("經手：" + st.label) : "職員選單";
+      }
+      btn.setAttribute("aria-label", label);
     }
+    rebuildDropdown();
   }
 
   function showView(name) {
@@ -62,7 +119,16 @@
     msg.classList.toggle("login-msg-error", !!isError);
   }
 
+  /* 訪客預設開職員 PIN 切換；連去管理員 Google 登入 */
   function openLogin() {
+    if (staffAuth() && staffAuth().openStaffSwitchModal) {
+      staffAuth().openStaffSwitchModal();
+      return;
+    }
+    openAdminLogin();
+  }
+
+  function openAdminLogin() {
     var modal = $("loginModal");
     if (modal) modal.classList.remove("hidden");
     showLoginMsg("");
@@ -70,8 +136,9 @@
     if (window.ZihuaAdminAuth && window.ZihuaAdminAuth.renderGoogleButton) {
       window.ZihuaAdminAuth.renderGoogleButton(slot, {
         onSuccess: function () {
+          if (staffAuth() && staffAuth().logoutStaff) staffAuth().logoutStaff();
           closeLogin();
-          setAdminVisible(true);
+          setAuthVisible();
           if (window.BPE_DimsumOrderUI && window.BPE_DimsumOrderUI.render) {
             window.BPE_DimsumOrderUI.render();
           }
@@ -89,6 +156,7 @@
       showLoginMsg("登入模組未載入，請刷新頁面。", true);
     }
   }
+
   function closeLogin() {
     var modal = $("loginModal");
     if (modal) modal.classList.add("hidden");
@@ -114,12 +182,13 @@
 
   function toggleStaffMenu(anchor) {
     var loginBtn = $("headerLoginBtn");
-    if (!isAdmin()) {
+    if (!canOperate()) {
       openLogin();
       return;
     }
     var dd = $("loginDropdown");
     if (!dd) return;
+    rebuildDropdown();
     var opening = dd.classList.contains("hidden");
     if (opening) {
       dd.classList.remove("hidden");
@@ -129,6 +198,71 @@
       dd.classList.add("hidden");
       positionStaffDropdown(null);
       if (loginBtn) loginBtn.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function onDropdownAction(e) {
+    var b = e.currentTarget;
+    var act = b.getAttribute("data-dd-action");
+    var dd = $("loginDropdown");
+    if (dd) dd.classList.add("hidden");
+    positionStaffDropdown(null);
+    var loginBtn = $("headerLoginBtn");
+    if (loginBtn) loginBtn.setAttribute("aria-expanded", "false");
+
+    if (act === "logout") {
+      if (staffAuth() && staffAuth().logoutStaff) staffAuth().logoutStaff();
+      if (window.ZihuaAdminAuth) window.ZihuaAdminAuth.logout();
+      setAuthVisible();
+      showView("order");
+      return;
+    }
+    if (act === "staff-logout") {
+      if (staffAuth() && staffAuth().logoutStaff) staffAuth().logoutStaff();
+      setAuthVisible();
+      showView("order");
+      return;
+    }
+    if (act === "export-cupal") {
+      if (!isAdmin()) return;
+      if (window.BPE_CupalDelivery) window.BPE_CupalDelivery.exportCsv();
+      return;
+    }
+    if (act === "gifts") {
+      if (!isAdmin()) return;
+      var gr = $("giftsDrawer");
+      if (gr) gr.classList.remove("hidden");
+      if (window.BPE_Gifts) window.BPE_Gifts.render();
+      return;
+    }
+    if (act === "stock") {
+      if (!canOperate()) {
+        openLogin();
+        return;
+      }
+      if (window.BPE_Stock && window.BPE_Stock.openPanel) window.BPE_Stock.openPanel();
+      return;
+    }
+    if (act === "restock") {
+      if (!canOperate()) {
+        openLogin();
+        return;
+      }
+      if (window.BPE_Restock && window.BPE_Restock.openPanel) window.BPE_Restock.openPanel();
+      return;
+    }
+    if (act === "target") {
+      if (!isAdmin()) return;
+      if (window.BPE_SalesTarget && window.BPE_SalesTarget.openPanel) window.BPE_SalesTarget.openPanel();
+      return;
+    }
+    if (act === "staff-switch") {
+      if (staffAuth() && staffAuth().openStaffSwitchModal) staffAuth().openStaffSwitchModal();
+      return;
+    }
+    if (act === "staff-roster") {
+      if (!isAdmin()) return;
+      if (staffAuth() && staffAuth().openStaffRoster) staffAuth().openStaffRoster();
     }
   }
 
@@ -163,35 +297,6 @@
         }
       }
     });
-    qsa("#loginDropdown [data-dd-action]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var act = b.getAttribute("data-dd-action");
-        $("loginDropdown").classList.add("hidden");
-        positionStaffDropdown(null);
-        if (act === "logout" && window.ZihuaAdminAuth) {
-          window.ZihuaAdminAuth.logout();
-          setAdminVisible(false);
-          showView("order");
-        }
-        if (act === "export-cupal" && window.BPE_CupalDelivery) {
-          window.BPE_CupalDelivery.exportCsv();
-        }
-        if (act === "gifts") {
-          var gr = $("giftsDrawer");
-          if (gr) gr.classList.remove("hidden");
-          if (window.BPE_Gifts) window.BPE_Gifts.render();
-        }
-        if (act === "stock") {
-          if (window.BPE_Stock && window.BPE_Stock.openPanel) window.BPE_Stock.openPanel();
-        }
-        if (act === "restock") {
-          if (window.BPE_Restock && window.BPE_Restock.openPanel) window.BPE_Restock.openPanel();
-        }
-        if (act === "target") {
-          if (window.BPE_SalesTarget && window.BPE_SalesTarget.openPanel) window.BPE_SalesTarget.openPanel();
-        }
-      });
-    });
 
     var cancel = $("btnCancelLogin");
     if (cancel) cancel.addEventListener("click", closeLogin);
@@ -207,7 +312,7 @@
 
   function init() {
     bind();
-    setAdminVisible(isAdmin());
+    setAuthVisible();
     var hash = (location.hash || "").replace(/^#/, "");
     showView(VIEWS.indexOf(hash) >= 0 ? hash : "order");
   }
@@ -215,9 +320,13 @@
   window.BPE_Shell = {
     showView: showView,
     openLogin: openLogin,
+    openAdminLogin: openAdminLogin,
     toggleStaffMenu: toggleStaffMenu,
     isAdmin: isAdmin,
-    refreshAdmin: function () { setAdminVisible(isAdmin()); }
+    isStaff: isStaff,
+    canOperate: canOperate,
+    refreshAdmin: function () { setAuthVisible(); },
+    refreshAuth: function () { setAuthVisible(); }
   };
 
   if (document.readyState === "loading") {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="2026 紫花油工展會：產品計數預訂、抽獎遊戲、宅配入會、推廣員更表。參考用途，非醫療建議。" />
   <title>2026 工展會 · 紫花油</title>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261106w" />
+  <link rel="stylesheet" href="assets/css/app.css?v=20261108a" />
 </head>
 <body class="app-shell">
   <main class="wrap" id="mainWrap">
@@ -46,8 +46,8 @@
           <div class="fair-fact"><strong>入場</strong><span>$10；合資格免費；每晚7時起免費（最後一天除外）</span></div>
         </div>
         <div class="map-frame" tabindex="0" aria-label="展位地圖，可左右上下拖移瀏覽">
-          <a class="map-open" href="assets/img/map/booth-map-4c52.jpg?v=20261106w" target="_blank" rel="noopener" title="開大圖">
-            <img src="assets/img/map/booth-map-4c52.jpg?v=20261106w" width="2400" height="1792" loading="lazy" decoding="async" alt="第60屆工展會紫花油展位 4C52 至 4C55 位置圖：維園戶外場，左天后入口紅虛線、右銅鑼灣入口藍虛線，紫標喺美容保健區表演台前" />
+          <a class="map-open" href="assets/img/map/booth-map-4c52.jpg?v=20261108a" target="_blank" rel="noopener" title="開大圖">
+            <img src="assets/img/map/booth-map-4c52.jpg?v=20261108a" width="2400" height="1792" loading="lazy" decoding="async" alt="第60屆工展會紫花油展位 4C52 至 4C55 位置圖：維園戶外場，左天后入口紅虛線、右銅鑼灣入口藍虛線，紫標喺美容保健區表演台前" />
           </a>
         </div>
         <ul class="map-legend">
@@ -64,8 +64,8 @@
       <section class="panel pay-panel" aria-labelledby="mapPayTitle">
         <h3 id="mapPayTitle">💳 付款方式</h3>
         <p class="pay-note">凡購物可用：八達通、現金、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>
-        <a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261106w" target="_blank" rel="noopener" title="開大圖">
-          <img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261106w" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />
+        <a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261108a" target="_blank" rel="noopener" title="開大圖">
+          <img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261108a" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />
         </a>
       </section>
     </section>
@@ -102,11 +102,35 @@
     </div>
   </div>
 
-  <!-- Login modal · Google 電郵認證 -->
+  <!-- 職員 PIN 切換經手 -->
+  <div id="staffSwitchModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="staffSwitchTitle">
+    <div class="modal staff-switch-modal">
+      <h3 id="staffSwitchTitle">切換經手職員 · POS1</h3>
+      <label class="field">職員編號
+        <select id="staffSwitchId" aria-label="職員編號">
+          <option value="">請選擇職員</option>
+        </select>
+      </label>
+      <label class="field">PIN
+        <input type="password" id="staffSwitchPin" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="輸入 PIN" aria-label="PIN" />
+      </label>
+      <p id="staffSwitchMsg" class="admin-msg hidden" role="status"></p>
+      <div class="btn-row">
+        <button type="button" class="primary" id="btnConfirmStaffSwitch">確認切換</button>
+        <button type="button" class="btn-ghost" id="btnCancelStaffSwitch">取消</button>
+      </div>
+      <p class="staff-switch-note">只限已登入並獲批准的職員裝置。切換後不會顯示管理員資料。</p>
+      <p class="staff-switch-admin-link">
+        <a href="#" id="btnStaffAdminRelogin">職員登入／管理員重新登入</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Login modal · Google 電郵認證（管理員） -->
   <div id="loginModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
     <div class="modal login-modal-google">
-      <h3 id="loginTitle">職員登入</h3>
-      <p class="login-google-note">撳下面嘅 <strong>Gmail</strong> 做電郵認證就可以入。只准 <strong>cherry3899@gmail.com</strong> 登入後修改庫存、加產品、禮遇等。</p>
+      <h3 id="loginTitle">管理員登入</h3>
+      <p class="login-google-note">撳下面嘅 <strong>Gmail</strong> 做電郵認證就可以入。只准 <strong>cherry3899@gmail.com</strong> 登入後修改庫存、加產品、禮遇、職員帳號等。</p>
       <div id="googleSignInSlot" class="google-signin-slot" aria-live="polite"></div>
       <p id="loginMsg" class="admin-msg hidden" role="status"></p>
       <div class="btn-row">
@@ -122,14 +146,7 @@
       <svg class="hdr-icon hdr-icon-in hidden" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="3.5" fill="currentColor"/><path d="M5 19.5c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" fill="currentColor"/></svg>
       <span class="hdr-login-dot hidden" aria-hidden="true"></span>
     </button>
-    <div id="loginDropdown" class="login-dropdown hidden" role="menu">
-      <button type="button" role="menuitem" data-dd-action="gifts">🎁 禮遇設定</button>
-      <button type="button" role="menuitem" data-dd-action="stock">📦 庫存／存貨表</button>
-      <button type="button" role="menuitem" data-dd-action="restock">📋 補貨表</button>
-      <button type="button" role="menuitem" data-dd-action="target">🎯 營業目標</button>
-      <button type="button" role="menuitem" data-dd-action="export-cupal">⬇ 匯出宅配 CSV</button>
-      <button type="button" role="menuitem" data-dd-action="logout" class="dd-logout">🚪 登出</button>
-    </div>
+    <div id="loginDropdown" class="login-dropdown hidden" role="menu"></div>
   </div>
 
   <nav class="bottom-nav" aria-label="主要分頁">
@@ -144,27 +161,29 @@
   <footer class="footer">
     紫花油工展會 · 參考用途，非醫療建議 ·
     <a href="https://www.hkzihua.com/" target="_blank" rel="noopener">hkzihua.com</a>
-    · v=20261106u
+    · v=20261108a
   </footer>
 
-  <script src="data/google-client.js?v=20261106w"></script>
-  <script src="assets/js/admin-auth.js?v=20261106w"></script>
-  <script src="data/schedule-seed.js?v=20261106w"></script>
-  <script src="data/dimsum-order.js?v=20261106w"></script>
-  <script src="data/stock-seed.js?v=20261106w"></script>
-  <script src="data/restock-seed.js?v=20261106w"></script>
-  <script src="data/gifts-seed.js?v=20261106w"></script>
-  <script src="assets/js/gifts-ui.js?v=20261106w"></script>
-  <script src="assets/js/stock-ui.js?v=20261106w"></script>
-  <script src="assets/js/restock-ui.js?v=20261106w"></script>
-  <script src="assets/js/sales-target-ui.js?v=20261106w"></script>
-  <script src="assets/js/dimsum-order-ui.js?v=20261106w"></script>
-  <script src="assets/js/games-lucky.js?v=20261106w"></script>
-  <script src="assets/js/cupal-delivery.js?v=20261106w"></script>
-  <script src="data/office-roster-seed.js?v=20261106w"></script>
-  <script src="assets/js/office-roster-ui.js?v=20261106w"></script>
-  <script src="assets/js/schedule-roster.js?v=20261106w"></script>
-  <script src="assets/js/booth-turntable.js?v=20261106w"></script>
-  <script src="assets/js/app.js?v=20261106w"></script>
+  <script src="data/google-client.js?v=20261108a"></script>
+  <script src="assets/js/admin-auth.js?v=20261108a"></script>
+  <script src="data/staff-accounts-seed.js?v=20261108a"></script>
+  <script src="assets/js/staff-auth.js?v=20261108a"></script>
+  <script src="data/schedule-seed.js?v=20261108a"></script>
+  <script src="data/dimsum-order.js?v=20261108a"></script>
+  <script src="data/stock-seed.js?v=20261108a"></script>
+  <script src="data/restock-seed.js?v=20261108a"></script>
+  <script src="data/gifts-seed.js?v=20261108a"></script>
+  <script src="assets/js/gifts-ui.js?v=20261108a"></script>
+  <script src="assets/js/stock-ui.js?v=20261108a"></script>
+  <script src="assets/js/restock-ui.js?v=20261108a"></script>
+  <script src="assets/js/sales-target-ui.js?v=20261108a"></script>
+  <script src="assets/js/dimsum-order-ui.js?v=20261108a"></script>
+  <script src="assets/js/games-lucky.js?v=20261108a"></script>
+  <script src="assets/js/cupal-delivery.js?v=20261108a"></script>
+  <script src="data/office-roster-seed.js?v=20261108a"></script>
+  <script src="assets/js/office-roster-ui.js?v=20261108a"></script>
+  <script src="assets/js/schedule-roster.js?v=20261108a"></script>
+  <script src="assets/js/booth-turntable.js?v=20261108a"></script>
+  <script src="assets/js/app.js?v=20261108a"></script>
 </body>
 </html>

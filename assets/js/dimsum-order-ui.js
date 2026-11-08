@@ -524,8 +524,17 @@
   }
 
   function isAdmin() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.isAdmin) {
+      return !!window.ZihuaStaffAuth.isAdmin();
+    }
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
+  }
+  function canOperate() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.canOperate) {
+      return !!window.ZihuaStaffAuth.canOperate();
+    }
+    return isAdmin();
   }
   var POS_LS = "zihua_bpe_pos_station_v1";
   var ORDER_SEQ_LS = "zihua_bpe_order_seq_v1";
@@ -566,24 +575,25 @@
   }
   function nextOrderNo(posN) {
     var date = hkYmd();
-    var state = { date: date, seq: 0 };
+    var state = { date: date, seq: 9000 };
     try {
       var raw = localStorage.getItem(ORDER_SEQ_LS);
       if (raw) {
         var o = JSON.parse(raw);
         if (o && o.date === date && typeof o.seq === "number" && o.seq >= 0) {
           state = { date: date, seq: o.seq };
+          if (state.seq < 9000) state.seq = 9000;
         }
       }
     } catch (e) {}
-    state.seq = (Number(state.seq) || 0) + 1;
+    state.seq = (Number(state.seq) || 9000) + 1;
+    if (state.seq < 9001) state.seq = 9001;
     state.date = date;
     try {
       localStorage.setItem(ORDER_SEQ_LS, JSON.stringify(state));
     } catch (e2) {}
-    var seqStr = String(state.seq).padStart(4, "0");
     var n = posN === 2 ? 2 : 1;
-    return "pos" + n + "-" + date + "-" + seqStr;
+    return "PRE" + n + "-" + date + "-" + String(state.seq);
   }
   function loadAllOrders() {
     try {
@@ -1377,8 +1387,8 @@
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261106u" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261106u" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261108a" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261108a" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
         '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
         (st.paymentMethod
@@ -1491,6 +1501,20 @@
     }
     var pos = getPosStation();
     var orderNo = nextOrderNo(pos);
+    var handler = "";
+    var staffId = "";
+    var staffLabel = "";
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.getStaff) {
+      var stf = window.ZihuaStaffAuth.getStaff();
+      if (stf) {
+        staffId = stf.id || "";
+        staffLabel = stf.label || "";
+        handler = staffLabel;
+      }
+    }
+    if (!handler && window.ZihuaAdminAuth && window.ZihuaAdminAuth.isLoggedIn && window.ZihuaAdminAuth.isLoggedIn()) {
+      handler = (window.ZihuaAdminAuth.getSessionEmail && window.ZihuaAdminAuth.getSessionEmail()) || "管理員";
+    }
     var order = {
       id: "po-" + Date.now(),
       orderNo: orderNo,
@@ -1506,7 +1530,10 @@
       paymentMethod: pr.paymentMethod,
       paymentLabel: payLabel(pr.paymentMethod),
       lines: calc.lines,
-      gifts: giftTitles
+      gifts: giftTitles,
+      handler: handler,
+      staffId: staffId,
+      staffLabel: staffLabel
     };
     try {
       var raw = localStorage.getItem(LS_PREORDERS);
@@ -1527,6 +1554,7 @@
     root._pcBound = true;
     root.addEventListener("click", function (e) {
       if (e.target.closest("#btnClearTestOrders")) {
+        if (!isAdmin()) return;
         if (!confirm("清除全部測試訂單？售出會歸零，今日營業額進度亦會清走。補貨同總預會保留。")) return;
         clearTestOrdersData();
         closeOrderDetail();
@@ -1749,6 +1777,7 @@
   window.BPE_DimsumOrderUI = {
     render: function () { bindRoot(); render(); },
     clearTestOrdersData: clearTestOrdersData,
+    getPosStation: getPosStation,
     openOrderDetail: openOrderDetail,
     clear: function () {
       saveState({ items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 });

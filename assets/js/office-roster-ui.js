@@ -10,6 +10,10 @@
   }
 
   function isStaff() {
+    /* 此處 isStaff＝管理員可見備註／補鐘（PIN 職員唔見） */
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.isAdmin) {
+      return !!window.ZihuaStaffAuth.isAdmin();
+    }
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
   }

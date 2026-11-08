@@ -17,8 +17,17 @@
     return window.BPE_RESTOCK_SEED || { version: "", items: [], sections: [], title: "日常補貨表" };
   }
   function isAdmin() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.isAdmin) {
+      return !!window.ZihuaStaffAuth.isAdmin();
+    }
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
+  }
+  function canOperate() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.canOperate) {
+      return !!window.ZihuaStaffAuth.canOperate();
+    }
+    return isAdmin();
   }
   function todayStr() {
     var d = new Date();
@@ -384,12 +393,16 @@
     ensureDrawer();
     var root = $("restockRoot");
     if (!root) return;
-    if (!isAdmin()) {
+    if (!canOperate()) {
       root.innerHTML = '<p class="muted">請先職員登入後先可以填補貨表。</p>';
       return;
     }
     var s = seed();
     var draft = loadDraft();
+    if (!String(draft.handler || "").trim() && window.ZihuaStaffAuth && window.ZihuaStaffAuth.operatorLabel) {
+      var ol = window.ZihuaStaffAuth.operatorLabel();
+      if (ol) draft.handler = ol;
+    }
     var items = filteredItems();
     var html =
       '<p class="restock-title"><strong>' + esc(s.title || "日常補貨表") + "</strong>" +
@@ -572,7 +585,7 @@
   }
 
   function openPanel() {
-    if (!isAdmin()) {
+    if (!canOperate()) {
       if (window.BPE_Shell && window.BPE_Shell.openLogin) window.BPE_Shell.openLogin();
       return;
     }

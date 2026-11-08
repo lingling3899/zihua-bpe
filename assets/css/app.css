@@ -1691,3 +1691,32 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
 }
 .target-recap p { margin: 0; font-size: .82rem; line-height: 1.45; }
 .target-date { margin-top: 6px !important; font-size: .72rem !important; }
+
+
+/* 職員 PIN 切換經手 */
+.staff-switch-modal .field { margin-top: 12px; }
+.staff-switch-modal .field select,
+.staff-switch-modal .field input {
+  width: 100%;
+  margin-top: 6px;
+  box-sizing: border-box;
+}
+.staff-switch-note {
+  margin: 12px 0 6px;
+  font-size: .78rem;
+  line-height: 1.45;
+  color: #6b7280;
+}
+.staff-switch-admin-link {
+  margin: 0;
+  text-align: center;
+  font-size: .88rem;
+}
+.staff-switch-admin-link a {
+  color: var(--purple, #6b3fa0);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.staff-roster-note { margin: 0 0 10px; font-size: .85rem; }
+.staff-roster-table code { font-size: .9rem; }
+.login-dropdown { min-width: 190px; }
