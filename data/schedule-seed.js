@@ -1,5 +1,5 @@
 window.BPE_SCHEDULE_SEED = {
-  "version": "20261109b",
+  "version": "20261109c",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "roles": [

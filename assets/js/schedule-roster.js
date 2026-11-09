@@ -292,7 +292,7 @@
         var cls;
         if (isFull) {
           fullN++;
-          label += "FULL 11–20";
+          label += "11–20";
           cls = "chip-full";
         } else if (startM < 12 * 60) {
           am++;
@@ -312,7 +312,7 @@
       if (list[0].note && list[0].note.indexOf("後補") >= 0) tag += '<span class="pill-tag">後補</span>';
       if (list[0].note && list[0].note.indexOf("WS") >= 0) tag += '<span class="pill-tag">WS</span>';
       var summary = "早 " + am;
-      if (fullN) summary += " · FULL " + fullN;
+      if (fullN) summary += " · 11–20 " + fullN;
       summary += " · 晏／其他 " + other + " · 共 " + list.length + " 更";
       sections[g.id].people.push(
         '<div class="person-card">' +
