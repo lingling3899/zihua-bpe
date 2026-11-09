@@ -808,6 +808,10 @@ body[data-view="order"] .floating-login .login-dropdown {
 .shift-chip { border-radius: 999px; padding: 4px 8px; font-size: .72rem; font-weight: 700; }
 .chip-am { background: #ffedd5; color: #9a3412; }
 .chip-pm { background: var(--purple-soft); color: var(--purple-dark); }
+.chip-full { background: #4c1d95; color: #f5f3ff; }
+.chip-12 { background: #ddd6fe; color: #5b21b6; }
+.chip-13 { background: #ccfbf1; color: #0f766e; }
+.chip-14 { background: #fce7f3; color: #9d174d; }
 .chip-weekend { background: #dbeafe; color: #1e40af; }
 .chip-holiday { background: #fce7f3; color: #9d174d; }
 .kind-toggle { margin-top: 10px; }

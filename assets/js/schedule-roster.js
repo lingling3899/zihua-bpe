@@ -281,7 +281,7 @@
       var list = byName[name];
       var g = groupFor(list[0].role) || { id: "other", title: "其他" };
       if (!sections[g.id]) sections[g.id] = { title: g.title, people: [] };
-      var am = 0, pm = 0;
+      var am = 0, fullN = 0, other = 0;
       var chips = list.slice().sort(function (a, b) {
         return String(a.date).localeCompare(b.date) || String(a.start).localeCompare(b.start);
       }).map(function (s) {
@@ -289,25 +289,37 @@
         var startM = minutesOf(s.start);
         var endM = minutesOf(s.end);
         var isFull = startM === 11 * 60 && endM === 20 * 60;
-        if (isFull) { pm++; label += "FULL"; }
-        else if (startM < 12 * 60) { am++; label += "早"; }
-        else {
-          pm++;
+        var cls;
+        if (isFull) {
+          fullN++;
+          label += "FULL 11–20";
+          cls = "chip-full";
+        } else if (startM < 12 * 60) {
+          am++;
+          label += "早";
+          cls = "chip-am";
+        } else {
+          other++;
           var hh = Math.floor(startM / 60);
-          label += (hh === 11 ? "場" : hh === 12 ? "12點" : hh === 13 ? "1點" : hh === 14 ? "2點" : "晏");
+          if (hh === 12) { label += "12點"; cls = "chip-12"; }
+          else if (hh === 13) { label += "1點"; cls = "chip-13"; }
+          else if (hh === 14) { label += "2點"; cls = "chip-14"; }
+          else { label += (hh === 11 ? "場" : "晏"); cls = "chip-pm"; }
         }
-        var cls = isFull ? "chip-pm" : (startM < 12 * 60 ? "chip-am" : "chip-pm");
         return '<span class="shift-chip ' + cls + '">' + esc(label) + "</span>";
       }).join("");
       var tag = list[0].tag ? '<span class="pill-tag">' + esc(list[0].tag) + "</span>" : "";
       if (list[0].note && list[0].note.indexOf("後補") >= 0) tag += '<span class="pill-tag">後補</span>';
       if (list[0].note && list[0].note.indexOf("WS") >= 0) tag += '<span class="pill-tag">WS</span>';
+      var summary = "早 " + am;
+      if (fullN) summary += " · FULL " + fullN;
+      summary += " · 晏／其他 " + other + " · 共 " + list.length + " 更";
       sections[g.id].people.push(
         '<div class="person-card">' +
           '<div class="person-head">' +
             '<span class="pill-av">' + esc(name.charAt(0)) + "</span>" +
             "<div><strong>" + esc(name) + tag + "</strong>" +
-            '<div class="muted">早 ' + am + " · 晏／其他 " + pm + " · 共 " + list.length + " 更</div></div>" +
+            '<div class="muted">' + summary + "</div></div>" +
             '<div class="person-count">' + list.length + " 更</div>" +
           "</div>" +
           '<div class="shift-chips">' + chips + "</div>" +
