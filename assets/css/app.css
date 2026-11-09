@@ -555,6 +555,7 @@ body[data-view="order"] .floating-login .login-dropdown {
 }
 .pc-senior-toggle input:checked + .pc-switch { background: var(--purple); }
 .pc-senior-toggle input:checked + .pc-switch::after { left: 21px; }
+.pc-promo-hint { margin: -4px 4px 8px; font-size: .78rem; }
 .pc-float-actions { display: flex; gap: 10px; align-items: center; }
 .pc-clear {
   width: 72px; height: 48px; border-radius: 14px; border: 1.5px solid var(--border);

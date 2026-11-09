@@ -1,4 +1,4 @@
-/* 產品計數 · 結算 — 必揀付款；先減優惠券，再銀髮 95 折；買6支散裝26ml送12ml／買5支散裝10ml送杯墊達標先自動開結算並扣庫存 */
+/* 產品計數 · 結算 — 必揀付款；合計→減券→滿$115減$15→古寶／調理滿$1200享85折→銀髮95折；買6支散裝26ml送12ml／買5支散裝10ml送杯墊達標先自動開結算並扣庫存 */
 (function () {
   "use strict";
 
@@ -50,12 +50,14 @@
           setPicks: o.setPicks || {},
           overrides: o.overrides || {},
           senior: !!o.senior,
+          promo115: !!o.promo115,
+          cupal85: !!o.cupal85,
           paymentMethod: o.paymentMethod || "",
           couponAmount: Math.max(0, Number(o.couponAmount) || 0)
         };
       }
     } catch (e) {}
-    return { items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 };
+    return { items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, promo115: false, cupal85: false, paymentMethod: "", couponAmount: 0 };
   }
   function saveState(st) {
     try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
@@ -886,21 +888,97 @@
     }).join("\n");
   }
 
-  /** 合計 → 減優惠券（唔低過 0）→ 銀髮 95 折 */
+  function textHasCupalOrTiaoli(s) {
+    return /古寶|調理|cupal/i.test(String(s || ""));
+  }
+
+  function isCupalTiaoliSheet(sheet) {
+    var id = String((sheet && sheet.id) || "");
+    if (id === "cupal-patch" || id === "cupal-health" || id === "angong-nmn") return true;
+    if (id.indexOf("cupal") >= 0) return true;
+    return textHasCupalOrTiaoli(sheet && sheet.title) || textHasCupalOrTiaoli(sheet && sheet.short);
+  }
+
+  /** 古寶／調理合資格小計（sheet：cupal-*／angong-nmn，或 section／品名含古寶／調理） */
+  function cupalQualifyingSubtotal(st) {
+    var total = 0;
+    allSheets().forEach(function (sheet) {
+      var sheetOk = isCupalTiaoliSheet(sheet);
+      (sheet.sections || []).forEach(function (sec) {
+        var secOk = sheetOk || textHasCupalOrTiaoli(sec.title) || textHasCupalOrTiaoli(sec.id);
+        var hasBogo = (sec.bundles || []).some(function (b) { return b.useItemPrices; });
+        (sec.bundles || []).forEach(function (b) {
+          var q = setQty(st, b.id);
+          if (q <= 0 || b.useItemPrices || b.setPrice == null) return;
+          if (!(secOk || textHasCupalOrTiaoli(b.label))) return;
+          total += q * Number(b.setPrice);
+        });
+        var bogoPrices = [];
+        (sec.items || []).forEach(function (it) {
+          if (it.displayOnly) return;
+          var q = itemQty(st, it.code);
+          if (q <= 0) return;
+          var p = unitPrice(it, st);
+          if (p == null) return;
+          var ok = secOk || textHasCupalOrTiaoli(it.name) || textHasCupalOrTiaoli(it.code);
+          if (!ok) return;
+          if (it.packQty && it.packPrice) {
+            var packs = Math.floor(q / it.packQty);
+            var rem = q % it.packQty;
+            total += packs * Number(it.packPrice) + rem * p;
+            return;
+          }
+          if (hasBogo) for (var i = 0; i < q; i++) bogoPrices.push(p);
+          total += q * p;
+        });
+        if (hasBogo && bogoPrices.length && secOk) {
+          var disc = bogoDiscount(bogoPrices);
+          if (disc > 0) total -= disc;
+        }
+      });
+    });
+    return Math.round(Math.max(0, total) * 100) / 100;
+  }
+
+  /** 合計 → 減優惠券 → 滿$115減$15 → 古寶／調理滿$1200享85折 → 銀髮 95 折 */
   function pricing(st, calc) {
     var subtotal = Math.max(0, Math.round((Number(calc.total) || 0) * 100) / 100);
     var couponRaw = Math.max(0, Number(st.couponAmount) || 0);
     var couponAmount = Math.min(couponRaw, subtotal);
     couponAmount = Math.round(couponAmount * 100) / 100;
     var afterCoupon = Math.round((subtotal - couponAmount) * 100) / 100;
-    var payable = afterCoupon;
-    if (st.senior) payable = Math.round(afterCoupon * 0.95 * 100) / 100;
+
+    var promo115 = !!st.promo115;
+    var promo115Applied = promo115 && afterCoupon >= 115;
+    var promo115Amount = promo115Applied ? 15 : 0;
+    var afterPromo115 = Math.round((afterCoupon - promo115Amount) * 100) / 100;
+
+    var cupal85 = !!st.cupal85;
+    var cupalQual = cupalQualifyingSubtotal(st);
+    var cupal85Applied = cupal85 && cupalQual >= 1200;
+    var afterCupal85 = afterPromo115;
+    if (cupal85Applied) {
+      afterCupal85 = Math.round(afterPromo115 * 0.85 * 100) / 100;
+    }
+
+    var senior = !!st.senior;
+    var payable = afterCupal85;
+    if (senior) payable = Math.round(afterCupal85 * 0.95 * 100) / 100;
+
     return {
       subtotal: subtotal,
       couponAmount: couponAmount,
       afterCoupon: afterCoupon,
+      promo115: promo115,
+      promo115Applied: promo115Applied,
+      promo115Amount: promo115Amount,
+      afterPromo115: afterPromo115,
+      cupal85: cupal85,
+      cupalQualifying: cupalQual,
+      cupal85Applied: cupal85Applied,
+      afterCupal85: afterCupal85,
       payable: payable,
-      senior: !!st.senior,
+      senior: senior,
       paymentMethod: st.paymentMethod || ""
     };
   }
@@ -1031,6 +1109,8 @@
           '<div><span>合計</span><strong>$' + esc(money(order.subtotal != null ? order.subtotal : order.total)) + "</strong></div>" +
           '<div><span>優惠券</span><strong>−$' + esc(money(order.couponAmount || 0)) + "</strong></div>" +
           '<div><span>券後</span><strong>$' + esc(money(order.afterCoupon)) + "</strong></div>" +
+          (order.promo115Applied ? '<div><span>滿$115減$15</span><strong>−$' + esc(money(order.promo115Amount || 15)) + "</strong></div>" : "") +
+          (order.cupal85Applied ? '<div><span>古寶／調理 85折</span><strong>已套用</strong></div>' : "") +
           (order.senior ? '<div><span>銀髮 95 折</span><strong>已套用</strong></div>' : "") +
           '<div class="order-detail-payable"><span>實付</span><strong>$' + esc(money(order.payable)) + "</strong></div>" +
         "</div>" +
@@ -1118,6 +1198,8 @@
         "<div><span>合計</span><span>$" + esc(money(order.subtotal != null ? order.subtotal : order.total)) + "</span></div>" +
         "<div><span>優惠券</span><span>−$" + esc(money(order.couponAmount || 0)) + "</span></div>" +
         "<div><span>券後</span><span>$" + esc(money(order.afterCoupon)) + "</span></div>" +
+        (order.promo115Applied ? "<div><span>滿$115減$15</span><span>−$" + esc(money(order.promo115Amount || 15)) + "</span></div>" : "") +
+        (order.cupal85Applied ? "<div><span>古寶／調理 85折</span><span>已套用</span></div>" : "") +
         (order.senior ? "<div><span>銀髮 95 折</span><span>已套用</span></div>" : "") +
         "<div class='pay'><span>實付</span><span>$" + esc(money(order.payable)) + "</span></div>" +
       "</div>" +
@@ -1151,7 +1233,7 @@
         (window.BPE_Gifts && window.BPE_Gifts.renderGiftCardsHtml
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
-        '<p class="pc-hero-note">套裝價自動計算 · 散支加到 6 支 26ml 或 5 支 10ml 先自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊（唔自動跳結算） · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再銀髮 95 折，以最終實付計禮遇 · 送完即止</p>' +
+        '<p class="pc-hero-note">套裝價自動計算 · 散支加到 6 支 26ml 或 5 支 10ml 先自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊（唔自動跳結算） · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再滿$115減$15／古寶調理85折／銀髮95折，以最終實付計禮遇 · 送完即止</p>' +
         (window.BPE_SalesTarget && window.BPE_SalesTarget.renderProgressHtml
           ? window.BPE_SalesTarget.renderProgressHtml()
           : "") +
@@ -1282,6 +1364,15 @@
         (pr.couponAmount > 0 ? ' class="pc-break-minus"' : "") +
         ">−$" + money(pr.couponAmount) + "</strong></div>" +
       '<div class="pc-break-row"><span>折前／券後</span><strong>$' + money(pr.afterCoupon) + "</strong></div>";
+    if (pr.promo115Applied) {
+      rows +=
+        '<div class="pc-break-row"><span>滿$115減$15</span><strong class="pc-break-minus">−$' +
+        money(pr.promo115Amount) + "</strong></div>";
+    }
+    if (pr.cupal85Applied) {
+      rows +=
+        '<div class="pc-break-row"><span>古寶／調理 85折</span><strong>$' + money(pr.afterCupal85) + "</strong></div>";
+    }
     if (pr.senior) {
       rows +=
         '<div class="pc-break-row"><span>銀髮 95 折</span><strong>$' + money(pr.payable) + "</strong></div>";
@@ -1334,6 +1425,8 @@
         "</div>" +
         '<div class="pc-float-body" id="pcFloatBody">' +
           '<div class="pc-float-total">$' + money(pr.payable) +
+            (pr.promo115Applied ? '<span class="pc-senior-tag">滿115減15</span>' : "") +
+            (pr.cupal85Applied ? '<span class="pc-senior-tag">古寶85折</span>' : "") +
             (pr.senior ? '<span class="pc-senior-tag">銀髮價</span>' : "") +
             (pr.couponAmount > 0 ? '<span class="pc-coupon-tag">已減券</span>' : "") +
           "</div>" +
@@ -1354,6 +1447,22 @@
             '<input type="number" id="pcCoupon" class="pc-coupon-input" min="0" step="1" inputmode="decimal" ' +
               'placeholder="0" value="' + esc(String(st.couponAmount || 0)) + '" aria-label="優惠券金額" />' +
           "</div>" +
+          '<label class="pc-senior-toggle">' +
+            '<span>滿$115減$15</span>' +
+            '<input type="checkbox" id="pcPromo115" ' + (st.promo115 ? "checked" : "") + ' />' +
+            '<span class="pc-switch" aria-hidden="true"></span>' +
+          "</label>" +
+          (st.promo115 && pr.afterCoupon < 115
+            ? '<p class="muted pc-promo-hint">未滿 $115，暫未套用減 $15</p>'
+            : "") +
+          '<label class="pc-senior-toggle">' +
+            '<span>古寶／調理滿$1200，即享85折</span>' +
+            '<input type="checkbox" id="pcCupal85" ' + (st.cupal85 ? "checked" : "") + ' />' +
+            '<span class="pc-switch" aria-hidden="true"></span>' +
+          "</label>" +
+          (st.cupal85 && pr.cupalQualifying < 1200
+            ? '<p class="muted pc-promo-hint">古寶／調理合計 $' + money(pr.cupalQualifying) + "，未滿 $1200，暫未套用 85 折</p>"
+            : "") +
           '<label class="pc-senior-toggle">' +
             '<span>銀髮優惠 95折（減券後）</span>' +
             '<input type="checkbox" id="pcSenior" ' + (st.senior ? "checked" : "") + ' />' +
@@ -1478,6 +1587,8 @@
     lines.push("合計　$" + money(pr.subtotal));
     lines.push("減優惠券　−$" + money(pr.couponAmount));
     lines.push("折前／券後　$" + money(pr.afterCoupon));
+    if (pr.promo115Applied) lines.push("滿$115減$15　−$" + money(pr.promo115Amount));
+    if (pr.cupal85Applied) lines.push("古寶／調理 85折　$" + money(pr.afterCupal85));
     if (pr.senior) lines.push("銀髮 95 折實付　$" + money(pr.payable));
     else lines.push("實付　$" + money(pr.payable));
     if (pr.paymentMethod) lines.push("付款方式　" + payLabel(pr.paymentMethod));
@@ -1525,6 +1636,14 @@
       total: pr.subtotal,
       couponAmount: pr.couponAmount,
       afterCoupon: pr.afterCoupon,
+      promo115: !!pr.promo115,
+      promo115Applied: !!pr.promo115Applied,
+      promo115Amount: pr.promo115Amount || 0,
+      cupal85: !!pr.cupal85,
+      cupal85Applied: !!pr.cupal85Applied,
+      cupalQualifying: pr.cupalQualifying || 0,
+      afterPromo115: pr.afterPromo115,
+      afterCupal85: pr.afterCupal85,
       payable: pr.payable,
       senior: !!pr.senior,
       paymentMethod: pr.paymentMethod,
@@ -1651,6 +1770,8 @@
           setPicks: {},
           overrides: st.overrides,
           senior: st.senior,
+          promo115: false,
+          cupal85: false,
           paymentMethod: st.paymentMethod,
           couponAmount: st.couponAmount
         });
@@ -1726,6 +1847,8 @@
           "合計 $" + money(order.subtotal) + "\n" +
           "減優惠券 −$" + money(order.couponAmount) + "\n" +
           "折前／券後 $" + money(order.afterCoupon) + "\n" +
+          (order.promo115Applied ? ("滿$115減$15 −$" + money(order.promo115Amount || 15) + "\n") : "") +
+          (order.cupal85Applied ? ("古寶／調理 85折\n") : "") +
           (order.senior ? ("銀髮 95 折\n") : "") +
           "實付 $" + money(order.payable) +
           giftLine +
@@ -1736,9 +1859,12 @@
       }
     });
     root.addEventListener("change", function (e) {
-      if (e.target && e.target.id === "pcSenior") {
+      if (!e.target) return;
+      if (e.target.id === "pcSenior" || e.target.id === "pcPromo115" || e.target.id === "pcCupal85") {
         var st = loadState();
-        st.senior = !!e.target.checked;
+        if (e.target.id === "pcSenior") st.senior = !!e.target.checked;
+        if (e.target.id === "pcPromo115") st.promo115 = !!e.target.checked;
+        if (e.target.id === "pcCupal85") st.cupal85 = !!e.target.checked;
         saveState(st);
         render();
       }
@@ -1780,12 +1906,16 @@
     getPosStation: getPosStation,
     openOrderDetail: openOrderDetail,
     clear: function () {
-      saveState({ items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 });
+      saveState({ items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, promo115: false, cupal85: false, paymentMethod: "", couponAmount: 0 });
       render();
     },
     pricing: function () {
       var st = loadState();
       return pricing(st, calcTotals(st));
-    }
+    },
+    pricingFrom: function (st, calcLike) {
+      return pricing(st || loadState(), calcLike || { total: 0 });
+    },
+    cupalQualifyingSubtotal: cupalQualifyingSubtotal
   };
 })();

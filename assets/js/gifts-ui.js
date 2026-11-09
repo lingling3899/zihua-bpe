@@ -1,4 +1,4 @@
-/* 會場購物禮遇 — 最高滿額一級＋年曆卡＋杯墊條件＋銀髮實付 */
+/* 會場購物禮遇 — 最高滿額一級＋年曆卡＋杯墊條件＋券／滿115／古寶85／銀髮實付 */
 (function () {
   "use strict";
 
@@ -92,12 +92,14 @@
           sets: o.sets || {},
           overrides: o.overrides || {},
           senior: !!o.senior,
+          promo115: !!o.promo115,
+          cupal85: !!o.cupal85,
           paymentMethod: o.paymentMethod || "",
           couponAmount: Math.max(0, Number(o.couponAmount) || 0)
         };
       }
     } catch (e) {}
-    return { items: {}, sets: {}, overrides: {}, senior: false, paymentMethod: "", couponAmount: 0 };
+    return { items: {}, sets: {}, overrides: {}, senior: false, promo115: false, cupal85: false, paymentMethod: "", couponAmount: 0 };
   }
 
   function qtyOf(map, codes) {
@@ -116,14 +118,37 @@
     return false;
   }
 
-  /** 合計 → 減優惠券（唔低過 0）→ 銀髮 95 折；滿額禮遇用最終實付 */
-  function payableTotal(gross, senior, couponAmount) {
+  /** 合計 → 減券 → 滿$115減$15 → 古寶／調理85折 → 銀髮95折；滿額禮遇用最終實付 */
+  function payableTotal(gross, orderSt) {
+    var st = orderSt || {};
+    if (window.BPE_DimsumOrderUI && typeof window.BPE_DimsumOrderUI.pricingFrom === "function") {
+      return window.BPE_DimsumOrderUI.pricingFrom(st, { total: gross });
+    }
     var t = Math.max(0, Number(gross) || 0);
-    var c = Math.max(0, Number(couponAmount) || 0);
+    var c = Math.max(0, Number(st.couponAmount) || 0);
     if (c > t) c = t;
-    t = Math.round((t - c) * 100) / 100;
-    if (senior) t = Math.round(t * 0.95 * 100) / 100;
-    return t;
+    c = Math.round(c * 100) / 100;
+    var afterCoupon = Math.round((t - c) * 100) / 100;
+    var afterPromo = afterCoupon;
+    var promo115Applied = !!st.promo115 && afterCoupon >= 115;
+    if (promo115Applied) afterPromo = Math.round((afterCoupon - 15) * 100) / 100;
+    var afterCupal = afterPromo;
+    // fallback：無 dimsum API 時，cupal85 以整單合計 ≥1200 作門檻（正式路徑用 pricingFrom）
+    var cupal85Applied = !!st.cupal85 && afterCoupon >= 1200;
+    if (cupal85Applied) afterCupal = Math.round(afterPromo * 0.85 * 100) / 100;
+    var payable = afterCupal;
+    if (st.senior) payable = Math.round(afterCupal * 0.95 * 100) / 100;
+    return {
+      subtotal: t,
+      couponAmount: c,
+      afterCoupon: afterCoupon,
+      promo115Applied: promo115Applied,
+      promo115Amount: promo115Applied ? 15 : 0,
+      cupal85Applied: cupal85Applied,
+      afterCupal85: afterCupal,
+      senior: !!st.senior,
+      payable: payable
+    };
   }
 
   function evaluate(grossTotal, orderSt) {
@@ -134,8 +159,9 @@
     var gross = Math.max(0, Number(grossTotal) || 0);
     if (coupon > gross) coupon = gross;
     coupon = Math.round(coupon * 100) / 100;
-    var afterCoupon = Math.round((gross - coupon) * 100) / 100;
-    var payable = payableTotal(grossTotal, senior, coupon);
+    var pr = payableTotal(gross, st);
+    var afterCoupon = pr.afterCoupon;
+    var payable = pr.payable;
     var active = (cfg.tiers || []).filter(function (x) { return !x.paused; });
 
     var calendar = null, coaster = null;
@@ -173,6 +199,8 @@
       afterCoupon: afterCoupon,
       payable: payable,
       senior: senior,
+      promo115Applied: !!pr.promo115Applied,
+      cupal85Applied: !!pr.cupal85Applied,
       reached: reached,
       highestSpend: highestSpend,
       calendar: calendar,
@@ -205,9 +233,11 @@
         return t.emoji + " " + t.title + (t.soldOut ? "（已送完）" : "");
       });
       parts.push('<p class="gift-progress-line"><strong>目前可享：</strong>' + esc(names.join("；") || "—") + "</p>");
-      if (ev.couponAmount > 0 || ev.senior) {
+      if (ev.couponAmount > 0 || ev.promo115Applied || ev.cupal85Applied || ev.senior) {
         var bits = [];
         if (ev.couponAmount > 0) bits.push("減券 $" + money(ev.couponAmount));
+        if (ev.promo115Applied) bits.push("滿$115減$15");
+        if (ev.cupal85Applied) bits.push("古寶／調理 85折");
         if (ev.senior) bits.push("銀髮 95 折");
         parts.push('<p class="gift-progress-line muted">' + bits.join(" → ") + "後實付 $" + money(ev.payable) + "（以此計贈品）</p>");
       }
@@ -250,7 +280,7 @@
         "<li>花香套裝或任選 5 支花香油送陶瓷杯墊</li>" +
         "<li>任何消費送 2027 年曆卡</li>" +
         "<li>滿額贈品（磁石／雨傘／手提袋）以最高一級計</li>" +
-        "<li>先減優惠券，再銀髮 95 折，以最終實付計贈品資格</li>" +
+        "<li>先減優惠券，再滿$115減$15／古寶調理85折／銀髮95折，以最終實付計贈品資格</li>" +
         "<li>送完即止；以攤位當日為準</li>" +
       "</ul>" +
       '<p class="claim-safe">' + esc(cfg.disclaimer) + "</p>"
