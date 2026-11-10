@@ -1,8 +1,8 @@
-/* 會場購物禮遇 — 最高滿額一級＋年曆卡＋杯墊條件＋券／滿115／古寶85／銀髮實付 */
+/* 會場購物禮遇 — 最高滿額一級＋年曆卡＋杯墊條件＋券／滿115／關節85／銀髮實付（未計膠袋） */
 (function () {
   "use strict";
 
-  var LS_CFG = "zihua_bpe_gifts_v3";
+  var LS_CFG = "zihua_bpe_gifts_v4";
 
   function esc(s) {
     return String(s == null ? "" : s)
@@ -59,6 +59,7 @@
           img: (t.img != null && String(t.img).trim() !== "") ? String(t.img) : (sb.img || ""),
           applyNote: t.applyNote != null ? String(t.applyNote) : (sb.applyNote || ""),
           cardLabel: t.cardLabel != null ? String(t.cardLabel) : (sb.cardLabel || ""),
+          sku: (t.sku != null && String(t.sku).trim() !== "") ? String(t.sku).trim() : (sb.sku || ""),
           soldOut: !!t.soldOut,
           paused: !!t.paused
         };
@@ -70,6 +71,19 @@
     try {
       var raw = localStorage.getItem(LS_CFG);
       if (raw) return normalize(JSON.parse(raw));
+      var oldRaw = localStorage.getItem("zihua_bpe_gifts_v3");
+      if (oldRaw) {
+        var oldCfg = JSON.parse(oldRaw);
+        var cfg = normalize(deepClone(seed()));
+        var sold = {};
+        (oldCfg.tiers || []).forEach(function (t) {
+          if (t && t.id) sold[t.id] = !!t.soldOut;
+        });
+        cfg.tiers.forEach(function (t) {
+          if (sold[t.id]) t.soldOut = true;
+        });
+        return cfg;
+      }
     } catch (e) { /* ignore */ }
     return normalize(deepClone(seed()));
   }
@@ -78,8 +92,9 @@
   }
   function resetConfig() {
     try { localStorage.removeItem(LS_CFG); } catch (e) {}
-    try { localStorage.removeItem("zihua_bpe_gifts_v2"); } catch (e2) {}
-    try { localStorage.removeItem("zihua_bpe_gifts_v1"); } catch (e3) {}
+    try { localStorage.removeItem("zihua_bpe_gifts_v3"); } catch (e2) {}
+    try { localStorage.removeItem("zihua_bpe_gifts_v2"); } catch (e3) {}
+    try { localStorage.removeItem("zihua_bpe_gifts_v1"); } catch (e4) {}
   }
 
   function loadOrderState() {
@@ -90,16 +105,21 @@
         return {
           items: o.items || {},
           sets: o.sets || {},
+          setPicks: o.setPicks || {},
           overrides: o.overrides || {},
           senior: !!o.senior,
           promo115: !!o.promo115,
           cupal85: !!o.cupal85,
+          angong80: !!o.angong80,
+          cupal9: !!o.cupal9,
+          plasticBag: !!o.plasticBag,
+          nmnGift: !!o.nmnGift,
           paymentMethod: o.paymentMethod || "",
           couponAmount: Math.max(0, Number(o.couponAmount) || 0)
         };
       }
     } catch (e) {}
-    return { items: {}, sets: {}, overrides: {}, senior: false, promo115: false, cupal85: false, paymentMethod: "", couponAmount: 0 };
+    return { items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, promo115: false, cupal85: false, angong80: false, cupal9: false, plasticBag: false, nmnGift: false, paymentMethod: "", couponAmount: 0 };
   }
 
   function qtyOf(map, codes) {
@@ -118,7 +138,7 @@
     return false;
   }
 
-  /** 合計 → 減券 → 滿$115減$15 → 古寶／調理85折 → 銀髮95折；滿額禮遇用最終實付 */
+  /** 合計 → 減券 → 滿$115減$15 → 安宮減$80 → 關節85折 → 銀髮95折；滿額禮遇用實付（未計袋） */
   function payableTotal(gross, orderSt) {
     var st = orderSt || {};
     if (window.BPE_DimsumOrderUI && typeof window.BPE_DimsumOrderUI.pricingFrom === "function") {
@@ -136,8 +156,10 @@
     // fallback：無 dimsum API 時，cupal85 以整單合計 ≥1200 作門檻（正式路徑用 pricingFrom）
     var cupal85Applied = !!st.cupal85 && afterCoupon >= 1200;
     if (cupal85Applied) afterCupal = Math.round(afterPromo * 0.85 * 100) / 100;
-    var payable = afterCupal;
-    if (st.senior) payable = Math.round(afterCupal * 0.95 * 100) / 100;
+    var payableBeforeBag = afterCupal;
+    if (st.senior) payableBeforeBag = Math.round(afterCupal * 0.95 * 100) / 100;
+    var bagFee = st.plasticBag ? 1 : 0;
+    var payable = Math.round((payableBeforeBag + bagFee) * 100) / 100;
     return {
       subtotal: t,
       couponAmount: c,
@@ -147,6 +169,9 @@
       cupal85Applied: cupal85Applied,
       afterCupal85: afterCupal,
       senior: !!st.senior,
+      plasticBag: !!st.plasticBag,
+      bagFee: bagFee,
+      payableBeforeBag: payableBeforeBag,
       payable: payable
     };
   }
@@ -161,7 +186,7 @@
     coupon = Math.round(coupon * 100) / 100;
     var pr = payableTotal(gross, st);
     var afterCoupon = pr.afterCoupon;
-    var payable = pr.payable;
+    var payable = pr.payableBeforeBag != null ? pr.payableBeforeBag : pr.payable;
     var active = (cfg.tiers || []).filter(function (x) { return !x.paused; });
 
     var calendar = null, coaster = null;
@@ -201,6 +226,11 @@
       senior: senior,
       promo115Applied: !!pr.promo115Applied,
       cupal85Applied: !!pr.cupal85Applied,
+      angong80Applied: !!pr.angong80Applied,
+      cupal9Applied: !!pr.cupal9Applied,
+      plasticBag: !!pr.plasticBag,
+      payableBeforeBag: payable,
+      nmnGiftApplied: !!pr.nmnGiftApplied,
       reached: reached,
       highestSpend: highestSpend,
       calendar: calendar,
@@ -233,13 +263,15 @@
         return t.emoji + " " + t.title + (t.soldOut ? "（已送完）" : "");
       });
       parts.push('<p class="gift-progress-line"><strong>目前可享：</strong>' + esc(names.join("；") || "—") + "</p>");
-      if (ev.couponAmount > 0 || ev.promo115Applied || ev.cupal85Applied || ev.senior) {
+      if (ev.couponAmount > 0 || ev.promo115Applied || ev.cupal85Applied || ev.angong80Applied || ev.cupal9Applied || ev.senior) {
         var bits = [];
         if (ev.couponAmount > 0) bits.push("減券 $" + money(ev.couponAmount));
         if (ev.promo115Applied) bits.push("滿$115減$15");
-        if (ev.cupal85Applied) bits.push("古寶／調理 85折");
+        if (ev.angong80Applied) bits.push("安宮減$80");
+        if (ev.cupal85Applied) bits.push("關節 85折");
+        if (ev.cupal9Applied) bits.push("正價 9折");
         if (ev.senior) bits.push("銀髮 95 折");
-        parts.push('<p class="gift-progress-line muted">' + bits.join(" → ") + "後實付 $" + money(ev.payable) + "（以此計贈品）</p>");
+        parts.push('<p class="gift-progress-line muted">' + bits.join(" → ") + "後實付 $" + money(ev.payable) + "（未計膠袋，以此計贈品）</p>");
       }
       if (ev.next) {
         parts.push('<p class="gift-progress-line">再買 <strong>$' + money(ev.next.gap) + "</strong> 送" + esc(ev.next.tier.title) + "</p>");
@@ -258,12 +290,13 @@
         var fallbackImg = ({ magnet168: "assets/img/gifts/magnet.jpg", umbrella328: "assets/img/gifts/umbrella.jpg", bag488: "assets/img/gifts/bag.jpg" })[t.id] || "";
         var imgSrc = (t.img && String(t.img).trim()) || fallbackImg;
         var icon = imgSrc
-          ? '<img class="gift-tier-img" src="' + esc(imgSrc) + '?v=20261108a" width="128" height="128" alt="" loading="lazy" decoding="async" />'
+          ? '<img class="gift-tier-img" src="' + esc(imgSrc) + '?v=20261110b" width="128" height="128" alt="" loading="lazy" decoding="async" />'
           : '<div class="gift-tier-emoji" aria-hidden="true">' + esc(t.emoji) + "</div>";
         return (
           '<div class="gift-tier-card' + (t.soldOut ? " sold" : "") + '">' +
             icon +
             '<div class="gift-tier-text">' + esc(t.cardLabel || ("滿 $" + t.amount + " " + t.title)) + "</div>" +
+            (t.sku ? '<div class="gift-tier-sku"><code>' + esc(t.sku) + "</code></div>" : "") +
             (t.soldOut ? '<span class="gift-tag sold">已送完</span>' : "") +
           "</div>"
         );
@@ -280,7 +313,7 @@
         "<li>花香套裝或任選 5 支花香油送陶瓷杯墊</li>" +
         "<li>任何消費送 2027 年曆卡</li>" +
         "<li>滿額贈品（磁石／雨傘／手提袋）以最高一級計</li>" +
-        "<li>先減優惠券，再滿$115減$15／古寶調理85折／銀髮95折，以最終實付計贈品資格</li>" +
+        "<li>先減優惠券，再滿$115減$15／安宮減$80／關節85折／銀髮95折，以最終實付（未計膠購物袋）計贈品資格</li>" +
         "<li>送完即止；以攤位當日為準</li>" +
       "</ul>" +
       '<p class="claim-safe">' + esc(cfg.disclaimer) + "</p>"

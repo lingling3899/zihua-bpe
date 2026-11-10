@@ -1,6 +1,6 @@
 /* 2026 工展會 總預貨量 — HKBPE seed；散裝 CO98/CO99/ZE01/ZE05–07 用獨立大數表 */
 window.BPE_STOCK_SEED = {
-  version: "20261106s",
+  version: "20261110b",
   asOf: "2026-11-06",
   source: "HKBPE 2026 總預貨量",
   notes: [
@@ -9,6 +9,7 @@ window.BPE_STOCK_SEED = {
     "CPW021JS1 對應 app 碼 CPW021JS。",
     "X／入機代號：優先 xCode，否則 wfCode，再係 app code（職員庫存／補貨表顯示）。",
     "CUPAL-B088 陶瓷杯墊：總預貨量未填（qtyUnknown）；職員輸入「剩餘」後先會按數扣／擋結算；未填時唔擋結算但會記已送出。",
+    "滿額贈品 CUPAL-B090 磁石貼／CUPAL-G011 雨傘／CUPAL-B089 防水手提包，以及 ZA155S1 NMN 試用裝：總預未填（qtyUnknown），唔發明數量。",
     "ZHMA02 WeArmask LV3 成人獨立包裝（白）：總預只計工展會 160 件（生產批次 2025.12 46pcs／2026.10 680pcs 另計）。"
   ],
   aliases: {
@@ -18,7 +19,8 @@ window.BPE_STOCK_SEED = {
     Z7B: "Z0007B",
     Z7C: "Z0007C",
     Z4C: "Z0004C",
-    CPW021JS1: "CPW021JS"
+    CPW021JS1: "CPW021JS",
+    "CUPAL-G011/V1": "CUPAL-G011"
   },
   items: [
     /* —— 紫花油套裝 —— */
@@ -44,6 +46,10 @@ window.BPE_STOCK_SEED = {
 
     /* —— 禮品（工展會贈品；總預未填） —— */
     { code: "CUPAL-B088", wfCode: "CUPAL-B088", xCode: "CUPAL-B088", name: "紫花油陶瓷杯墊", category: "禮品", qtyUnknown: true, unit: "件" },
+    { code: "CUPAL-B090", wfCode: "CUPAL-B090", xCode: "CUPAL-B090", name: "紫花油立體磁石貼", category: "禮品", qtyUnknown: true, unit: "件" },
+    { code: "CUPAL-G011", wfCode: "CUPAL-G011", xCode: "CUPAL-G011", name: "紫花油雨傘（有新舊版本，新加 V1）", category: "禮品", qtyUnknown: true, unit: "件" },
+    { code: "CUPAL-B089", wfCode: "CUPAL-B089", xCode: "CUPAL-B089", name: "紫花油防水手提包（灰色）", category: "禮品", qtyUnknown: true, unit: "件" },
+    { code: "ZA155S1", wfCode: "ZA155S1", xCode: "ZA155S1", name: "CUPAL Health NMN PQQ Ex 10粒試用裝／試食裝", category: "禮品", qtyUnknown: true, unit: "件" },
 
     /* —— 口罩 —— */
     { code: "ZHMA02", wfCode: "ZHMA02", xCode: "ZHMA02", name: "WeArmask LV3 成人獨立包裝（白）", category: "口罩", qty: 160, unit: "件",

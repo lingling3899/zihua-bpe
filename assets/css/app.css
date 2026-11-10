@@ -1725,3 +1725,15 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
 .staff-roster-note { margin: 0 0 10px; font-size: .85rem; }
 .staff-roster-table code { font-size: .9rem; }
 .login-dropdown { min-width: 190px; }
+
+.gift-tier-sku {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #6b5a7a;
+}
+.gift-tier-sku code {
+  font-size: 0.75rem;
+  background: rgba(128, 90, 160, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+}

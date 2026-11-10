@@ -1,4 +1,4 @@
-/* 產品計數 · 結算 — 必揀付款；合計→減券→滿$115減$15→古寶／調理滿$1200享85折→銀髮95折；買6支散裝26ml送12ml／買5支散裝10ml送杯墊達標先自動開結算並扣庫存 */
+/* 產品計數 · 結算 — 必揀付款；線金額（可含正價9折）→合計→減券→滿$115減$15→安宮滿$600減$80→關節滿$1200享85折→銀髮95折→膠袋$1；買6支散裝26ml送12ml／買5支散裝10ml送杯墊達標先自動開結算並扣庫存 */
 (function () {
   "use strict";
 
@@ -39,25 +39,30 @@
     }
     return id || "";
   }
+  function normalizeState(o) {
+    o = o || {};
+    return {
+      items: o.items || {},
+      sets: o.sets || {},
+      setPicks: o.setPicks || {},
+      overrides: o.overrides || {},
+      senior: !!o.senior,
+      promo115: !!o.promo115,
+      cupal85: !!o.cupal85,
+      angong80: !!o.angong80,
+      cupal9: !!o.cupal9,
+      plasticBag: !!o.plasticBag,
+      nmnGift: !!o.nmnGift,
+      paymentMethod: o.paymentMethod || "",
+      couponAmount: Math.max(0, Number(o.couponAmount) || 0)
+    };
+  }
   function loadState() {
     try {
       var raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        var o = JSON.parse(raw);
-        return {
-          items: o.items || {},
-          sets: o.sets || {},
-          setPicks: o.setPicks || {},
-          overrides: o.overrides || {},
-          senior: !!o.senior,
-          promo115: !!o.promo115,
-          cupal85: !!o.cupal85,
-          paymentMethod: o.paymentMethod || "",
-          couponAmount: Math.max(0, Number(o.couponAmount) || 0)
-        };
-      }
+      if (raw) return normalizeState(JSON.parse(raw));
     } catch (e) {}
-    return { items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, promo115: false, cupal85: false, paymentMethod: "", couponAmount: 0 };
+    return normalizeState({});
   }
   function saveState(st) {
     try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
@@ -83,6 +88,85 @@
 
   function normCode(c) {
     return String(c == null ? "" : c).trim().toUpperCase();
+  }
+
+  function round2(n) {
+    return Math.round((Number(n) || 0) * 100) / 100;
+  }
+
+  var REDEEM_STOCK = { R0001: "CMPS", R0002: "CPW021A", R0003: "ZE10", R0004: "ZA155S1" };
+  var SET_SECTION_IDS = { "z-oil-set": 1, "z-pack": 1, "z-ointment-set": 1, "cp-set": 1, "cp-pack": 1 };
+  var SET_SKU_CODES = {
+    Z0001A: 1, Z0005: 1, Z0007A: 1, Z0007B: 1, Z0007C: 1,
+    Z0004: 1, Z0004B: 1, Z0004C: 1, Z0008A: 1, Z0008B: 1,
+    J0002: 1, L0024: 1
+  };
+  var JOINT_CODES = {
+    CMPS: 1, CMPL: 1, ZA164: 1, ZA177: 1, CU51: 1,
+    J0002: 1, L0024: 1, ZA119A: 1, ZA172: 1, CPW020B: 1, ZA124: 1, ZA141: 1
+  };
+  var JOINT_BUNDLE_IDS = { "cp-mix-3": 1 };
+  var ORAL_CODES = {
+    CU001: 1, ZA153: 1, ZA155: 1, ZA169: 1, CP52: 1, CPW014: 1,
+    ZA119A: 1, ZA172: 1, CPW020B: 1, ZA141: 1,
+    CPW003: 1, CPW010: 1, CPW011: 1, CPW015: 1, CPW016: 1, CPW017: 1, CPW026: 1,
+    VTM04: 1, ZA002: 1, CPW007: 1, CPW019A: 1, ZA166: 1, CU30C: 1,
+    CPW005: 1, CPW006: 1, CPW004: 1, CU22: 1,
+    SWC05: 1, ZA075: 1, ZA118A: 1, ZA081: 1, ZA094: 1, ZA100A: 1, BIF02: 1,
+    ZA154: 1, ZA156A: 1, ZA157: 1, ZA158: 1, ZA165: 1, ZA160: 1,
+    C0004: 1, C0005: 1, C0006: 1
+  };
+  var ORAL_BUNDLE_IDS = {
+    "an-cu001-3": 1, "an-za153-2": 1, "an-za155-3": 1, "an-za169-3": 1, "ch-lingzhi-2": 1
+  };
+  var TOPICAL_CODES = { CMPS: 1, CMPL: 1, ZA164: 1, ZA177: 1, CU51: 1, ZA124: 1, J0002: 1, L0024: 1 };
+
+  function isRedeemCode(code) {
+    return !!REDEEM_STOCK[normCode(code)];
+  }
+  function redeemStockCode(code) {
+    var c = normCode(code);
+    return REDEEM_STOCK[c] || c;
+  }
+  function isSetSku(code, sec) {
+    var c = normCode(code);
+    if (SET_SKU_CODES[c]) return true;
+    if (sec && SET_SECTION_IDS[sec.id]) return true;
+    return false;
+  }
+  function isCupalBrandSheet(sheet) {
+    var id = String((sheet && sheet.id) || "");
+    return id === "cupal-patch" || id === "cupal-health" || id === "angong-nmn";
+  }
+  function isCupalBrandItem(it, sheet) {
+    if (!it || isRedeemCode(it.code)) return false;
+    if (isCupalBrandSheet(sheet)) return true;
+    return /古寶|CUPAL|Cupal/i.test(String((it.name || "") + " " + (it.code || "")));
+  }
+  function isListPriceItem(it, st) {
+    if (!it) return false;
+    if (st && st.overrides && st.overrides[it.code] != null && st.overrides[it.code] !== "") return false;
+    if (it.special == null || it.special === "") return true;
+    if (it.orig == null || it.orig === "") return false;
+    return Number(it.special) === Number(it.orig);
+  }
+  function cupal9Applies(it, st, sheet, sec) {
+    if (!st || !st.cupal9) return false;
+    if (!it || it.displayOnly) return false;
+    if (isRedeemCode(it.code)) return false;
+    if (isSetSku(it.code, sec)) return false;
+    if (!isCupalBrandItem(it, sheet)) return false;
+    if (!isListPriceItem(it, st)) return false;
+    return true;
+  }
+  function isJointCode(code) {
+    return !!JOINT_CODES[normCode(code)];
+  }
+  function isOralCode(code, name) {
+    var c = normCode(code);
+    if (!c || TOPICAL_CODES[c] || isRedeemCode(c)) return false;
+    if (ORAL_CODES[c]) return true;
+    return /調理個/.test(String(name || ""));
   }
 
   function getSetPicks(st, id) {
@@ -740,6 +824,22 @@
     var total = 0;
     var lines = [];
     var pieceCount = 0;
+    var promo115Qual = 0;
+    var jointQual = 0;
+    var angongQual = 0;
+    var oralQual = 0;
+    var redeemCount = 0;
+    var nonRedeemCount = 0;
+    var cupal9Saved = 0;
+
+    function addQualifiers(amt, flags) {
+      var a = round2(amt);
+      if (!flags) return;
+      if (flags.c1) promo115Qual = round2(promo115Qual + a);
+      if (flags.joint) jointQual = round2(jointQual + a);
+      if (flags.angong) angongQual = round2(angongQual + a);
+      if (flags.oral) oralQual = round2(oralQual + a);
+    }
 
     sheets.forEach(function (sheet) {
       (sheet.sections || []).forEach(function (sec) {
@@ -748,6 +848,7 @@
           var q = setQty(st, b.id);
           if (q <= 0) return;
           pieceCount += q;
+          nonRedeemCount += q;
           var picksTxt = "";
           if (isPickAnyBundle(b, sec)) {
             picksTxt = formatPicksForLine(getSetPicks(st, b.id));
@@ -761,43 +862,117 @@
             return;
           }
           if (b.setPrice == null) return;
-          var amt = q * Number(b.setPrice);
+          var amt = round2(q * Number(b.setPrice));
           total += amt;
+          var isJointSet = !!JOINT_BUNDLE_IDS[b.id];
+          var isOralSet = !!ORAL_BUNDLE_IDS[b.id];
+          addQualifiers(amt, { c1: false, joint: isJointSet, angong: false, oral: isOralSet });
           lines.push({
             kind: "set",
             label: b.label + " × " + q + (picksTxt ? ("　" + picksTxt) : ""),
-            amount: amt
+            amount: amt,
+            isSet: true,
+            isJoint: isJointSet,
+            isOral: isOralSet
           });
         });
-        var bogoPrices = [];
+
+        var bogoEntries = [];
         (sec.items || []).forEach(function (it) {
           if (it.displayOnly) return;
           var q = itemQty(st, it.code);
           if (q <= 0) return;
           pieceCount += q;
+          var redeem = isRedeemCode(it.code) || sec.id === "rd-redeem";
+          if (redeem) redeemCount += q;
+          else nonRedeemCount += q;
           var p = unitPrice(it, st);
+          var apply9 = !redeem && cupal9Applies(it, st, sheet, sec);
           if (p == null) {
-            lines.push({ kind: "item", label: it.code + " " + it.name + " × " + q, amount: null });
+            lines.push({ kind: "item", label: it.code + " " + it.name + " × " + q, amount: null, code: it.code });
             return;
           }
           if (it.packQty && it.packPrice) {
             var packs = Math.floor(q / it.packQty);
             var rem = q % it.packQty;
-            var amt = packs * Number(it.packPrice) + rem * p;
+            var remGross = rem * p;
+            var remAmt = apply9 ? round2(remGross * 0.9) : remGross;
+            if (apply9) cupal9Saved = round2(cupal9Saved + (remGross - remAmt));
+            var packAmt = packs * Number(it.packPrice);
+            var amt = round2(packAmt + remAmt);
             total += amt;
-            lines.push({ kind: "item", label: it.code + " " + it.name + " × " + q, amount: amt });
+            var joint = isJointCode(it.code);
+            var oral = isOralCode(it.code, it.name);
+            var angong = normCode(it.code) === "CU001";
+            addQualifiers(packAmt, { c1: false, joint: joint, angong: false, oral: oral });
+            addQualifiers(remAmt, { c1: !redeem && !isSetSku(it.code, sec), joint: joint, angong: angong, oral: oral });
+            lines.push({ kind: "item", label: it.code + " " + it.name + " × " + q, amount: amt, code: it.code, cupal9: apply9 && rem > 0 });
             return;
           }
-          var lineAmt = q * p;
-          if (hasBogo) for (var i = 0; i < q; i++) bogoPrices.push(p);
+          var gross = q * p;
+          var lineAmt = apply9 ? round2(gross * 0.9) : round2(gross);
+          if (apply9) cupal9Saved = round2(cupal9Saved + (gross - lineAmt));
+          var flags = {
+            redeem: redeem,
+            c1: !redeem && !isSetSku(it.code, sec),
+            joint: !redeem && isJointCode(it.code),
+            angong: !redeem && normCode(it.code) === "CU001",
+            oral: !redeem && isOralCode(it.code, it.name),
+            apply9: apply9
+          };
+          if (hasBogo) {
+            for (var i = 0; i < q; i++) bogoEntries.push({ price: apply9 ? round2(p * 0.9) : p });
+            bogoEntries[bogoEntries.length - 1]._meta = true;
+            bogoEntries._items = bogoEntries._items || [];
+            bogoEntries._items.push({ it: it, q: q, lineAmt: lineAmt, flags: flags });
+            return;
+          }
           total += lineAmt;
-          lines.push({ kind: "item", label: it.code + " " + it.name + " × " + q, amount: lineAmt, code: it.code });
+          addQualifiers(lineAmt, flags);
+          lines.push({
+            kind: "item",
+            label: it.code + " " + it.name + " × " + q,
+            amount: lineAmt,
+            code: it.code,
+            cupal9: apply9,
+            isRedeem: redeem
+          });
         });
-        if (hasBogo && bogoPrices.length) {
+        if (hasBogo && bogoEntries._items && bogoEntries._items.length) {
+          var bogoPrices = [];
+          bogoEntries.forEach(function (e) {
+            if (e && e.price != null) bogoPrices.push(e.price);
+          });
+          var items = bogoEntries._items;
+          var grossBogo = 0;
+          items.forEach(function (e) { grossBogo = round2(grossBogo + e.lineAmt); });
           var disc = bogoDiscount(bogoPrices);
+          disc = round2(disc);
+          items.forEach(function (e) {
+            total += e.lineAmt;
+            lines.push({
+              kind: "item",
+              label: e.it.code + " " + e.it.name + " × " + e.q,
+              amount: e.lineAmt,
+              code: e.it.code,
+              cupal9: e.flags.apply9
+            });
+          });
           if (disc > 0) {
             total -= disc;
-            lines.push({ kind: "discount", label: sec.title + " · 買3送1", amount: -disc });
+            lines.push({ kind: "discount", label: sec.title + " · 買3送1", amount: -disc, isSet: true });
+            items.forEach(function (e) {
+              var share = grossBogo > 0 ? (e.lineAmt / grossBogo) * (grossBogo - disc) : 0;
+              var f = {
+                c1: false,
+                joint: e.flags.joint,
+                angong: e.flags.angong,
+                oral: e.flags.oral
+              };
+              addQualifiers(share, f);
+            });
+          } else {
+            items.forEach(function (e) { addQualifiers(e.lineAmt, e.flags); });
           }
         }
       });
@@ -836,15 +1011,33 @@
         giftQty: freeCoaster
       });
     }
+    var nmnGiftApplied = !!st.nmnGift && oralQual >= 1200;
+    if (nmnGiftApplied) {
+      lines.push({
+        kind: "gift",
+        label: "口服保健滿$1200送 ZA155S1 CUPAL PQQ NMN Ex 10粒試食裝",
+        amount: 0,
+        code: "ZA155S1",
+        giftQty: 1
+      });
+    }
     return {
-      total: total,
+      total: round2(total),
       lines: lines,
       count: pieceCount,
       freeCo99: freeCo99,
       ze01Qty: ze01Qty,
       z4cQty: z4cQty,
       freeCoaster: freeCoaster,
-      coasterParts: coasterParts
+      coasterParts: coasterParts,
+      promo115Qual: round2(promo115Qual),
+      jointQual: round2(jointQual),
+      angongQual: round2(angongQual),
+      oralQual: round2(oralQual),
+      redeemCount: redeemCount,
+      nonRedeemCount: nonRedeemCount,
+      nmnGiftApplied: nmnGiftApplied,
+      cupal9Saved: round2(cupal9Saved)
     };
   }
 
@@ -862,7 +1055,9 @@
       (sheet.sections || []).forEach(function (sec) {
         (sec.items || []).forEach(function (it) {
           if (it.displayOnly) return;
-          add(it.code, itemQty(st, it.code));
+          var code = it.code;
+          if (isRedeemCode(code)) code = redeemStockCode(code);
+          add(code, itemQty(st, it.code));
         });
         (sec.bundles || []).forEach(function (b) {
           if (!isPickAnyBundle(b, sec)) return;
@@ -878,6 +1073,16 @@
     // Z0004C 以套裝 SKU 扣；唔另外扣 ZE01／CO99（套裝已喺總預貨量獨立列）
     var freeCoaster = countFreeCoaster(st);
     if (freeCoaster > 0) add("CUPAL-B088", freeCoaster);
+    var calcDemand = calcTotals(st);
+    if (calcDemand.nmnGiftApplied) add("ZA155S1", 1);
+    if (window.BPE_Gifts && typeof window.BPE_Gifts.evaluate === "function") {
+      try {
+        var evGift = window.BPE_Gifts.evaluate(calcDemand.total, st);
+        if (evGift && evGift.highestSpend && evGift.highestSpend.sku) {
+          add(evGift.highestSpend.sku, 1);
+        }
+      } catch (eGift) {}
+    }
     return demand;
   }
 
@@ -888,97 +1093,89 @@
     }).join("\n");
   }
 
-  function textHasCupalOrTiaoli(s) {
-    return /古寶|調理|cupal/i.test(String(s || ""));
-  }
-
-  function isCupalTiaoliSheet(sheet) {
-    var id = String((sheet && sheet.id) || "");
-    if (id === "cupal-patch" || id === "cupal-health" || id === "angong-nmn") return true;
-    if (id.indexOf("cupal") >= 0) return true;
-    return textHasCupalOrTiaoli(sheet && sheet.title) || textHasCupalOrTiaoli(sheet && sheet.short);
-  }
-
-  /** 古寶／調理合資格小計（sheet：cupal-*／angong-nmn，或 section／品名含古寶／調理） */
   function cupalQualifyingSubtotal(st) {
-    var total = 0;
-    allSheets().forEach(function (sheet) {
-      var sheetOk = isCupalTiaoliSheet(sheet);
-      (sheet.sections || []).forEach(function (sec) {
-        var secOk = sheetOk || textHasCupalOrTiaoli(sec.title) || textHasCupalOrTiaoli(sec.id);
-        var hasBogo = (sec.bundles || []).some(function (b) { return b.useItemPrices; });
-        (sec.bundles || []).forEach(function (b) {
-          var q = setQty(st, b.id);
-          if (q <= 0 || b.useItemPrices || b.setPrice == null) return;
-          if (!(secOk || textHasCupalOrTiaoli(b.label))) return;
-          total += q * Number(b.setPrice);
-        });
-        var bogoPrices = [];
-        (sec.items || []).forEach(function (it) {
-          if (it.displayOnly) return;
-          var q = itemQty(st, it.code);
-          if (q <= 0) return;
-          var p = unitPrice(it, st);
-          if (p == null) return;
-          var ok = secOk || textHasCupalOrTiaoli(it.name) || textHasCupalOrTiaoli(it.code);
-          if (!ok) return;
-          if (it.packQty && it.packPrice) {
-            var packs = Math.floor(q / it.packQty);
-            var rem = q % it.packQty;
-            total += packs * Number(it.packPrice) + rem * p;
-            return;
-          }
-          if (hasBogo) for (var i = 0; i < q; i++) bogoPrices.push(p);
-          total += q * p;
-        });
-        if (hasBogo && bogoPrices.length && secOk) {
-          var disc = bogoDiscount(bogoPrices);
-          if (disc > 0) total -= disc;
-        }
-      });
-    });
-    return Math.round(Math.max(0, total) * 100) / 100;
+    return calcTotals(st).jointQual || 0;
   }
 
-  /** 合計 → 減優惠券 → 滿$115減$15 → 古寶／調理滿$1200享85折 → 銀髮 95 折 */
+  /** 線金額（可含 D9 9折）→ 合計 → 減券 → C1 −15 → C3 −80 → C2 關節小計 85折 → 銀髮 95折 → ＋袋$1 */
   function pricing(st, calc) {
-    var subtotal = Math.max(0, Math.round((Number(calc.total) || 0) * 100) / 100);
+    var computed = calcTotals(st);
+    var merged = Object.assign({}, computed);
+    if (calc) {
+      Object.keys(calc).forEach(function (k) {
+        if (calc[k] != null) merged[k] = calc[k];
+      });
+    }
+    calc = merged;
+    var subtotal = Math.max(0, round2(Number(calc.total) || 0));
     var couponRaw = Math.max(0, Number(st.couponAmount) || 0);
     var couponAmount = Math.min(couponRaw, subtotal);
-    couponAmount = Math.round(couponAmount * 100) / 100;
-    var afterCoupon = Math.round((subtotal - couponAmount) * 100) / 100;
+    couponAmount = round2(couponAmount);
+    var afterCoupon = round2(subtotal - couponAmount);
 
+    var promo115Qual = calc.promo115Qual != null ? calc.promo115Qual : 0;
     var promo115 = !!st.promo115;
-    var promo115Applied = promo115 && afterCoupon >= 115;
+    var promo115Applied = promo115 && promo115Qual >= 115;
     var promo115Amount = promo115Applied ? 15 : 0;
-    var afterPromo115 = Math.round((afterCoupon - promo115Amount) * 100) / 100;
+    var afterPromo115 = round2(Math.max(0, afterCoupon - promo115Amount));
 
+    var angongQual = calc.angongQual != null ? calc.angongQual : 0;
+    var angong80 = !!st.angong80;
+    var angong80Applied = angong80 && angongQual >= 600;
+    var angong80Amount = angong80Applied ? 80 : 0;
+    var afterAngong80 = round2(Math.max(0, afterPromo115 - angong80Amount));
+
+    var jointQual = calc.jointQual != null ? calc.jointQual : 0;
     var cupal85 = !!st.cupal85;
-    var cupalQual = cupalQualifyingSubtotal(st);
-    var cupal85Applied = cupal85 && cupalQual >= 1200;
-    var afterCupal85 = afterPromo115;
+    var cupal85Applied = cupal85 && jointQual >= 1200;
+    var cupal85Amount = 0;
+    var afterCupal85 = afterAngong80;
     if (cupal85Applied) {
-      afterCupal85 = Math.round(afterPromo115 * 0.85 * 100) / 100;
+      cupal85Amount = round2(jointQual * 0.15);
+      if (cupal85Amount > afterAngong80) cupal85Amount = afterAngong80;
+      afterCupal85 = round2(afterAngong80 - cupal85Amount);
     }
 
     var senior = !!st.senior;
-    var payable = afterCupal85;
-    if (senior) payable = Math.round(afterCupal85 * 0.95 * 100) / 100;
+    var payableBeforeBag = afterCupal85;
+    if (senior) payableBeforeBag = round2(afterCupal85 * 0.95);
+
+    var plasticBag = !!st.plasticBag;
+    var bagFee = plasticBag ? 1 : 0;
+    var payable = round2(payableBeforeBag + bagFee);
+    var nmnGiftApplied = !!calc.nmnGiftApplied;
 
     return {
       subtotal: subtotal,
       couponAmount: couponAmount,
       afterCoupon: afterCoupon,
       promo115: promo115,
+      promo115Qual: promo115Qual,
       promo115Applied: promo115Applied,
       promo115Amount: promo115Amount,
       afterPromo115: afterPromo115,
+      angong80: angong80,
+      angongQual: angongQual,
+      angong80Applied: angong80Applied,
+      angong80Amount: angong80Amount,
+      afterAngong80: afterAngong80,
       cupal85: cupal85,
-      cupalQualifying: cupalQual,
+      cupalQualifying: jointQual,
+      jointQual: jointQual,
       cupal85Applied: cupal85Applied,
+      cupal85Amount: cupal85Amount,
       afterCupal85: afterCupal85,
-      payable: payable,
+      cupal9: !!st.cupal9,
+      cupal9Applied: !!st.cupal9 && (calc.cupal9Saved || 0) > 0,
+      cupal9Saved: calc.cupal9Saved || 0,
       senior: senior,
+      plasticBag: plasticBag,
+      bagFee: bagFee,
+      payableBeforeBag: payableBeforeBag,
+      payable: payable,
+      nmnGift: !!st.nmnGift,
+      nmnGiftApplied: nmnGiftApplied,
+      oralQual: calc.oralQual || 0,
       paymentMethod: st.paymentMethod || ""
     };
   }
@@ -1109,9 +1306,13 @@
           '<div><span>合計</span><strong>$' + esc(money(order.subtotal != null ? order.subtotal : order.total)) + "</strong></div>" +
           '<div><span>優惠券</span><strong>−$' + esc(money(order.couponAmount || 0)) + "</strong></div>" +
           '<div><span>券後</span><strong>$' + esc(money(order.afterCoupon)) + "</strong></div>" +
+          (order.cupal9Applied ? '<div><span>CUPAL 正價單件 9折</span><strong>已計入合計</strong></div>' : "") +
           (order.promo115Applied ? '<div><span>滿$115減$15</span><strong>−$' + esc(money(order.promo115Amount || 15)) + "</strong></div>" : "") +
-          (order.cupal85Applied ? '<div><span>古寶／調理 85折</span><strong>已套用</strong></div>' : "") +
+          (order.angong80Applied ? '<div><span>古寶安宮滿$600減$80</span><strong>−$' + esc(money(order.angong80Amount || 80)) + "</strong></div>" : "") +
+          (order.cupal85Applied ? '<div><span>古寶肌肉關節 85折</span><strong>−$' + esc(money(order.cupal85Amount || 0)) + "</strong></div>" : "") +
           (order.senior ? '<div><span>銀髮 95 折</span><strong>已套用</strong></div>' : "") +
+          (order.plasticBag ? '<div><span>膠購物袋 $1</span><strong>+$' + esc(money(order.bagFee || 1)) + "</strong></div>" : "") +
+          (order.nmnGiftApplied ? '<div><span>送 NMN 試用裝</span><strong>ZA155S1 × 1</strong></div>' : "") +
           '<div class="order-detail-payable"><span>實付</span><strong>$' + esc(money(order.payable)) + "</strong></div>" +
         "</div>" +
         gifts +
@@ -1198,9 +1399,13 @@
         "<div><span>合計</span><span>$" + esc(money(order.subtotal != null ? order.subtotal : order.total)) + "</span></div>" +
         "<div><span>優惠券</span><span>−$" + esc(money(order.couponAmount || 0)) + "</span></div>" +
         "<div><span>券後</span><span>$" + esc(money(order.afterCoupon)) + "</span></div>" +
+        (order.cupal9Applied ? "<div><span>CUPAL 正價單件 9折</span><span>已計入合計</span></div>" : "") +
         (order.promo115Applied ? "<div><span>滿$115減$15</span><span>−$" + esc(money(order.promo115Amount || 15)) + "</span></div>" : "") +
-        (order.cupal85Applied ? "<div><span>古寶／調理 85折</span><span>已套用</span></div>" : "") +
+        (order.angong80Applied ? "<div><span>古寶安宮滿$600減$80</span><span>−$" + esc(money(order.angong80Amount || 80)) + "</span></div>" : "") +
+        (order.cupal85Applied ? "<div><span>古寶肌肉關節 85折</span><span>−$" + esc(money(order.cupal85Amount || 0)) + "</span></div>" : "") +
         (order.senior ? "<div><span>銀髮 95 折</span><span>已套用</span></div>" : "") +
+        (order.plasticBag ? "<div><span>膠購物袋 $1</span><span>+$" + esc(money(order.bagFee || 1)) + "</span></div>" : "") +
+        (order.nmnGiftApplied ? "<div><span>送 NMN 試用裝</span><span>ZA155S1 × 1</span></div>" : "") +
         "<div class='pay'><span>實付</span><span>$" + esc(money(order.payable)) + "</span></div>" +
       "</div>" +
       "<p><strong>禮遇：</strong>" + esc(gifts) + "</p>" +
@@ -1233,7 +1438,7 @@
         (window.BPE_Gifts && window.BPE_Gifts.renderGiftCardsHtml
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
-        '<p class="pc-hero-note">套裝價自動計算 · 散支加到 6 支 26ml 或 5 支 10ml 先自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊（唔自動跳結算） · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再滿$115減$15／古寶調理85折／銀髮95折，以最終實付計禮遇 · 送完即止</p>' +
+        '<p class="pc-hero-note">套裝價自動計算 · 散支加到 6 支 26ml 或 5 支 10ml 先自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊（唔自動跳結算） · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再滿$115減$15／安宮減$80／關節85折／銀髮95折，膠袋$1唔計入滿額門檻 · 以最終實付（未計袋）計禮遇 · 送完即止</p>' +
         (window.BPE_SalesTarget && window.BPE_SalesTarget.renderProgressHtml
           ? window.BPE_SalesTarget.renderProgressHtml()
           : "") +
@@ -1364,18 +1569,37 @@
         (pr.couponAmount > 0 ? ' class="pc-break-minus"' : "") +
         ">−$" + money(pr.couponAmount) + "</strong></div>" +
       '<div class="pc-break-row"><span>折前／券後</span><strong>$' + money(pr.afterCoupon) + "</strong></div>";
+    if (pr.cupal9Applied) {
+      rows +=
+        '<div class="pc-break-row"><span>CUPAL 正價單件 9折</span><strong class="pc-break-minus">−$' +
+        money(pr.cupal9Saved) + "</strong></div>";
+    }
     if (pr.promo115Applied) {
       rows +=
         '<div class="pc-break-row"><span>滿$115減$15</span><strong class="pc-break-minus">−$' +
         money(pr.promo115Amount) + "</strong></div>";
     }
+    if (pr.angong80Applied) {
+      rows +=
+        '<div class="pc-break-row"><span>古寶安宮滿$600減$80</span><strong class="pc-break-minus">−$' +
+        money(pr.angong80Amount) + "</strong></div>";
+    }
     if (pr.cupal85Applied) {
       rows +=
-        '<div class="pc-break-row"><span>古寶／調理 85折</span><strong>$' + money(pr.afterCupal85) + "</strong></div>";
+        '<div class="pc-break-row"><span>古寶肌肉關節 85折</span><strong class="pc-break-minus">−$' +
+        money(pr.cupal85Amount) + "</strong></div>";
     }
     if (pr.senior) {
       rows +=
-        '<div class="pc-break-row"><span>銀髮 95 折</span><strong>$' + money(pr.payable) + "</strong></div>";
+        '<div class="pc-break-row"><span>銀髮 95 折</span><strong>$' + money(pr.payableBeforeBag) + "</strong></div>";
+    }
+    if (pr.plasticBag) {
+      rows +=
+        '<div class="pc-break-row"><span>膠購物袋 $1</span><strong>+$' + money(pr.bagFee || 1) + "</strong></div>";
+    }
+    if (pr.nmnGiftApplied) {
+      rows +=
+        '<div class="pc-break-row pc-break-gift"><span>送 NMN 試用裝</span><strong>ZA155S1 × 1</strong></div>';
     }
     rows +=
       '<div class="pc-break-row pc-break-pay"><span>實付</span><strong>$' + money(pr.payable) + "</strong></div>";
@@ -1426,8 +1650,12 @@
         '<div class="pc-float-body" id="pcFloatBody">' +
           '<div class="pc-float-total">$' + money(pr.payable) +
             (pr.promo115Applied ? '<span class="pc-senior-tag">滿115減15</span>' : "") +
-            (pr.cupal85Applied ? '<span class="pc-senior-tag">古寶85折</span>' : "") +
+            (pr.cupal85Applied ? '<span class="pc-senior-tag">關節85折</span>' : "") +
+            (pr.angong80Applied ? '<span class="pc-senior-tag">安宮減80</span>' : "") +
+            (pr.cupal9Applied ? '<span class="pc-senior-tag">正價9折</span>' : "") +
             (pr.senior ? '<span class="pc-senior-tag">銀髮價</span>' : "") +
+            (pr.plasticBag ? '<span class="pc-senior-tag">膠袋$1</span>' : "") +
+            (pr.nmnGiftApplied ? '<span class="pc-senior-tag">送NMN試用</span>' : "") +
             (pr.couponAmount > 0 ? '<span class="pc-coupon-tag">已減券</span>' : "") +
           "</div>" +
           renderBreakdown(pr, calc) +
@@ -1452,22 +1680,48 @@
             '<input type="checkbox" id="pcPromo115" ' + (st.promo115 ? "checked" : "") + ' />' +
             '<span class="pc-switch" aria-hidden="true"></span>' +
           "</label>" +
-          (st.promo115 && pr.afterCoupon < 115
-            ? '<p class="muted pc-promo-hint">未滿 $115，暫未套用減 $15</p>'
+          (st.promo115 && !pr.promo115Applied
+            ? '<p class="muted pc-promo-hint">合資格折實 $' + money(pr.promo115Qual) + "（套裝／換購唔計），未滿 $115，暫未套用減 $15</p>"
             : "") +
           '<label class="pc-senior-toggle">' +
-            '<span>古寶／調理滿$1200，即享85折</span>' +
+            '<span>古寶肌肉關節滿$1200，享85折</span>' +
             '<input type="checkbox" id="pcCupal85" ' + (st.cupal85 ? "checked" : "") + ' />' +
             '<span class="pc-switch" aria-hidden="true"></span>' +
           "</label>" +
-          (st.cupal85 && pr.cupalQualifying < 1200
-            ? '<p class="muted pc-promo-hint">古寶／調理合計 $' + money(pr.cupalQualifying) + "，未滿 $1200，暫未套用 85 折</p>"
+          (st.cupal85 && !pr.cupal85Applied
+            ? '<p class="muted pc-promo-hint">古寶肌肉關節合計 $' + money(pr.jointQual || pr.cupalQualifying) + "，未滿 $1200，暫未套用 85 折（只折關節系列）</p>"
             : "") +
+          '<label class="pc-senior-toggle">' +
+            '<span>古寶安宮一粒裝滿$600減$80</span>' +
+            '<input type="checkbox" id="pcAngong80" ' + (st.angong80 ? "checked" : "") + ' />' +
+            '<span class="pc-switch" aria-hidden="true"></span>' +
+          "</label>" +
+          (st.angong80 && !pr.angong80Applied
+            ? '<p class="muted pc-promo-hint">安宮單件合計 $' + money(pr.angongQual) + "，未滿 $600，暫未套用減 $80（$996／3盒套裝唔計）</p>"
+            : "") +
+          '<label class="pc-senior-toggle">' +
+            '<span>CUPAL 正價單件 9折</span>' +
+            '<input type="checkbox" id="pcCupal9" ' + (st.cupal9 ? "checked" : "") + ' />' +
+            '<span class="pc-switch" aria-hidden="true"></span>' +
+          "</label>" +
           '<label class="pc-senior-toggle">' +
             '<span>銀髮優惠 95折（減券後）</span>' +
             '<input type="checkbox" id="pcSenior" ' + (st.senior ? "checked" : "") + ' />' +
             '<span class="pc-switch" aria-hidden="true"></span>' +
           "</label>" +
+          '<label class="pc-senior-toggle">' +
+            '<span>膠購物袋 $1</span>' +
+            '<input type="checkbox" id="pcPlasticBag" ' + (st.plasticBag ? "checked" : "") + ' />' +
+            '<span class="pc-switch" aria-hidden="true"></span>' +
+          "</label>" +
+          '<label class="pc-senior-toggle">' +
+            '<span>口服保健滿$1200送 NMN 試用裝</span>' +
+            '<input type="checkbox" id="pcNmnGift" ' + (st.nmnGift ? "checked" : "") + ' />' +
+            '<span class="pc-switch" aria-hidden="true"></span>' +
+          "</label>" +
+          (st.nmnGift && !pr.nmnGiftApplied
+            ? '<p class="muted pc-promo-hint">口服保健合計 $' + money(pr.oralQual) + "，未滿 $1200，暫未送 ZA155S1（貼／膏／噴霧唔計）</p>"
+            : "") +
           '<div class="pc-float-extra">' +
             (window.BPE_Gifts && window.BPE_Gifts.renderProgressHtml
               ? window.BPE_Gifts.renderProgressHtml(calc.total, st) : "") +
@@ -1549,6 +1803,10 @@
   function setQtyValue(kind, id, val) {
     var st = loadState();
     var n = Math.max(0, Math.floor(Number(val) || 0));
+    if (kind === "item" && isRedeemCode(id) && n > 1) {
+      n = 1;
+      alert("換購每款每張單限換 1 件");
+    }
     // 只喺散支 26ml／10ml 跨越買送門檻先自動開結算；套裝／任選5支唔跳
     var shouldOpen = false;
     if (kind === "item" && id === "ZE01") {
@@ -1587,10 +1845,14 @@
     lines.push("合計　$" + money(pr.subtotal));
     lines.push("減優惠券　−$" + money(pr.couponAmount));
     lines.push("折前／券後　$" + money(pr.afterCoupon));
+    if (pr.cupal9Applied) lines.push("CUPAL 正價單件 9折　−$" + money(pr.cupal9Saved) + "（已計入合計）");
     if (pr.promo115Applied) lines.push("滿$115減$15　−$" + money(pr.promo115Amount));
-    if (pr.cupal85Applied) lines.push("古寶／調理 85折　$" + money(pr.afterCupal85));
-    if (pr.senior) lines.push("銀髮 95 折實付　$" + money(pr.payable));
-    else lines.push("實付　$" + money(pr.payable));
+    if (pr.angong80Applied) lines.push("古寶安宮滿$600減$80　−$" + money(pr.angong80Amount));
+    if (pr.cupal85Applied) lines.push("古寶肌肉關節 85折　−$" + money(pr.cupal85Amount));
+    if (pr.senior) lines.push("銀髮 95 折　$" + money(pr.payableBeforeBag));
+    if (pr.plasticBag) lines.push("膠購物袋　+$" + money(pr.bagFee || 1));
+    if (pr.nmnGiftApplied) lines.push("口服保健滿$1200送 NMN 試用裝　ZA155S1 × 1");
+    lines.push("實付　$" + money(pr.payable));
     if (pr.paymentMethod) lines.push("付款方式　" + payLabel(pr.paymentMethod));
     if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
       var gev = window.BPE_Gifts.evaluate(calc.total, st);
@@ -1609,6 +1871,9 @@
     var giftTitles = [];
     if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
       giftTitles = window.BPE_Gifts.evaluate(calc.total, st).reached.map(function (t) { return t.title; });
+    }
+    if (calc.nmnGiftApplied) {
+      giftTitles = giftTitles.concat(["ZA155S1 CUPAL PQQ NMN Ex 10粒試食裝"]);
     }
     var pos = getPosStation();
     var orderNo = nextOrderNo(pos);
@@ -1639,13 +1904,30 @@
       promo115: !!pr.promo115,
       promo115Applied: !!pr.promo115Applied,
       promo115Amount: pr.promo115Amount || 0,
+      promo115Qual: pr.promo115Qual || 0,
       cupal85: !!pr.cupal85,
       cupal85Applied: !!pr.cupal85Applied,
+      cupal85Amount: pr.cupal85Amount || 0,
       cupalQualifying: pr.cupalQualifying || 0,
+      jointQual: pr.jointQual || 0,
       afterPromo115: pr.afterPromo115,
       afterCupal85: pr.afterCupal85,
+      angong80: !!pr.angong80,
+      angong80Applied: !!pr.angong80Applied,
+      angong80Amount: pr.angong80Amount || 0,
+      angongQual: pr.angongQual || 0,
+      afterAngong80: pr.afterAngong80,
+      cupal9: !!pr.cupal9,
+      cupal9Applied: !!pr.cupal9Applied,
+      cupal9Saved: pr.cupal9Saved || 0,
+      plasticBag: !!pr.plasticBag,
+      bagFee: pr.bagFee || 0,
+      payableBeforeBag: pr.payableBeforeBag,
       payable: pr.payable,
       senior: !!pr.senior,
+      nmnGift: !!pr.nmnGift,
+      nmnGiftApplied: !!pr.nmnGiftApplied,
+      oralQual: pr.oralQual || 0,
       paymentMethod: pr.paymentMethod,
       paymentLabel: payLabel(pr.paymentMethod),
       lines: calc.lines,
@@ -1764,17 +2046,15 @@
       if (e.target.closest("#btnPcClear")) {
         if (!confirm("清除全部數量？")) return;
         var st = loadState();
-        saveState({
+        saveState(normalizeState({
           items: {},
           sets: {},
           setPicks: {},
           overrides: st.overrides,
           senior: st.senior,
-          promo115: false,
-          cupal85: false,
           paymentMethod: st.paymentMethod,
           couponAmount: st.couponAmount
-        });
+        }));
         render();
         return;
       }
@@ -1801,6 +2081,24 @@
         var calcS = calcTotals(stS);
         if (calcS.count <= 0) {
           alert("未有產品，請先加數量。");
+          return;
+        }
+        var stCap = loadState();
+        var redeemOver = false;
+        Object.keys(stCap.items || {}).forEach(function (code) {
+          if (isRedeemCode(code) && itemQty(stCap, code) > 1) {
+            stCap.items[code] = 1;
+            redeemOver = true;
+          }
+        });
+        if (redeemOver) {
+          saveState(stCap);
+          alert("換購每款每張單限換 1 件，已幫你改返 1 件，請再核對數目後結算。");
+          render();
+          return;
+        }
+        if ((calcS.redeemCount || 0) > 0 && (calcS.nonRedeemCount || 0) <= 0) {
+          alert("換購須同時購買其他產品。");
           return;
         }
         var incomplete = incompletePickAnyBundles(stS);
@@ -1848,8 +2146,11 @@
           "減優惠券 −$" + money(order.couponAmount) + "\n" +
           "折前／券後 $" + money(order.afterCoupon) + "\n" +
           (order.promo115Applied ? ("滿$115減$15 −$" + money(order.promo115Amount || 15) + "\n") : "") +
-          (order.cupal85Applied ? ("古寶／調理 85折\n") : "") +
+          (order.angong80Applied ? ("古寶安宮滿$600減$80 −$" + money(order.angong80Amount || 80) + "\n") : "") +
+          (order.cupal85Applied ? ("古寶肌肉關節 85折 −$" + money(order.cupal85Amount || 0) + "\n") : "") +
+          (order.cupal9Applied ? ("CUPAL 正價單件 9折\n") : "") +
           (order.senior ? ("銀髮 95 折\n") : "") +
+          (order.plasticBag ? ("膠購物袋 +$" + money(order.bagFee || 1) + "\n") : "") +
           "實付 $" + money(order.payable) +
           giftLine +
           "\n\n庫存已按售出扣減；請向攤位職員確認付款。"
@@ -1860,11 +2161,17 @@
     });
     root.addEventListener("change", function (e) {
       if (!e.target) return;
-      if (e.target.id === "pcSenior" || e.target.id === "pcPromo115" || e.target.id === "pcCupal85") {
+      if (e.target.id === "pcSenior" || e.target.id === "pcPromo115" || e.target.id === "pcCupal85" ||
+          e.target.id === "pcAngong80" || e.target.id === "pcCupal9" || e.target.id === "pcPlasticBag" ||
+          e.target.id === "pcNmnGift") {
         var st = loadState();
         if (e.target.id === "pcSenior") st.senior = !!e.target.checked;
         if (e.target.id === "pcPromo115") st.promo115 = !!e.target.checked;
         if (e.target.id === "pcCupal85") st.cupal85 = !!e.target.checked;
+        if (e.target.id === "pcAngong80") st.angong80 = !!e.target.checked;
+        if (e.target.id === "pcCupal9") st.cupal9 = !!e.target.checked;
+        if (e.target.id === "pcPlasticBag") st.plasticBag = !!e.target.checked;
+        if (e.target.id === "pcNmnGift") st.nmnGift = !!e.target.checked;
         saveState(st);
         render();
       }
@@ -1906,7 +2213,7 @@
     getPosStation: getPosStation,
     openOrderDetail: openOrderDetail,
     clear: function () {
-      saveState({ items: {}, sets: {}, setPicks: {}, overrides: {}, senior: false, promo115: false, cupal85: false, paymentMethod: "", couponAmount: 0 });
+      saveState(normalizeState({}));
       render();
     },
     pricing: function () {
@@ -1914,7 +2221,7 @@
       return pricing(st, calcTotals(st));
     },
     pricingFrom: function (st, calcLike) {
-      return pricing(st || loadState(), calcLike || { total: 0 });
+      return pricing(st || loadState(), calcLike);
     },
     cupalQualifyingSubtotal: cupalQualifyingSubtotal
   };

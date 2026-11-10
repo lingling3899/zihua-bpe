@@ -1,6 +1,6 @@
 /* 第60屆工展會點心紙下單資料 — 以掃描紙為準；參考用途，非醫療建議 */
 window.BPE_DIMSUM_ORDER = {
-  version: "20261030d",
+  version: "20261110b",
   currency: "HK$",
   sheets: [
     {
@@ -137,12 +137,12 @@ window.BPE_DIMSUM_ORDER = {
         {
           id: "rd-redeem",
           title: "換購 · 購買任何產品",
-          note: "加錢換購；須同時購買其他產品",
+          note: "加錢換購；須同時購買其他產品；每款每張單限換 1 件。官方表 R0003 寫 ZE09 50ml，目錄／庫存只有 ZE10 85ml（新款），沿用 ZE10。",
           items: [
             { code: "R0001", name: "加 $20 換購 CMPS 古寶補適貼（細）10片", orig: 44, special: 20, unit: "盒" },
             { code: "R0002", name: "加 $30 換購 CPW021A 日本叮叮環保驅蚊劑 35克", orig: 45, special: 30, unit: "盒" },
             { code: "R0003", name: "加 $30 換購 ZE10 紫花油蚊水 85ml", orig: 62, special: 30, unit: "盒" },
-            { code: "R0004", name: "加 $99 換購銀 PQQ NMN 試用裝 10粒", orig: 280, special: 99, unit: "盒" }
+            { code: "R0004", name: "加 $99 換購 ZA155S1 CUPAL Health NMN PQQ Ex 10粒試用裝", orig: 280, special: 99, unit: "盒" }
           ]
         },
         {
