@@ -1754,3 +1754,82 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
   border-radius: 10px;
   border-bottom: 1px solid #fdba74;
 }
+
+.pc-order-stats {
+  margin: 0 0 10px;
+  padding: 0 0 10px;
+  border-bottom: 1px dashed #e9e0f7;
+}
+.pc-stats-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pc-stats-chip {
+  border: 1px solid #d4c2e8;
+  background: #fff;
+  color: var(--purple-dark);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: .75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pc-stats-chip.active {
+  background: var(--purple);
+  color: #fff;
+  border-color: var(--purple);
+}
+.pc-stats-summary { margin: 6px 0 8px; font-size: .8rem; line-height: 1.45; }
+.pc-stats-actions { margin: 0 0 4px; }
+.pc-void-stamp {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border: 1px solid #b91c1c;
+  color: #991b1b;
+  border-radius: 4px;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  vertical-align: middle;
+}
+.pc-order-row-void .pc-order-no,
+.pc-order-row-void .pc-order-meta { color: #991b1b; }
+.pc-order-row-void .pc-order-meta { text-decoration: line-through; }
+.pc-order-voided { background: #fff7f7; }
+.order-void-banner {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 2px solid #b91c1c;
+  background: #fef2f2;
+  color: #991b1b;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: .08em;
+  border-radius: 10px;
+}
+.order-detail.is-voided .order-detail-payable strong { text-decoration: line-through; }
+.order-void-btn { color: #991b1b !important; border-color: #fecaca !important; }
+.order-lines-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 0 8px; }
+.order-lines-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+}
+.order-lines-table th,
+.order-lines-table td {
+  border-bottom: 1px solid #eee6f5;
+  padding: 6px 4px;
+  vertical-align: top;
+  text-align: left;
+}
+.order-lines-table th { color: var(--purple-dark); font-weight: 700; background: #f7f2fb; }
+.order-lines-table td.num,
+.order-lines-table th:nth-child(n+4) { text-align: right; font-variant-numeric: tabular-nums; }
+.order-line-note td { color: var(--muted); font-size: .75rem; }
+.order-stats-panel { width: min(560px, 100%); max-height: 90vh; }
+.stats-table { font-size: .82rem; }
+.stats-total td { font-weight: 800; border-top: 1px solid #d4c2e8; }
+.stats-note { font-size: .72rem; line-height: 1.45; margin: 0 0 8px; }

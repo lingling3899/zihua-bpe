@@ -104,7 +104,7 @@
     return hkDateKey(d);
   }
 
-  /** Fallback: sum payable of today's orders still in the 50-item preorder list */
+  /** Fallback: sum payable of that HK date's non-voided saved orders */
   function sumTodayFromPreorders(dateKey) {
     var key = dateKey || hkDateKey();
     var total = 0;
@@ -114,7 +114,7 @@
       var list = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(list)) return { total: 0, count: 0 };
       list.forEach(function (o) {
-        if (!o) return;
+        if (!o || o.voided) return;
         if (orderHkDate(o) !== key) return;
         var p = Number(o.payable);
         if (isNaN(p)) return;
@@ -163,6 +163,28 @@
     }
     cur.total = round2((Number(cur.total) || 0) + amt);
     cur.count = Math.max(0, Math.floor(Number(cur.count) || 0) + 1);
+    map[key] = cur;
+    saveSalesMap(map);
+    return { total: cur.total, count: cur.count, fromAccumulator: true, dateKey: key };
+  }
+
+  /** Undo a voided order's payable on that HK date. Total / count never go below 0. */
+  function removeSale(payable, when) {
+    var amt = Number(payable);
+    if (isNaN(amt)) amt = 0;
+    amt = round2(amt);
+    var whenDate = when instanceof Date ? when : (when ? new Date(when) : new Date());
+    var key = hkDateKey(isNaN(whenDate.getTime()) ? new Date() : whenDate);
+    var map = loadSalesMap();
+    var cur = map[key];
+    if (!cur || typeof cur !== "object") {
+      var seed = sumTodayFromPreorders(key);
+      map[key] = { total: seed.total, count: seed.count };
+      saveSalesMap(map);
+      return { total: seed.total, count: seed.count, fromAccumulator: true, dateKey: key };
+    }
+    cur.total = Math.max(0, round2((Number(cur.total) || 0) - amt));
+    cur.count = Math.max(0, Math.floor(Number(cur.count) || 0) - 1);
     map[key] = cur;
     saveSalesMap(map);
     return { total: cur.total, count: cur.count, fromAccumulator: true, dateKey: key };
@@ -328,6 +350,7 @@
     saveTarget: saveTarget,
     getTodayBucket: getTodayBucket,
     addSale: addSale,
+    removeSale: removeSale,
     clearSales: clearSales,
     renderProgressHtml: renderProgressHtml,
     openPanel: openPanel,

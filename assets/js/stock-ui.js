@@ -309,14 +309,16 @@
   function addIssued(code, delta) {
     var c = canonicalCode(code);
     if (!c) return;
-    var d = Math.max(0, Math.floor(Number(delta) || 0));
+    var d = Math.floor(Number(delta) || 0);
     if (!d) return;
     var map = loadIssued();
     var keys = relatedKeys(c);
     keys.forEach(function (k) {
       if (k !== c) delete map[k];
     });
-    map[c] = (Math.floor(Number(map[c]) || 0)) + d;
+    var next = (Math.floor(Number(map[c]) || 0)) + d;
+    if (next <= 0) delete map[c];
+    else map[c] = next;
     saveIssued(map);
   }
 
@@ -541,6 +543,23 @@
       }
     });
     return { ok: true, shorts: [] };
+  }
+
+  /** Restore deducted stock (void). Issued never goes below 0. If a remaining override was adjusted on deduct, reverse it too. */
+  function restore(demandMap) {
+    var map = demandMap || {};
+    Object.keys(map).forEach(function (code) {
+      var need = Math.max(0, Math.floor(Number(map[code]) || 0));
+      if (need <= 0) return;
+      var have = getQty(code);
+      var hadOv = hasRemainingOverride(code);
+      addIssued(code, -need);
+      if (hadOv) {
+        var cur = have == null ? 0 : have;
+        setQty(code, cur + need);
+      }
+    });
+    return { ok: true };
   }
 
   function resetToSeed() {
@@ -1042,6 +1061,7 @@
     addQty: addQty,
     addRestockAmount: addRestockAmount,
     deduct: deduct,
+    restore: restore,
     canFulfill: canFulfill,
     resetToSeed: resetToSeed,
     listAll: listAll,

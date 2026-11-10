@@ -41,6 +41,7 @@
       }
       html =
         trialItem +
+        '<button type="button" role="menuitem" data-dd-action="order-stats">📊 單據統計</button>' +
         '<button type="button" role="menuitem" data-dd-action="gifts">🎁 禮遇設定</button>' +
         '<button type="button" role="menuitem" data-dd-action="stock">📦 庫存／存貨表</button>' +
         '<button type="button" role="menuitem" data-dd-action="restock">📋 補貨表</button>' +
@@ -53,6 +54,7 @@
       html =
         '<button type="button" role="menuitem" data-dd-action="stock">📦 庫存／存貨表</button>' +
         '<button type="button" role="menuitem" data-dd-action="restock">📋 補貨表</button>' +
+        '<button type="button" role="menuitem" data-dd-action="order-stats">📊 單據統計</button>' +
         '<button type="button" role="menuitem" data-dd-action="staff-switch">🔄 切換經手職員</button>' +
         '<button type="button" role="menuitem" data-dd-action="staff-logout" class="dd-logout">🚪 職員登出</button>';
     }
@@ -261,6 +263,16 @@
       var gr = $("giftsDrawer");
       if (gr) gr.classList.remove("hidden");
       if (window.BPE_Gifts) window.BPE_Gifts.render();
+      return;
+    }
+    if (act === "order-stats") {
+      if (!canOperate()) {
+        openLogin();
+        return;
+      }
+      if (window.BPE_DimsumOrderUI && window.BPE_DimsumOrderUI.openOrderStats) {
+        window.BPE_DimsumOrderUI.openOrderStats();
+      }
       return;
     }
     if (act === "stock") {
