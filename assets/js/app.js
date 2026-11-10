@@ -33,7 +33,14 @@
     if (!dd) return;
     var html = "";
     if (isAdmin()) {
+      var trialItem = "";
+      if (window.BPE_TrialMode && window.BPE_TrialMode.isCodeEnabled && window.BPE_TrialMode.isCodeEnabled()) {
+        trialItem = window.BPE_TrialMode.isOn()
+          ? '<button type="button" role="menuitem" data-dd-action="trial-toggle">🧪 試機模式：開</button>'
+          : '<button type="button" role="menuitem" data-dd-action="trial-toggle">🧪 試機模式：關</button>';
+      }
       html =
+        trialItem +
         '<button type="button" role="menuitem" data-dd-action="gifts">🎁 禮遇設定</button>' +
         '<button type="button" role="menuitem" data-dd-action="stock">📦 庫存／存貨表</button>' +
         '<button type="button" role="menuitem" data-dd-action="restock">📋 補貨表</button>' +
@@ -228,6 +235,27 @@
       if (window.BPE_CupalDelivery) window.BPE_CupalDelivery.exportCsv();
       return;
     }
+    if (act === "trial-toggle") {
+      if (!isAdmin()) return;
+      if (!window.BPE_TrialMode || !window.BPE_TrialMode.isCodeEnabled || !window.BPE_TrialMode.isCodeEnabled()) return;
+      var on = !!window.BPE_TrialMode.isOn();
+      if (on) {
+        if (!confirm("關閉試機模式？之後賣貨會改返跟「補貨−售出」（未補貨就不能賣）。每日自動重新開始亦會停。除非再通知，建議保持開啟。")) return;
+        window.BPE_TrialMode.setOn(false);
+      } else {
+        if (!confirm("重新開啟試機模式？存貨會當已到場（剩餘=總預−售出）；每日（香港日期）會自動清訂單、售出同今日營業額。")) return;
+        window.BPE_TrialMode.setOn(true);
+        if (window.BPE_TrialMode.maybeDailyReset) window.BPE_TrialMode.maybeDailyReset();
+      }
+      if (window.BPE_TrialMode.scheduleMidnightCheck) window.BPE_TrialMode.scheduleMidnightCheck();
+      setAuthVisible();
+      if (window.BPE_DimsumOrderUI && window.BPE_DimsumOrderUI.render) window.BPE_DimsumOrderUI.render();
+      if (window.BPE_Stock && window.BPE_Stock.renderPanel) {
+        var sd = $("stockDrawer");
+        if (sd && !sd.classList.contains("hidden")) window.BPE_Stock.renderPanel();
+      }
+      return;
+    }
     if (act === "gifts") {
       if (!isAdmin()) return;
       var gr = $("giftsDrawer");
@@ -312,6 +340,12 @@
 
   function init() {
     bind();
+    if (window.BPE_TrialMode && window.BPE_TrialMode.bindWatchers) {
+      window.BPE_TrialMode.bindWatchers();
+    }
+    if (window.BPE_TrialMode && window.BPE_TrialMode.maybeDailyReset) {
+      window.BPE_TrialMode.maybeDailyReset();
+    }
     setAuthVisible();
     var hash = (location.hash || "").replace(/^#/, "");
     showView(VIEWS.indexOf(hash) >= 0 ? hash : "order");

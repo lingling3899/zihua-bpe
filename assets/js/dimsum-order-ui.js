@@ -728,9 +728,10 @@
     }
   }
 
-  /** Clear test orders + sold + remaining overrides + daily sales. Keep restock / 總預 / daily target. */
+  /** Clear test orders + current cart + sold + remaining overrides + daily sales. Keep restock / 總預 / daily target / order seq. */
   function clearTestOrdersData() {
     try { localStorage.removeItem(LS_PREORDERS); } catch (e) {}
+    try { localStorage.removeItem(LS_KEY); } catch (e1) {}
     if (window.BPE_Stock) {
       if (window.BPE_Stock.clearIssued) {
         try { window.BPE_Stock.clearIssued(); } catch (e2) {}
@@ -742,6 +743,14 @@
     if (window.BPE_SalesTarget && window.BPE_SalesTarget.clearSales) {
       try { window.BPE_SalesTarget.clearSales(); } catch (e4) {}
     }
+  }
+
+  /** Returns true if a new HK calendar day triggered a trial reset. */
+  function maybeTrialDayReset() {
+    if (window.BPE_TrialMode && window.BPE_TrialMode.maybeDailyReset) {
+      return !!window.BPE_TrialMode.maybeDailyReset();
+    }
+    return false;
   }
 
   function maybeWipeTestOrdersOnce() {
@@ -1432,6 +1441,7 @@
         "</button>" +
       "</div>" +
       '<p class="pc-pos-note">撳左上 POS 掣喺 <strong>POS1／POS2</strong> 之間切換（預設 POS1）。同一部機切換 POS1／POS2 共用當日流水號；兩部實體機暫時各自計（之後可加雲端同步）。</p>' +
+      (window.BPE_TrialMode && window.BPE_TrialMode.bannerHtml ? window.BPE_TrialMode.bannerHtml() : "") +
       '<header class="pc-hero">' +
         '<p class="pc-hero-kicker">2026 工展會 · 會場購物禮遇</p>' +
         "<h2>產品計數 · 預訂</h2>" +
@@ -1762,6 +1772,7 @@
   }
 
   function render() {
+    maybeTrialDayReset();
     var root = $("dimsumOrderRoot");
     if (!root) return;
     var st = loadState();
@@ -1956,7 +1967,7 @@
     root.addEventListener("click", function (e) {
       if (e.target.closest("#btnClearTestOrders")) {
         if (!isAdmin()) return;
-        if (!confirm("清除全部測試訂單？售出會歸零，今日營業額進度亦會清走。補貨同總預會保留。")) return;
+        if (!confirm("清除全部測試訂單？購物車、售出會歸零，今日營業額進度亦會清走。補貨同總預會保留。")) return;
         clearTestOrdersData();
         closeOrderDetail();
         render();
@@ -2069,6 +2080,11 @@
         return;
       }
       if (e.target.closest("#btnPcSettle") || e.target.closest("#btnPcPreorder")) {
+        if (maybeTrialDayReset()) {
+          alert("已過香港日期，試機資料已每日重新開始。請重新落單。");
+          render();
+          return;
+        }
         var stS = loadState();
         if (!stS.paymentMethod) {
           alert("請先揀付款方式");
@@ -2197,6 +2213,10 @@
   }
 
   maybeWipeTestOrdersOnce();
+  maybeTrialDayReset();
+  if (window.BPE_TrialMode && window.BPE_TrialMode.bindWatchers) {
+    window.BPE_TrialMode.bindWatchers();
+  }
 
   if (!document._orderDetailBound) {
     document._orderDetailBound = true;

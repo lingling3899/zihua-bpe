@@ -1737,3 +1737,20 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
   padding: 1px 6px;
   border-radius: 4px;
 }
+
+.trial-banner {
+  margin: 0;
+  padding: 8px 14px;
+  font-size: .78rem;
+  line-height: 1.45;
+  font-weight: 600;
+  color: #7c2d12;
+  background: #fff7ed;
+  border-bottom: 1px solid #fdba74;
+}
+.stock-panel .trial-banner {
+  margin: 0 0 10px;
+  border: 1px solid #fdba74;
+  border-radius: 10px;
+  border-bottom: 1px solid #fdba74;
+}

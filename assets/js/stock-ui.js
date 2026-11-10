@@ -1,4 +1,4 @@
-/* 庫存：總預＝未到場計劃量（上限）；補貨＝已到場；售出＝結算累積；剩餘＝補貨−售出（真正到場先可賣）；補貨不可超過總預；qtyUnknown 未填剩餘唔擋結算 */
+/* 庫存：總預＝未到場計劃量（上限）；補貨＝已到場；售出＝結算累積；剩餘＝補貨−售出（真正到場先可賣）；試機模式剩餘＝總預−售出（唔寫假補貨）；補貨不可超過總預；qtyUnknown 未填剩餘唔擋結算 */
 (function () {
   "use strict";
 
@@ -31,6 +31,21 @@
     }
     return isAdmin();
   }
+
+  function isTrialOn() {
+    return !!(window.BPE_TrialMode && window.BPE_TrialMode.isOn && window.BPE_TrialMode.isOn());
+  }
+
+  /** Effective arrived qty used for remaining. Trial: known 總預 counts as arrived (does not write restock). */
+  function arrivedBase(code) {
+    if (isQtyUnknownItem(code)) return null;
+    if (isTrialOn()) {
+      var seedQ = getSeedQty(code);
+      if (seedQ != null) return Math.max(0, seedQ);
+    }
+    return getRestock(code);
+  }
+
 
   /** X／入機代號：優先 xCode，其次 wfCode，再係 app code */
   function xCodeOf(it) {
@@ -421,10 +436,10 @@
     }
     // qtyUnknown with no staff remaining: 未填 — 唔擋結算、唔因補貨發明數字
     if (isQtyUnknownItem(c)) return null;
-    // 到場剩餘 = 補貨 − 售出（總預只係未到場計劃上限，唔當庫存）
-    var restock = getRestock(c);
+    // 正式：剩餘 = 補貨 − 售出。試機：有總預時剩餘 = 總預 − 售出（唔寫入補貨紀錄）
+    var arrived = arrivedBase(c);
     var sold = getIssued(c);
-    return Math.max(0, restock - sold);
+    return Math.max(0, (arrived == null ? 0 : arrived) - sold);
   }
 
   function getSeedQty(code) {
@@ -446,10 +461,11 @@
     keys.forEach(function (k) {
       if (k !== c) delete ov[k];
     });
-    // Baseline on-hand = 補貨 − 售出（qtyUnknown 無基線，填咗就要寫覆寫）
-    var baseline = isQtyUnknownItem(c)
+    // Baseline on-hand = 到場 − 售出（試機用總預當到場；qtyUnknown 無基線，填咗就要寫覆寫）
+    var base = arrivedBase(c);
+    var baseline = base == null
       ? null
-      : Math.max(0, getRestock(c) - getIssued(c));
+      : Math.max(0, base - getIssued(c));
     if (baseline != null && qty === baseline) {
       delete ov[c];
     } else {
@@ -519,7 +535,7 @@
       }
       var hadOv = hasRemainingOverride(code);
       addIssued(code, need);
-      // 無覆寫：剩餘自動 = 補貨 − 售出。有人手「改剩餘」先同步覆寫。
+      // 無覆寫：剩餘自動 = 到場 − 售出（試機用總預）。有人手「改剩餘」先同步覆寫。
       if (hadOv) {
         setQty(code, Math.max(0, have - need));
       }
@@ -529,7 +545,7 @@
 
   function resetToSeed() {
     try { localStorage.removeItem(LS_KEY); } catch (e) {}
-    // 只清人手「改剩餘」覆寫；剩餘改返跟 補貨−售出。補貨／已售／職員加貨保留。
+    // 只清人手「改剩餘」覆寫；剩餘改返跟 到場−售出（試機用總預）。補貨／已售／職員加貨保留。
   }
 
   function clearIssued() {
@@ -633,11 +649,12 @@
   function stockBadgeHtml(code) {
     var q = getQty(code);
     if (q == null) return "";
+    var badgeTitle = isTrialOn() ? "試機註：剩餘=總預−售出" : "到場剩餘（補貨−售出）";
     if (q <= 0) {
-      return '<span class="stock-badge stock-out" title="到場剩餘（補貨−售出）">暫無貨</span>';
+      return '<span class="stock-badge stock-out" title="' + badgeTitle + '">暫無貨</span>';
     }
     var cls = q <= 12 ? " stock-low" : "";
-    return '<span class="stock-badge' + cls + '" title="到場剩餘（補貨−售出）">庫存 ' + esc(String(q)) + "</span>";
+    return '<span class="stock-badge' + cls + '" title="' + badgeTitle + '">庫存 ' + esc(String(q)) + "</span>";
   }
 
   function ensureDrawer() {
@@ -688,6 +705,9 @@
   }
 
   function renderPanel() {
+    if (window.BPE_TrialMode && window.BPE_TrialMode.maybeDailyReset) {
+      window.BPE_TrialMode.maybeDailyReset();
+    }
     ensureDrawer();
     var root = $("stockRoot");
     if (!root) return;
@@ -708,8 +728,14 @@
       );
     });
     var extraCount = loadExtras().length;
+    var trialOn = isTrialOn();
     var html =
-      '<p class="stock-meta"><strong>喺呢度更新存貨表</strong>：總預＝未到場計劃量（上限）；補貨＝已到場貨，可＋／−／刪（入錯可改）；售出只由真正補貨扣；剩餘＝補貨−售出。補貨不可超過總預，超過會提示「已冇得補貨」。撳「加產品」可加新款（總預）。禮品（如杯墊）剩餘未填＝「未填」、唔擋結算；填剩餘後先會擋／扣數。</p>' +
+      (window.BPE_TrialMode && window.BPE_TrialMode.bannerHtml ? window.BPE_TrialMode.bannerHtml() : "") +
+      '<p class="stock-meta"><strong>喺呢度更新存貨表</strong>：' +
+      (trialOn
+        ? "試機模式：有總預嘅貨剩餘＝總預−售出（當已到場，唔會寫假補貨）。補貨欄顯示實際已登記數量，唔當賣貨庫存。補貨仍然不可超過總預。禮品（總預未填）剩餘未填＝「未填」、唔擋結算；填剩餘後先會擋／扣數。人手「改剩餘」仍然有效。"
+        : "總預＝未到場計劃量（上限）；補貨＝已到場貨，可＋／−／刪（入錯可改）；售出只由真正補貨扣；剩餘＝補貨−售出。補貨不可超過總預，超過會提示「已冇得補貨」。撳「加產品」可加新款（總預）。禮品（如杯墊）剩餘未填＝「未填」、唔擋結算；填剩餘後先會擋／扣數。") +
+      "</p>" +
       '<p class="stock-meta muted">來源：' + esc(s.source || "") +
       " · 版本 " + esc(s.version || "") +
       " · 截至 " + esc(s.asOf || "") +
@@ -741,7 +767,11 @@
             '<label class="field">單位<input id="stockAddUnit" name="unit" type="text" placeholder="件" value="件" /></label>' +
             '<label class="field">售價（選填）<input id="stockAddPrice" name="price" type="number" min="0" step="0.1" inputmode="decimal" placeholder="出現喺產品計數" /></label>' +
           "</div>" +
-          '<p class="muted stock-add-hint">加咗會存本機（總預＝計劃上限）；要賣先要再「補貨」登記到場。有填售價會出現喺「產品計數 → 職員加貨」。未寫入 seed 檔前，清瀏覽器資料會冇。</p>' +
+          '<p class="muted stock-add-hint">' +
+            (trialOn
+              ? "加咗會存本機（總預＝計劃上限）。試機模式有總預即可賣（剩餘＝總預−售出），唔使先補貨；正式開賣後就要再「補貨」登記到場。有填售價會出現喺「產品計數 → 職員加貨」。"
+              : "加咗會存本機（總預＝計劃上限）；要賣先要再「補貨」登記到場。有填售價會出現喺「產品計數 → 職員加貨」。未寫入 seed 檔前，清瀏覽器資料會冇。") +
+          "</p>" +
           '<div class="btn-row">' +
             '<button type="submit" class="primary">確認加貨</button>' +
             '<button type="button" class="btn-ghost" id="btnStockAddCancel">取消</button>' +
@@ -788,12 +818,14 @@
                 : "") +
             "</td>" +
             '<td class="num" title="未到場計劃量／總預上限">' + esc(seedTxt) +
-              (r.notArrived != null
+              (trialOn && !r.qtyUnknown && r.seed != null
+                ? '<div class="muted stock-not-arrived" title="試機當已到場">試機當已到場</div>'
+                : (r.notArrived != null
                 ? ('<div class="muted stock-not-arrived" title="總預−補貨">未到場 ' + esc(String(r.notArrived)) + "</div>")
-                : "") +
+                : "")) +
             "</td>" +
             '<td class="stock-restock-cell">' +
-              '<div class="num" title="已到場補貨">' + esc(String(r.restock || 0)) + "</div>" +
+              '<div class="num" title="' + (trialOn ? "實際已登記補貨（試機賣貨唔跟呢欄）" : "已到場補貨") + '">' + esc(String(r.restock || 0)) + "</div>" +
               '<div class="stock-restock-add">' +
                 '<input class="stock-restock-input" type="number" min="1" step="1" inputmode="numeric" ' +
                   'data-code="' + esc(r.code) + '" placeholder="數量" aria-label="補貨數量 ' + esc(r.name) + '" />' +
@@ -805,7 +837,7 @@
               "</div>" +
             "</td>" +
             '<td class="num" title="售出">' + esc(soldTxt) + "</td>" +
-            '<td class="num stock-rem">' + esc(remTxt) + "</td>" +
+            '<td class="num stock-rem" title="' + (trialOn && !r.qtyUnknown ? "試機註：剩餘=總預−售出" : "到場剩餘（補貨−售出）") + '">' + esc(remTxt) + "</td>" +
             '<td><input class="stock-edit" type="number" min="0" step="1" inputmode="numeric" ' +
               'data-code="' + esc(r.code) + '" data-qty-unknown="' + (r.qtyUnknown ? "1" : "0") + '" ' +
               'value="' + (remNull ? "" : esc(String(r.remaining))) + '" placeholder="未填" aria-label="剩餘庫存 ' + esc(r.name) + '" /></td>' +
@@ -833,7 +865,9 @@
     var btnReset = $("btnStockReset");
     if (btnReset) {
       btnReset.addEventListener("click", function () {
-        if (!confirm("清除人手改過嘅「剩餘」覆寫，改返跟「補貨−售出」？補貨同已售會保留；職員加貨產品會保留。")) return;
+        if (!confirm(isTrialOn()
+          ? "清除人手改過嘅「剩餘」覆寫，改返跟「總預−售出」（試機）？補貨同已售會保留；職員加貨產品會保留。"
+          : "清除人手改過嘅「剩餘」覆寫，改返跟「補貨−售出」？補貨同已售會保留；職員加貨產品會保留。")) return;
         resetToSeed();
         renderPanel();
         refreshOrderUi();
