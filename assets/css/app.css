@@ -1543,8 +1543,53 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
   font-size: .88rem !important;
 }
 .pc-float.is-open {
-  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  max-height: min(76vh, 620px);
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+.pc-float.is-open .pc-float-head {
+  flex-shrink: 0;
+}
+.pc-float.is-open .pc-float-body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.pc-float-foot {
+  flex-shrink: 0;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  background: #fff;
+}
+.pc-float-pay-label {
+  margin: 0;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--purple-dark);
+}
+.pc-float-pay .pay-chips {
+  margin-top: 6px;
+  gap: 6px;
+}
+.pc-float-pay .pay-chip {
+  min-height: 44px;
+  padding: 6px 12px;
+  font-size: .82rem;
+}
+.pc-float-pay .pay-selected {
+  margin: 6px 0 8px;
+  font-size: .82rem;
+}
+.pc-float-pay.pay-need {
+  background: #fff7ed;
+  box-shadow: 0 0 0 2px #f59e0b;
+  border-radius: 12px;
+  padding: 6px 8px 2px;
 }
 
 /* 買6送1／套裝贈品明細 */

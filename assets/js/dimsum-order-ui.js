@@ -1782,6 +1782,22 @@
     return '<div class="pc-breakdown" aria-label="金額明細">' + rows + "</div>";
   }
 
+  function renderPayChips(st) {
+    var chips = PAY_METHODS.map(function (m) {
+      var on = st.paymentMethod === m.id ? " active" : "";
+      return (
+        '<button type="button" class="pay-chip' + on + '" data-pay="' + esc(m.id) + '" aria-pressed="' +
+          (st.paymentMethod === m.id ? "true" : "false") + '">' + esc(m.label) + "</button>"
+      );
+    }).join("");
+    return (
+      '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
+      (st.paymentMethod
+        ? ('<p class="pay-selected">已揀：<strong>' + esc(payLabel(st.paymentMethod)) + "</strong></p>")
+        : '<p class="pay-selected pay-need">尚未揀付款方式</p>')
+    );
+  }
+
   function renderFloat(st, calc, pr) {
     var progress = "";
     if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
@@ -1897,6 +1913,12 @@
               ? '<button type="button" class="btn-ghost" id="btnPcExport">匯出訂單</button>'
               : "") +
           "</div>" +
+        "</div>" +
+        '<div class="pc-float-foot">' +
+          '<div class="pc-float-pay" id="pcFloatPay">' +
+            '<p class="pc-float-pay-label">付款方式</p>' +
+            renderPayChips(st) +
+          "</div>" +
           '<div class="pc-float-actions">' +
             '<button type="button" class="pc-clear" id="btnPcClear" aria-label="清除"><span aria-hidden="true">↺</span> 清除</button>' +
             '<button type="button" class="' + settleCls + '" id="btnPcSettle">' + esc(settleLabel) + "</button>" +
@@ -1907,24 +1929,14 @@
   }
 
   function renderPayment(st) {
-    var chips = PAY_METHODS.map(function (m) {
-      var on = st.paymentMethod === m.id ? " active" : "";
-      return (
-        '<button type="button" class="pay-chip' + on + '" data-pay="' + esc(m.id) + '" aria-pressed="' +
-          (st.paymentMethod === m.id ? "true" : "false") + '">' + esc(m.label) + "</button>"
-      );
-    }).join("");
     return (
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261111b" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261111b" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261111c" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261111c" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
-        '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
-        (st.paymentMethod
-          ? ('<p class="pay-selected">已揀：<strong>' + esc(payLabel(st.paymentMethod)) + "</strong></p>")
-          : '<p class="pay-selected pay-need">尚未揀付款方式</p>') +
+        renderPayChips(st) +
       "</section>"
     );
   }
@@ -1951,8 +1963,14 @@
     html += "</div>";
     html += renderPayment(st);
     html += renderFloat(st, calc, pr);
+    var bodyEl = $("pcFloatBody");
+    var bodyScroll = (floatOpen && bodyEl) ? bodyEl.scrollTop : 0;
     root.innerHTML = html;
     root.classList.toggle("is-float-open", !!floatOpen);
+    if (bodyScroll) {
+      var bodyAgain = $("pcFloatBody");
+      if (bodyAgain) bodyAgain.scrollTop = bodyScroll;
+    }
 
     var search = $("pcSearch");
     if (search) {
@@ -2397,10 +2415,12 @@
         }
         var stS = loadState();
         if (!stS.paymentMethod) {
-          alert("請先揀付款方式");
-          var panel = root.querySelector(".pc-pay");
-          if (panel && panel.scrollIntoView) {
-            panel.scrollIntoView({ behavior: "smooth", block: "center" });
+          var floatPay = root.querySelector("#pcFloatPay") || root.querySelector(".pc-float-pay");
+          if (floatPay) {
+            floatPay.classList.add("pay-need");
+            if (floatPay.scrollIntoView) {
+              floatPay.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
           }
           return;
         }
