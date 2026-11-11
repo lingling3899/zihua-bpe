@@ -1,4 +1,4 @@
-/* 產品計數 · 結算 — 必揀付款；線金額（可含正價9折）→合計→減券→滿$115減$15→安宮滿$600減$80→關節滿$1200享85折→銀髮95折→膠袋$1；買6支散裝26ml送12ml／買5支散裝10ml送杯墊達標先自動開結算並扣庫存 */
+/* 產品計數 · 結算 — 必揀付款；線金額（可含正價9折）→合計→減券→滿$115減$15→關節滿$1200享85折→銀髮95折→膠袋$1；口服保健滿$1200送NMN、肌肉關節滿$1200享85折達標自動跳亦可手動；買6支散裝26ml送12ml／買5支散裝10ml送杯墊達標先自動開結算並扣庫存 */
 (function () {
   "use strict";
 
@@ -53,6 +53,8 @@
       cupal9: !!o.cupal9,
       plasticBag: !!o.plasticBag,
       nmnGift: !!o.nmnGift,
+      cupal85OffByUser: !!o.cupal85OffByUser,
+      nmnGiftOffByUser: !!o.nmnGiftOffByUser,
       paymentMethod: o.paymentMethod || "",
       couponAmount: Math.max(0, Number(o.couponAmount) || 0)
     };
@@ -66,6 +68,34 @@
   }
   function saveState(st) {
     try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
+  }
+  /** 達標自動開開關；職員手動關後只要仍達標就保持關。跌穿門檻就清除手動關旗，下次達標再自動開。 */
+  function applyAutoPromoToggles(st) {
+    st = st || loadState();
+    var calc = calcTotals(st);
+    var jointOk = (calc.jointQual || 0) >= 1200;
+    var oralOk = (calc.oralQual || 0) >= 1200;
+    var changed = false;
+    if (!jointOk) {
+      if (st.cupal85OffByUser) {
+        st.cupal85OffByUser = false;
+        changed = true;
+      }
+    } else if (!st.cupal85OffByUser && !st.cupal85) {
+      st.cupal85 = true;
+      changed = true;
+    }
+    if (!oralOk) {
+      if (st.nmnGiftOffByUser) {
+        st.nmnGiftOffByUser = false;
+        changed = true;
+      }
+    } else if (!st.nmnGiftOffByUser && !st.nmnGift) {
+      st.nmnGift = true;
+      changed = true;
+    }
+    if (changed) saveState(st);
+    return st;
   }
   function data() { return window.BPE_DIMSUM_ORDER || { sheets: [] }; }
   function unitPrice(item, st) {
@@ -1106,7 +1136,7 @@
     return calcTotals(st).jointQual || 0;
   }
 
-  /** 線金額（可含 D9 9折）→ 合計 → 減券 → C1 −15 → C3 −80 → C2 關節小計 85折 → 銀髮 95折 → ＋袋$1 */
+  /** 線金額（可含 D9 9折）→ 合計 → 減券 → C1 −15 →（不再套用 C3 −80）→ C2 關節小計 85折 → 銀髮 95折 → ＋袋$1 */
   function pricing(st, calc) {
     var computed = calcTotals(st);
     var merged = Object.assign({}, computed);
@@ -1128,11 +1158,12 @@
     var promo115Amount = promo115Applied ? 15 : 0;
     var afterPromo115 = round2(Math.max(0, afterCoupon - promo115Amount));
 
+    // 新單不再套用 C3（安宮滿$600減$80），即使本機仲有 leftover st.angong80 都唔減；已出單據仍按當時存檔列印
     var angongQual = calc.angongQual != null ? calc.angongQual : 0;
-    var angong80 = !!st.angong80;
-    var angong80Applied = angong80 && angongQual >= 600;
-    var angong80Amount = angong80Applied ? 80 : 0;
-    var afterAngong80 = round2(Math.max(0, afterPromo115 - angong80Amount));
+    var angong80 = false;
+    var angong80Applied = false;
+    var angong80Amount = 0;
+    var afterAngong80 = afterPromo115;
 
     var jointQual = calc.jointQual != null ? calc.jointQual : 0;
     var cupal85 = !!st.cupal85;
@@ -1583,7 +1614,7 @@
         (window.BPE_Gifts && window.BPE_Gifts.renderGiftCardsHtml
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
-        '<p class="pc-hero-note">套裝價自動計算 · 散支加到 6 支 26ml 或 5 支 10ml 先自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊（唔自動跳結算） · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再滿$115減$15／安宮減$80／關節85折／銀髮95折，膠袋$1唔計入滿額門檻 · 以最終實付（未計袋）計禮遇 · 送完即止</p>' +
+        '<p class="pc-hero-note">套裝價自動計算 · 散支加到 6 支 26ml 或 5 支 10ml 先自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊（唔自動跳結算） · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再滿$115減$15／關節85折／銀髮95折，膠袋$1唔計入滿額門檻 · 以最終實付（未計袋）計禮遇 · 送完即止</p>' +
         (window.BPE_SalesTarget && window.BPE_SalesTarget.renderProgressHtml
           ? window.BPE_SalesTarget.renderProgressHtml()
           : "") +
@@ -1837,14 +1868,6 @@
             ? '<p class="muted pc-promo-hint">古寶肌肉關節合計 $' + money(pr.jointQual || pr.cupalQualifying) + "，未滿 $1200，暫未套用 85 折（只折關節系列）</p>"
             : "") +
           '<label class="pc-senior-toggle">' +
-            '<span>古寶安宮一粒裝滿$600減$80</span>' +
-            '<input type="checkbox" id="pcAngong80" ' + (st.angong80 ? "checked" : "") + ' />' +
-            '<span class="pc-switch" aria-hidden="true"></span>' +
-          "</label>" +
-          (st.angong80 && !pr.angong80Applied
-            ? '<p class="muted pc-promo-hint">安宮單件合計 $' + money(pr.angongQual) + "，未滿 $600，暫未套用減 $80（$996／3盒套裝唔計）</p>"
-            : "") +
-          '<label class="pc-senior-toggle">' +
             '<span>CUPAL 正價單件 9折</span>' +
             '<input type="checkbox" id="pcCupal9" ' + (st.cupal9 ? "checked" : "") + ' />' +
             '<span class="pc-switch" aria-hidden="true"></span>' +
@@ -1860,7 +1883,7 @@
             '<span class="pc-switch" aria-hidden="true"></span>' +
           "</label>" +
           '<label class="pc-senior-toggle">' +
-            '<span>口服保健滿$1200送 NMN 試用裝</span>' +
+            '<span>口服保健滿$1200送 NMN 10粒試用裝</span>' +
             '<input type="checkbox" id="pcNmnGift" ' + (st.nmnGift ? "checked" : "") + ' />' +
             '<span class="pc-switch" aria-hidden="true"></span>' +
           "</label>" +
@@ -1895,8 +1918,8 @@
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
         '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261111a" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261111a" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261111b" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261111b" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
         "</a>" +
         '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
         (st.paymentMethod
@@ -1910,7 +1933,7 @@
     maybeTrialDayReset();
     var root = $("dimsumOrderRoot");
     if (!root) return;
-    var st = loadState();
+    var st = applyAutoPromoToggles(loadState());
     var sheets = allSheets();
     var sheet = sheets.filter(function (s) { return s.id === activeSheet; })[0] || sheets[0];
     if (sheet) activeSheet = sheet.id;
@@ -1973,6 +1996,7 @@
       else st.items[id] = n;
     }
     saveState(st);
+    applyAutoPromoToggles(st);
     if (shouldOpen) floatOpen = true;
     render();
   }
@@ -1997,7 +2021,7 @@
     if (pr.cupal85Applied) lines.push("古寶肌肉關節 85折　−$" + money(pr.cupal85Amount));
     if (pr.senior) lines.push("銀髮 95 折　$" + money(pr.payableBeforeBag));
     if (pr.plasticBag) lines.push("膠購物袋　+$" + money(pr.bagFee || 1));
-    if (pr.nmnGiftApplied) lines.push("口服保健滿$1200送 NMN 試用裝　ZA155S1 × 1");
+    if (pr.nmnGiftApplied) lines.push("口服保健滿$1200送 NMN 10粒試用裝　ZA155S1 × 1");
     lines.push("實付　$" + money(pr.payable));
     if (pr.paymentMethod) lines.push("付款方式　" + payLabel(pr.paymentMethod));
     if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
@@ -2447,16 +2471,23 @@
     root.addEventListener("change", function (e) {
       if (!e.target) return;
       if (e.target.id === "pcSenior" || e.target.id === "pcPromo115" || e.target.id === "pcCupal85" ||
-          e.target.id === "pcAngong80" || e.target.id === "pcCupal9" || e.target.id === "pcPlasticBag" ||
+          e.target.id === "pcCupal9" || e.target.id === "pcPlasticBag" ||
           e.target.id === "pcNmnGift") {
         var st = loadState();
         if (e.target.id === "pcSenior") st.senior = !!e.target.checked;
         if (e.target.id === "pcPromo115") st.promo115 = !!e.target.checked;
-        if (e.target.id === "pcCupal85") st.cupal85 = !!e.target.checked;
-        if (e.target.id === "pcAngong80") st.angong80 = !!e.target.checked;
+        if (e.target.id === "pcCupal85") {
+          st.cupal85 = !!e.target.checked;
+          if (!st.cupal85 && (calcTotals(st).jointQual || 0) >= 1200) st.cupal85OffByUser = true;
+          else st.cupal85OffByUser = false;
+        }
         if (e.target.id === "pcCupal9") st.cupal9 = !!e.target.checked;
         if (e.target.id === "pcPlasticBag") st.plasticBag = !!e.target.checked;
-        if (e.target.id === "pcNmnGift") st.nmnGift = !!e.target.checked;
+        if (e.target.id === "pcNmnGift") {
+          st.nmnGift = !!e.target.checked;
+          if (!st.nmnGift && (calcTotals(st).oralQual || 0) >= 1200) st.nmnGiftOffByUser = true;
+          else st.nmnGiftOffByUser = false;
+        }
         saveState(st);
         render();
       }

@@ -138,7 +138,7 @@
     return false;
   }
 
-  /** 合計 → 減券 → 滿$115減$15 → 安宮減$80 → 關節85折 → 銀髮95折；滿額禮遇用實付（未計袋） */
+  /** 合計 → 減券 → 滿$115減$15 → 關節85折 → 銀髮95折；滿額禮遇用實付（未計袋）；新單不再套用安宮減$80 */
   function payableTotal(gross, orderSt) {
     var st = orderSt || {};
     if (window.BPE_DimsumOrderUI && typeof window.BPE_DimsumOrderUI.pricingFrom === "function") {
@@ -313,7 +313,7 @@
         "<li>花香套裝或任選 5 支花香油送陶瓷杯墊</li>" +
         "<li>任何消費送 2027 年曆卡</li>" +
         "<li>滿額贈品（磁石／雨傘／手提袋）以最高一級計</li>" +
-        "<li>先減優惠券，再滿$115減$15／安宮減$80／關節85折／銀髮95折，以最終實付（未計膠購物袋）計贈品資格</li>" +
+        "<li>先減優惠券，再滿$115減$15／關節85折／銀髮95折，以最終實付（未計膠購物袋）計贈品資格</li>" +
         "<li>送完即止；以攤位當日為準</li>" +
       "</ul>" +
       '<p class="claim-safe">' + esc(cfg.disclaimer) + "</p>"
