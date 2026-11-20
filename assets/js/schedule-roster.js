@@ -62,6 +62,16 @@
     var a = window.ZihuaAdminAuth;
     return !!(a && a.isLoggedIn && a.isLoggedIn());
   }
+
+  function canOperateOffice() {
+    if (window.ZihuaStaffAuth && window.ZihuaStaffAuth.canOperate) {
+      return !!window.ZihuaStaffAuth.canOperate();
+    }
+    if (window.BPE_OfficeRoster && window.BPE_OfficeRoster.canOperate) {
+      return !!window.BPE_OfficeRoster.canOperate();
+    }
+    return isAdmin();
+  }
   function uid() { return "sh-" + Date.now() + "-" + Math.floor(Math.random() * 999); }
 
   function seedObj() {
@@ -416,7 +426,9 @@
     if (kind === "promoter") {
       footerNote = '<p class="claim-safe">已按最新更表載入；職員登入後可加減／改更。本機改動會跟種子版本保存。</p>';
     } else if (isAdmin()) {
-      footerNote = '<p class="claim-safe">暫定 Office roster · 內部參考 · 唔係正式 claim 金額。Set Up 12/10–11 不計入合計；Ben 12/12 拍野暫不計入（工時未定）。</p>';
+      footerNote = '<p class="claim-safe">暫定 Office roster · 內部參考 · 唔係正式 claim 金額。Set Up 12/10–11 不計入合計。登入職員可加減更同拍照參考；只儲喺呢部機，兩部機唔會同步。</p>';
+    } else if (canOperateOffice()) {
+      footerNote = '<p class="claim-safe">登入後可加減更／拍照作參考；改動只儲喺呢部機，兩部機唔會同步。</p>';
     } else {
       /* 訪客唔顯示 Office 說明／remark；職員後台先有 */
       footerNote = "";

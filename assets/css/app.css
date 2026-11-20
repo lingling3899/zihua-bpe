@@ -842,6 +842,101 @@ body[data-view="order"] .floating-login .login-dropdown {
 .setup-uncertain-item { padding: 8px 0; border-top: 1px solid var(--border); font-size: .85rem; }
 .setup-uncertain-item:first-of-type { border-top: 0; padding-top: 0; }
 
+/* Office staff edit + official sheet photo */
+.badge-setup { background: #e5e7eb; color: #374151; }
+.date-chip-setup { opacity: .78; border-style: dashed; }
+.date-chip-setup.active { opacity: 1; }
+.office-setup-staff { margin: 0 0 8px; font-size: .92rem; line-height: 1.5; }
+.office-assign-list { display: flex; flex-direction: column; gap: 10px; }
+.office-assign-row {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 8px 0; border-top: 1px solid var(--border);
+}
+.office-assign-row:first-child { border-top: 0; padding-top: 0; }
+.office-assign-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+}
+.office-assign-head .name-pill { flex: 1 1 auto; min-height: 44px; padding-right: 10px; }
+.pill-tag-time { background: #e0e7ff; color: #3730a3; }
+.office-rm-btn {
+  min-height: 44px; min-width: 44px;
+  background: #fff; color: #b91c1c;
+  border: 1.5px solid #fecaca; border-radius: 999px;
+  padding: 8px 14px; font-weight: 700; font-size: .82rem;
+}
+.office-time-editors {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end;
+}
+.office-time-editors label {
+  flex: 1 1 120px;
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: .78rem; font-weight: 700; color: var(--muted);
+}
+.office-time-editors input[type="time"] {
+  width: 100%; min-height: 44px; margin-top: 0;
+  padding: 8px 10px; border-radius: 12px;
+  border: 1.5px solid var(--border); font: inherit; background: #fff;
+  color: var(--ink); font-weight: 700;
+}
+.office-edit-row {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end;
+  margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--border);
+}
+.office-add-label {
+  flex: 1 1 160px;
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: .78rem; font-weight: 700; color: var(--purple-dark);
+}
+.office-add-label select,
+.office-restore-btn {
+  min-height: 44px;
+}
+.office-restore-btn:disabled { opacity: .45; cursor: not-allowed; }
+.office-sheet-card details { margin: 0; }
+.office-sheet-details > summary {
+  cursor: pointer; font-weight: 800; color: var(--purple-dark);
+  min-height: 44px; display: flex; align-items: center; list-style: none;
+}
+.office-sheet-details > summary::-webkit-details-marker { display: none; }
+.office-sheet-details > summary::before {
+  content: "▸"; margin-right: 8px; color: var(--purple);
+}
+.office-sheet-details[open] > summary::before { content: "▾"; }
+.office-sheet-thumb {
+  display: block; width: 100%; margin: 8px 0; padding: 0;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  background: #f8f5fc; overflow: hidden; min-height: 44px; cursor: zoom-in;
+}
+.office-sheet-thumb img {
+  display: block; width: 100%; height: auto; max-height: 280px; object-fit: contain;
+  background: #fff;
+}
+.office-photo-actions { margin-top: 8px; }
+.office-photo-upload {
+  position: relative; overflow: hidden; min-height: 44px;
+  cursor: pointer; margin: 0;
+}
+.office-photo-upload input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%;
+  cursor: pointer; margin: 0; padding: 0; border: 0;
+}
+.office-photo-lightbox {
+  position: fixed; inset: 0; z-index: 80;
+  background: rgba(20,10,30,.88);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 16px; gap: 10px;
+}
+.office-photo-lightbox img {
+  max-width: 100%; max-height: calc(100vh - 80px);
+  object-fit: contain; border-radius: 8px; background: #fff;
+}
+.office-photo-close {
+  min-height: 44px; align-self: flex-end;
+  background: #fff; color: var(--purple-dark);
+  border: 0; border-radius: 999px; padding: 8px 16px; font-weight: 700;
+}
+
+
 /* Placeholders / fair */
 .placeholder-card { text-align: center; }
 .placeholder-art { font-size: 3rem; margin: 8px 0; }
