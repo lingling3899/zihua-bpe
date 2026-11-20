@@ -1,5 +1,5 @@
 window.BPE_OFFICE_ROSTER_SEED = {
-  "version": "20261120a-office",
+  "version": "20261120b-office",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "label": "暫定 Office 同事更表（內部參考）",
@@ -9,6 +9,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
     "補鐘時數跟表上當日 On Duty Hour（平日 1:45、平安夜／除夕 3:45、週末／假 11、尾場 1）；半更按工時比例（工時÷當日 Call 時數×On Duty Hour）",
     "冬至 12/22 當平日。公眾假：聖誕 12/25、Boxing Day 12/26、元旦 1/1。平安夜 12/24 同除夕 12/31 係平日，補鐘跟表上 3:45",
     "12/10–11 Set Up：列出但不計入補鐘合計（表註「不計此場」；無 On Duty Hour）",
+    "12/12 Wing 拍野計 5 小時（唔當全日；未定起迄，職員可後補時間）",
     "1 補鐘日＝9 小時：應補日數＝floor(補鐘時數÷9)；剩返可補小時＝餘數。表列 Hr／÷9.150 CL 只作參考，app 應補日數仍用 1日＝9h",
     "此為暫定 roster／內部參考，唔係正式 claim 金額"
   ],
@@ -36,7 +37,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
         "Ben",
         "Wing"
       ],
-      "notes": "Day 1",
+      "notes": "Day 1；Wing 拍野 5小時",
       "fairHours": 11
     },
     {
@@ -446,13 +447,14 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "timeEnd": "21:00",
       "callStart": "10:30",
       "callEnd": "21:30",
-      "start": "10:30",
-      "end": "21:30",
+      "start": "",
+      "end": "",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
-      "notes": "Day 1"
+      "buchongHours": 5,
+      "daysCredit": 0.5,
+      "notes": "拍野 5小時",
+      "workedHours": 5
     },
     {
       "name": "Cherry",
@@ -1222,14 +1224,14 @@ window.BPE_OFFICE_ROSTER_SEED = {
     },
     {
       "name": "Wing",
-      "days": 3,
+      "days": 2.5,
       "weekdayDays": 1,
-      "holidayWeekendDays": 2,
+      "holidayWeekendDays": 1.5,
       "totalFairHours": 32,
-      "buchongHours": 23,
-      "buchongDays": 2.556,
-      "buchongWholeDays": 2,
-      "buchongRemainHours": 5
+      "buchongHours": 17,
+      "buchongDays": 1.889,
+      "buchongWholeDays": 1,
+      "buchongRemainHours": 8
     }
   ]
 };

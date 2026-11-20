@@ -4,7 +4,7 @@
 
   var LS_OVERRIDES = "zihua_bpe_office_roster_overrides_v1";
   var LS_PHOTO = "zihua_bpe_office_roster_photo_v1";
-  var OFFICIAL_SHEET = "assets/img/office/roster-official-20261120.jpg?v=20261120a";
+  var OFFICIAL_SHEET = "assets/img/office/roster-official-20261120.jpg?v=20261120b";
   var FULL_SHIFT_EPS = 0.05;
 
   var officeMode = "date"; // date | person
@@ -76,6 +76,10 @@
     return (b - a) / 60;
   }
 
+  function hasClockTime(t) {
+    return !!String(t || "").trim();
+  }
+
   function splitBuchong(hours) {
     var h = Number(hours) || 0;
     var whole = Math.floor((h + 1e-9) / 9);
@@ -84,7 +88,7 @@
     return { wholeDays: whole, remainHours: rem, buchongDays: Math.round((h / 9) * 1000) / 1000 };
   }
 
-  function computeBuchong(day, start, end) {
+  function computeBuchong(day, start, end, workedHours) {
     if (!day || day.countInBuchong === false) {
       return { worked: 0, fair: 0, official: 0, buchong: 0, daysCredit: 0 };
     }
@@ -92,7 +96,12 @@
     if (!fair) fair = hoursBetween(day.callStart, day.callEnd);
     var official = Number(day.onDutyHour);
     if (!isFinite(official)) official = 0;
-    var worked = hoursBetween(start || day.callStart, end || day.callEnd);
+    var worked;
+    if (workedHours != null && isFinite(Number(workedHours)) && !(hasClockTime(start) && hasClockTime(end))) {
+      worked = Number(workedHours);
+    } else {
+      worked = hoursBetween(start || day.callStart, end || day.callEnd);
+    }
     if (worked < 0) worked = 0;
     var full = Math.abs(worked - fair) < FULL_SHIFT_EPS;
     var buchong = full ? official : Math.round(official * (worked / (fair || 1)) * 10) / 10;
@@ -103,7 +112,7 @@
   function officialSheetSrc() {
     var s = seed();
     var path = (s && s.officialSheet) || "assets/img/office/roster-official-20261120.jpg";
-    if (path.indexOf("?") === -1) path += "?v=20261120a";
+    if (path.indexOf("?") === -1) path += "?v=20261120b";
     return path;
   }
 
@@ -179,11 +188,14 @@
     var list = [];
     if (s && Array.isArray(s.assignments)) {
       list = s.assignments.filter(function (a) { return a.date === date; }).map(function (a) {
+        var workedH = (a.workedHours != null && isFinite(Number(a.workedHours))) ? Number(a.workedHours) : null;
+        var useHoursOnly = workedH != null && !(hasClockTime(a.start) && hasClockTime(a.end));
         return {
           name: a.name,
-          start: a.start || a.callStart || (day && day.callStart) || "",
-          end: a.end || a.callEnd || (day && day.callEnd) || "",
-          notes: a.notes || ""
+          start: useHoursOnly ? (a.start || "") : (a.start || a.callStart || (day && day.callStart) || ""),
+          end: useHoursOnly ? (a.end || "") : (a.end || a.callEnd || (day && day.callEnd) || ""),
+          notes: a.notes || "",
+          workedHours: workedH
         };
       });
     }
@@ -206,9 +218,20 @@
   }
 
   function enrichAssignment(day, raw) {
-    var start = raw.start || (day && day.callStart) || "";
-    var end = raw.end || (day && day.callEnd) || "";
-    var r = computeBuchong(day, start, end);
+    var workedH = (raw.workedHours != null && isFinite(Number(raw.workedHours))) ? Number(raw.workedHours) : null;
+    var hasClock = hasClockTime(raw.start) && hasClockTime(raw.end);
+    var start, end;
+    if (hasClock) {
+      start = raw.start;
+      end = raw.end;
+    } else if (workedH != null) {
+      start = raw.start || "";
+      end = raw.end || "";
+    } else {
+      start = raw.start || (day && day.callStart) || "";
+      end = raw.end || (day && day.callEnd) || "";
+    }
+    var r = computeBuchong(day, start, end, hasClock ? null : workedH);
     return {
       name: raw.name,
       date: day ? day.date : raw.date,
@@ -220,6 +243,7 @@
       callEnd: day ? day.callEnd : raw.callEnd,
       start: start,
       end: end,
+      workedHours: hasClock ? null : workedH,
       fairHours: day ? day.fairHours : raw.fairHours,
       onDutyHour: day ? day.onDutyHour : raw.onDutyHour,
       buchongHours: r.buchong,
@@ -310,7 +334,11 @@
   function writeDateOverride(date, list) {
     var ov = getOverrides();
     ov[date] = list.map(function (a) {
-      return { name: a.name, start: a.start, end: a.end, notes: a.notes || "" };
+      var row = { name: a.name, start: a.start, end: a.end, notes: a.notes || "" };
+      if (a.workedHours != null && isFinite(Number(a.workedHours)) && !(hasClockTime(a.start) && hasClockTime(a.end))) {
+        row.workedHours = Number(a.workedHours);
+      }
+      return row;
     });
     setOverrides(ov);
   }
@@ -319,7 +347,7 @@
     var ov = getOverrides();
     if (Object.prototype.hasOwnProperty.call(ov, date)) {
       return (ov[date] || []).map(function (a) {
-        return { name: a.name, start: a.start, end: a.end, notes: a.notes || "" };
+        return { name: a.name, start: a.start, end: a.end, notes: a.notes || "", workedHours: a.workedHours };
       });
     }
     return seedRawForDate(date);
@@ -437,9 +465,10 @@
     }).join("") + "</div>";
   }
 
-  function timeLabel(start, end) {
-    if (!start || !end) return "";
-    return start + "–" + end;
+  function timeLabel(start, end, hours) {
+    if (hasClockTime(start) && hasClockTime(end)) return start + "–" + end;
+    if (hours != null && hours !== "" && isFinite(Number(hours))) return fmtHours(hours) + "小時";
+    return "";
   }
 
   function renderSetupCard(u) {
@@ -455,9 +484,10 @@
   function renderAssignBlock(day, rows, staff, operate) {
     var html = rows.map(function (a) {
       var letter = (a.name || "?").charAt(0);
-      var times = timeLabel(a.start, a.end);
+      var times = timeLabel(a.start, a.end, a.workedHours);
       var tags = "";
       if (times) tags += '<span class="pill-tag pill-tag-time">' + esc(times) + "</span>";
+      if ((a.notes || "").indexOf("拍野") !== -1) tags += '<span class="pill-tag">拍野</span>';
       if (staff) {
         if (a.notes) {
           var short = a.notes.split("；")[0].trim();
@@ -562,9 +592,10 @@
     var cards = summary.map(function (s) {
       var list = assignmentsForPerson(s.name);
       var chips = list.map(function (a) {
-        var times = timeLabel(a.start, a.end);
+        var times = timeLabel(a.start, a.end, a.workedHours);
         var label = a.date.slice(5).replace("-", "/");
         if (times) label += " " + times;
+        if ((a.notes || "").indexOf("拍野") !== -1 && (!times || times.indexOf("拍野") === -1)) label += " 拍野";
         var cls = "chip-pm";
         if (a.dayType === "平日") cls = "chip-am";
         else if (a.dayType === "公眾假期") cls = "chip-holiday";
