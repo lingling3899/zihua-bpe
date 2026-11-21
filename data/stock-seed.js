@@ -1,7 +1,7 @@
 /* 2026 工展會 總預貨量 — HKBPE seed；散裝 CO98/CO99/ZE01/ZE05–07 用獨立大數表 */
 window.BPE_STOCK_SEED = {
-  version: "20261110b",
-  asOf: "2026-11-06",
+  version: "20261121a",
+  asOf: "2026-11-21",
   source: "HKBPE 2026 總預貨量",
   notes: [
     "紫花油散裝 CO98/CO99/ZE01/ZE05/ZE06/ZE07 採用獨立摘要表較大數量，非 sheet1 散裝欄較小數。",
@@ -10,7 +10,8 @@ window.BPE_STOCK_SEED = {
     "X／入機代號：優先 xCode，否則 wfCode，再係 app code（職員庫存／補貨表顯示）。",
     "CUPAL-B088 陶瓷杯墊：總預貨量未填（qtyUnknown）；職員輸入「剩餘」後先會按數扣／擋結算；未填時唔擋結算但會記已送出。",
     "滿額贈品 CUPAL-B090 磁石貼／CUPAL-G011 雨傘／CUPAL-B089 防水手提包，以及 ZA155S1 NMN 試用裝：總預未填（qtyUnknown），唔發明數量。",
-    "ZHMA02 WeArmask LV3 成人獨立包裝（白）：總預只計工展會 160 件（生產批次 2025.12 46pcs／2026.10 680pcs 另計）。"
+    "ZHMA02 WeArmask LV3 成人獨立包裝（白）：總預只計工展會 160 件（生產批次 2025.12 46pcs／2026.10 680pcs 另計）。",
+    "2026-11-21 黃格貨號：ZA141→ZA186、ZA124→ZA120A；VTM04／ZA188、CMPL／CMPLA、ZA177／ZA177B、CU51／CU51A 雙碼（入機代號顯示雙碼，舊碼留別名）。"
   ],
   aliases: {
     Z1A: "Z0001A",
@@ -20,7 +21,17 @@ window.BPE_STOCK_SEED = {
     Z7C: "Z0007C",
     Z4C: "Z0004C",
     CPW021JS1: "CPW021JS",
-    "CUPAL-G011/V1": "CUPAL-G011"
+    "CUPAL-G011/V1": "CUPAL-G011",
+    ZA141: "ZA186",
+    ZA124: "ZA120A",
+    ZA188: "VTM04",
+    "VTM04/ZA188": "VTM04",
+    CMPLA: "CMPL",
+    "CMPL/CMPLA": "CMPL",
+    ZA177B: "ZA177",
+    "ZA177/ZA177B": "ZA177",
+    CU51A: "CU51",
+    "CU51/CU51A": "CU51"
   },
   items: [
     /* —— 紫花油套裝 —— */
@@ -86,7 +97,7 @@ window.BPE_STOCK_SEED = {
     { code: "CPW015", name: "古寶冠軍藍莓 100粒", category: "保健品", qty: 111, unit: "件" },
     { code: "CPW017", name: "古寶速燒脂 60粒", category: "保健品", qty: 12, unit: "件" },
     { code: "CPW026", name: "古寶免疫球蛋白片 80粒", category: "保健品", qty: 12, unit: "件" },
-    { code: "VTM04", name: "古寶液體鈣軟膠囊 100粒", category: "保健品", qty: 12, unit: "件" },
+    { code: "VTM04", wfCode: "VTM04", xCode: "VTM04/ZA188", name: "古寶液體鈣軟膠囊 100粒", category: "保健品", qty: 12, unit: "件" },
     { code: "ZA002", name: "古寶南極磷蝦油丸 30粒", category: "保健品", qty: 12, unit: "件" },
     { code: "CPW007", name: "古寶卵磷脂 100粒", category: "保健品", qty: 12, unit: "件" },
     { code: "CPW019A", name: "古寶 RTG 精純魚油 100'S", category: "保健品", qty: 12, unit: "件" },
@@ -113,13 +124,13 @@ window.BPE_STOCK_SEED = {
     { code: "ZA160", name: "調理個腦 30包", category: "保健品", qty: 12, unit: "件" },
 
     /* —— 外用關節 —— */
-    { code: "CMPL", name: "古寶補適貼（大）", category: "外用關節", qty: 600, unit: "件" },
+    { code: "CMPL", wfCode: "CMPL", xCode: "CMPL/CMPLA", name: "古寶補適貼（大）", category: "外用關節", qty: 600, unit: "件" },
     { code: "CMPS", name: "古寶補適貼（細）", category: "外用關節", qty: 1800, unit: "件" },
-    { code: "CU51", name: "古寶關節靈軟膏 50克", category: "外用關節", qty: 360, unit: "件" },
-    { code: "ZA177", name: "古寶肌肉按摩膏 50G", category: "外用關節", qty: 120, unit: "件" },
+    { code: "CU51", wfCode: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克", category: "外用關節", qty: 360, unit: "件" },
+    { code: "ZA177", wfCode: "ZA177", xCode: "ZA177/ZA177B", name: "古寶肌肉按摩膏 50G", category: "外用關節", qty: 120, unit: "件" },
     { code: "ZA164", name: "金御一條根急速消痛滲透霜 100克", category: "外用關節", qty: 192, unit: "件" },
-    { code: "ZA124", name: "古寶釋痛肌腱噴霧 80毫升", category: "外用關節", qty: 60, unit: "件" },
-    { code: "ZA141", name: "古寶 UCII 關節修復靈 60粒", category: "外用關節", qty: 56, unit: "件" },
+    { code: "ZA120A", wfCode: "ZA120A", xCode: "ZA120A", name: "古寶釋痛肌腱噴霧 80毫升", category: "外用關節", qty: 60, unit: "件" },
+    { code: "ZA186", wfCode: "ZA186", xCode: "ZA186", name: "古寶 UC II 關節修復靈 60粒", category: "外用關節", qty: 56, unit: "件" },
 
     /* —— 日本叮叮 —— */
     { code: "CPW021I", name: "日本叮叮蟑螂屋（5屋裝）", category: "日本叮叮", qty: 12, unit: "件" },

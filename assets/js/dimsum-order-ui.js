@@ -132,15 +132,15 @@
     J0002: 1, L0024: 1
   };
   var JOINT_CODES = {
-    CMPS: 1, CMPL: 1, ZA164: 1, ZA177: 1, CU51: 1,
-    J0002: 1, L0024: 1, ZA119A: 1, ZA172: 1, CPW020B: 1, ZA124: 1, ZA141: 1
+    CMPS: 1, CMPL: 1, CMPLA: 1, "CMPL/CMPLA": 1, ZA164: 1, ZA177: 1, ZA177B: 1, "ZA177/ZA177B": 1, CU51: 1, CU51A: 1, "CU51/CU51A": 1,
+    J0002: 1, L0024: 1, ZA119A: 1, ZA172: 1, CPW020B: 1, ZA124: 1, ZA120A: 1, ZA141: 1, ZA186: 1
   };
   var JOINT_BUNDLE_IDS = { "cp-mix-3": 1 };
   var ORAL_CODES = {
     CU001: 1, ZA153: 1, ZA155: 1, ZA169: 1, CP52: 1, CPW014: 1,
-    ZA119A: 1, ZA172: 1, CPW020B: 1, ZA141: 1,
+    ZA119A: 1, ZA172: 1, CPW020B: 1, ZA141: 1, ZA186: 1,
     CPW003: 1, CPW010: 1, CPW011: 1, CPW015: 1, CPW016: 1, CPW017: 1, CPW026: 1,
-    VTM04: 1, ZA002: 1, CPW007: 1, CPW019A: 1, ZA166: 1, CU30C: 1,
+    VTM04: 1, ZA188: 1, "VTM04/ZA188": 1, ZA002: 1, CPW007: 1, CPW019A: 1, ZA166: 1, CU30C: 1,
     CPW005: 1, CPW006: 1, CPW004: 1, CU22: 1,
     SWC05: 1, ZA075: 1, ZA118A: 1, ZA081: 1, ZA094: 1, ZA100A: 1, BIF02: 1,
     ZA154: 1, ZA156A: 1, ZA157: 1, ZA158: 1, ZA165: 1, ZA160: 1,
@@ -149,7 +149,12 @@
   var ORAL_BUNDLE_IDS = {
     "an-cu001-3": 1, "an-za153-2": 1, "an-za155-3": 1, "an-za169-3": 1, "ch-lingzhi-2": 1
   };
-  var TOPICAL_CODES = { CMPS: 1, CMPL: 1, ZA164: 1, ZA177: 1, CU51: 1, ZA124: 1, J0002: 1, L0024: 1 };
+  var TOPICAL_CODES = { CMPS: 1, CMPL: 1, CMPLA: 1, "CMPL/CMPLA": 1, ZA164: 1, ZA177: 1, ZA177B: 1, "ZA177/ZA177B": 1, CU51: 1, CU51A: 1, "CU51/CU51A": 1, ZA124: 1, ZA120A: 1, J0002: 1, L0024: 1 };
+
+  function entryCode(it) {
+    if (!it) return "";
+    return String(it.xCode || it.code || "").trim() || String(it.code || "");
+  }
 
   function isRedeemCode(code) {
     return !!REDEEM_STOCK[normCode(code)];
@@ -409,11 +414,11 @@
     if (!box || !pickModalState) return;
     var q = String(pickModalState.filter || "").trim().toLowerCase();
     var html = pickModalState.eligible.map(function (it) {
-      var hay = (it.code + " " + (it.name || "")).toLowerCase();
+      var hay = (it.code + " " + (it.xCode || "") + " " + (it.name || "")).toLowerCase();
       if (q && hay.indexOf(q) < 0) return "";
       return (
         '<button type="button" class="pick-any-chip" data-pick-code="' + esc(it.code) + '">' +
-          "<strong>" + esc(it.code) + "</strong>" +
+          "<strong>" + esc(entryCode(it)) + "</strong>" +
           "<span>" + esc(it.name || "") + "</span>" +
         "</button>"
       );
@@ -928,7 +933,7 @@
           var p = unitPrice(it, st);
           var apply9 = !redeem && cupal9Applies(it, st, sheet, sec);
           if (p == null) {
-            lines.push({ kind: "item", label: it.code + " " + it.name + " × " + q, amount: null, code: it.code });
+            lines.push({ kind: "item", label: entryCode(it) + " " + it.name + " × " + q, amount: null, code: it.code });
             return;
           }
           if (it.packQty && it.packPrice) {
@@ -945,7 +950,7 @@
             var angong = normCode(it.code) === "CU001";
             addQualifiers(packAmt, { c1: false, joint: joint, angong: false, oral: oral });
             addQualifiers(remAmt, { c1: !redeem && !isSetSku(it.code, sec), joint: joint, angong: angong, oral: oral });
-            lines.push({ kind: "item", label: it.code + " " + it.name + " × " + q, amount: amt, code: it.code, cupal9: apply9 && rem > 0 });
+            lines.push({ kind: "item", label: entryCode(it) + " " + it.name + " × " + q, amount: amt, code: it.code, cupal9: apply9 && rem > 0 });
             return;
           }
           var gross = q * p;
@@ -970,7 +975,7 @@
           addQualifiers(lineAmt, flags);
           lines.push({
             kind: "item",
-            label: it.code + " " + it.name + " × " + q,
+            label: entryCode(it) + " " + it.name + " × " + q,
             amount: lineAmt,
             code: it.code,
             cupal9: apply9,
@@ -991,7 +996,7 @@
             total += e.lineAmt;
             lines.push({
               kind: "item",
-              label: e.it.code + " " + e.it.name + " × " + e.q,
+              label: entryCode(e.it) + " " + e.it.name + " × " + e.q,
               amount: e.lineAmt,
               code: e.it.code,
               cupal9: e.flags.apply9
@@ -1697,7 +1702,7 @@
 
     (sec.items || []).forEach(function (it) {
       if (it.displayOnly) return;
-      if (searchQ && !matchQ(it.name) && !matchQ(it.code)) return;
+      if (searchQ && !matchQ(it.name) && !matchQ(it.code) && !matchQ(it.xCode)) return;
       var q = itemQty(st, it.code);
       var p = unitPrice(it, st);
       var priceTxt = p == null ? "待填" : ("$" + money(p) + "／" + (it.unit || "件"));
@@ -1709,7 +1714,7 @@
           '<div class="pc-thumb" aria-hidden="true">🧴</div>' +
           '<div class="pc-card-body">' +
             "<strong>" + esc(it.name) + "</strong>" +
-            '<div class="pc-meta"><span class="pc-xcode" title="X＝入機代號">入機代號 <code>' + esc(it.code) + '</code></span> · <span class="pc-price">' + esc(priceTxt) + '</span> ' + orig +
+            '<div class="pc-meta"><span class="pc-xcode" title="X＝入機代號">入機代號 <code>' + esc(entryCode(it)) + '</code></span> · <span class="pc-price">' + esc(priceTxt) + '</span> ' + orig +
               (stockBadge ? (" · " + stockBadge) : "") + '</div>' +
           "</div>" +
           qtyCtrl("item", it.code, q) +

@@ -1,12 +1,12 @@
 /* 2026 工展會 日常補貨表 seed — 跟紙本 WF Code／Pack Size；no 跟紙本（保健品 55/56 紙本重號保留） */
 window.BPE_RESTOCK_SEED = {
-  version: "20261105f",
+  version: "20261121a",
   asOf: "2026-11-05",
   title: "2026 工展會 日常補貨表",
   subtitle: "紫花油＋真威龍＋WeArmask＋日本叮叮＋其他",
   source: "HKBPE 2026 日常補貨表",
   notes: [
-    "紙本保健品欄 No.55／56 重複（ZA119A／ZA172 與 ZA141／SWC05）；以 WF Code 作唯一鍵。",
+    "紙本保健品欄 No.55／56 重複（ZA119A／ZA172 與 ZA186（舊 ZA141）／SWC05）；以 WF Code 作唯一鍵。黃格貨號：ZA124→ZA120A、ZA141→ZA186；VTM04／ZA188、CMPL／CMPLA、CU51／CU51A 雙碼。",
     "CPW019 對應 app 碼 CPW019A；套裝 Z1A／Z5／Z7A–C 對應 Z0001A／Z0005／Z0007A–C。",
     "樣板／其他無 Pack Size 者留空；Leaflet／Coupon 可喺備註欄註明。"
   ],
@@ -17,7 +17,12 @@ window.BPE_RESTOCK_SEED = {
     Z7B: "Z0007B",
     Z7C: "Z0007C",
     CPW019: "CPW019A",
-    CPW021JS1: "CPW021JS"
+    CPW021JS1: "CPW021JS",
+    ZA141: "ZA186",
+    ZA124: "ZA120A",
+    ZA188: "VTM04",
+    CMPLA: "CMPL",
+    CU51A: "CU51"
   },
   sections: [
     "紫花油套裝",
@@ -72,10 +77,10 @@ window.BPE_RESTOCK_SEED = {
     { no: 31, wfCode: "ZHMA19", category: "WeArmask", name: "小童立體卡通口罩 20片", packSize: 40 },
 
     /* —— 古寶外用 —— */
-    { no: 32, wfCode: "CMPL", category: "古寶外用", name: "古寶補適貼（大）", packSize: 24 },
+    { no: 32, wfCode: "CMPL", xCode: "CMPL/CMPLA", category: "古寶外用", name: "古寶補適貼（大）", packSize: 24 },
     { no: 33, wfCode: "CMPS", category: "古寶外用", name: "古寶補適貼（小）", packSize: 36 },
-    { no: 34, wfCode: "CU51", category: "古寶外用", name: "古寶關節靈軟膏 50克", packSize: 120 },
-    { no: 35, wfCode: "ZA124", category: "古寶外用", name: "古寶釋痛肌腱噴霧 80毫升", packSize: 60 },
+    { no: 34, wfCode: "CU51", xCode: "CU51/CU51A", category: "古寶外用", name: "古寶關節靈軟膏 50克", packSize: 120 },
+    { no: 35, wfCode: "ZA120A", xCode: "ZA120A", appCode: "ZA120A", category: "古寶外用", name: "古寶釋痛肌腱噴霧 80毫升", packSize: 60 },
     { no: 36, wfCode: "ZA164", category: "古寶外用", name: "金御一條根極速消痛滲透霜 100克", packSize: 48 },
 
     /* —— 保健品 —— */
@@ -92,14 +97,14 @@ window.BPE_RESTOCK_SEED = {
     { no: 47, wfCode: "CPW015", category: "保健品", name: "古寶冠軍藍莓 100粒", packSize: 37 },
     { no: 48, wfCode: "CPW017", category: "保健品", name: "古寶速燒脂 60粒", packSize: 54 },
     { no: 49, wfCode: "CPW026", category: "保健品", name: "古寶免疫球蛋白片 80粒", packSize: 54 },
-    { no: 50, wfCode: "VTM04", category: "保健品", name: "古寶液體鈣軟膠囊 100粒", packSize: 48 },
+    { no: 50, wfCode: "VTM04", xCode: "VTM04/ZA188", category: "保健品", name: "古寶液體鈣軟膠囊 100粒", packSize: 48 },
     { no: 51, wfCode: "ZA002", category: "保健品", name: "古寶南極蝦油丸 30粒", packSize: 56 },
     { no: 52, wfCode: "CPW007", category: "保健品", name: "古寶卵磷脂 100粒", packSize: 34 },
     { no: 53, wfCode: "CPW019", appCode: "CPW019A", category: "保健品", name: "古寶深海魚油丸 100粒", packSize: 32 },
     { no: 54, wfCode: "CPW020B", category: "保健品", name: "古寶三合一關節靈 90粒（新裝）", packSize: 20 },
     { no: 55, wfCode: "ZA119A", category: "保健品", name: "古寶強腱肌活靈 60粒", packSize: 30 },
     { no: 56, wfCode: "ZA172", category: "保健品", name: "Cupal Fortigel 關絡健", packSize: 18 },
-    { no: 55, wfCode: "ZA141", category: "保健品", name: "古寶 UC II 關節修復", packSize: 56 },
+    { no: 55, wfCode: "ZA186", xCode: "ZA186", appCode: "ZA186", category: "保健品", name: "古寶 UC II 關節修復靈 60粒", packSize: 56 },
     { no: 56, wfCode: "SWC05", category: "保健品", name: "CUPAL瑞士膠原蛋白美肌精華 165g（橙味）", packSize: 20 },
     { no: 57, wfCode: "ZA075", category: "保健品", name: "CUPAL逆肌齡白藜蘆醇 75粒", packSize: 30 },
     { no: 58, wfCode: "ZA118A", category: "保健品", name: "CUPAL Beauty 褪黑透亮美白丸 60粒 EX", packSize: 30 },

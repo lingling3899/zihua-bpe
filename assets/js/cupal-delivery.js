@@ -11,7 +11,7 @@
     { months: 12, discount: 0.5, label: "12 Months", tag: "5折" }
   ];
   var PRODUCTS = [
-    { id: "cmpl", name: "古寶補適貼（大）10片", code: "CMPL", price: 67 },
+    { id: "cmpl", name: "古寶補適貼（大）10片", code: "CMPL/CMPLA", price: 67 },
     { id: "cmps", name: "古寶補適貼（細）10片", code: "CMPS", price: 48 },
     { id: "cpw020b", name: "古寶三合一關節靈 90粒（新裝）", code: "CPW020B", price: 288 },
     { id: "ucii", name: "UC II 關節修復 Active Joint 3-in-1", code: "UCII", price: 328 },

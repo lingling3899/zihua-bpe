@@ -263,23 +263,23 @@ window.BPE_DIMSUM_ORDER = {
           title: "散件",
           items: [
             { code: "CMPS", name: "古寶補適貼（細）10片", orig: 44, special: 35, unit: "盒" },
-            { code: "CMPL", name: "古寶補適貼（大）10片", orig: 67, special: 55, unit: "盒" },
+            { code: "CMPL", xCode: "CMPL/CMPLA", name: "古寶補適貼（大）10片", orig: 67, special: 55, unit: "盒" },
             { code: "ZA164", name: "金御一條根極速消痛滲透霜 100克", orig: 88, special: 65, unit: "盒" },
-            { code: "ZA177", name: "古寶按摩膏 50克", orig: 84, special: 84, unit: "盒" },
-            { code: "CU51", name: "古寶關節靈軟膏 50克", orig: 78, special: 65, unit: "盒" }
+            { code: "ZA177", xCode: "ZA177/ZA177B", name: "古寶按摩膏 50克", orig: 84, special: 84, unit: "盒" },
+            { code: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克", orig: 78, special: 65, unit: "盒" }
           ]
         },
         {
           id: "cp-mix",
           title: "任選套裝 $150／3盒",
-          note: "CMPL／ZA164／CU51 任選",
+          note: "CMPL／CMPLA、ZA164、CU51／CU51A 任選",
           bundles: [
             { id: "cp-mix-3", label: "$150／3盒", setPrice: 150, setSize: 3 }
           ],
           items: [
-            { code: "CMPL", name: "古寶補適貼（大）10片（見散件）", orig: 67, special: 55, unit: "盒", displayOnly: true },
+            { code: "CMPL", xCode: "CMPL/CMPLA", name: "古寶補適貼（大）10片（見散件）", orig: 67, special: 55, unit: "盒", displayOnly: true },
             { code: "ZA164", name: "金御一條根極速消痛滲透霜 100克（見散件）", orig: 88, special: 65, unit: "盒", displayOnly: true },
-            { code: "CU51", name: "古寶關節靈軟膏 50克（見散件）", orig: 78, special: 65, unit: "盒", displayOnly: true }
+            { code: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克（見散件）", orig: 78, special: 65, unit: "盒", displayOnly: true }
           ]
         }
       ]
@@ -312,8 +312,8 @@ window.BPE_DIMSUM_ORDER = {
             { code: "ZA119A", name: "古寶強腱肌活靈 60粒", orig: null, special: 299, unit: "盒" },
             { code: "ZA172", name: "Cupal Fortigel 關絡健 28包", orig: null, special: 423, unit: "盒" },
             { code: "CPW020B", name: "古寶三合一關節靈 90粒", orig: null, special: 260, unit: "盒" },
-            { code: "ZA124", name: "古寶釋痛肌腱噴霧 80毫升", orig: null, special: 94, unit: "盒" },
-            { code: "ZA141", name: "古寶 UC II 關節修復", orig: null, special: 307, unit: "盒" },
+            { code: "ZA120A", xCode: "ZA120A", name: "古寶釋痛肌腱噴霧 80毫升", orig: null, special: 94, unit: "盒" },
+            { code: "ZA186", xCode: "ZA186", name: "古寶 UC II 關節修復靈 60粒", orig: null, special: 307, unit: "盒" },
             { code: "CPW003", name: "通脈紅麴 120粒", orig: null, special: 360, unit: "盒" },
             { code: "CPW010", name: "蜂膠素 100粒", orig: null, special: 295, unit: "盒" },
             { code: "CPW011", name: "樂肝健 80粒", orig: null, special: 380, unit: "盒" },
@@ -321,7 +321,7 @@ window.BPE_DIMSUM_ORDER = {
             { code: "CPW016", name: "活腦素 100粒", orig: null, special: 380, unit: "盒" },
             { code: "CPW017", name: "速燒脂 60粒", orig: null, special: 235, unit: "盒" },
             { code: "CPW026", name: "免疫球蛋白片 80粒", orig: null, special: 220, unit: "盒" },
-            { code: "VTM04", name: "液晶鈣軟膠囊 100粒", orig: null, special: 205, unit: "盒" },
+            { code: "VTM04", xCode: "VTM04/ZA188", name: "古寶液體鈣軟膠囊 100粒", orig: null, special: 205, unit: "盒" },
             { code: "ZA002", name: "南極磷蝦油丸 30粒", orig: null, special: 288, unit: "盒" },
             { code: "CPW007", name: "卵磷脂 100粒", orig: null, special: 180, unit: "盒" },
             { code: "CPW019A", name: "古寶 RTG 精純魚油 100粒", orig: null, special: 180, unit: "盒" },
