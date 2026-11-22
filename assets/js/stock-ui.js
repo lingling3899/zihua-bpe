@@ -1,4 +1,4 @@
-/* 庫存：總預＝未到場計劃量（上限）；補貨＝已到場；售出＝結算累積；剩餘＝補貨−售出（真正到場先可賣）；試機模式剩餘＝總預−售出（唔寫假補貨）；補貨不可超過總預；qtyUnknown 未填剩餘唔擋結算 */
+/* 庫存：總預＝未到場計劃量（上限）；補貨＝已到場（未有本機紀錄時跟表定第一次送貨 firstDrop）；售出＝結算累積；剩餘＝補貨−售出（真正到場先可賣）；試機模式剩餘＝總預−售出（唔寫假補貨）；補貨不可超過總預；qtyUnknown 未填剩餘唔擋結算 */
 (function () {
   "use strict";
 
@@ -161,16 +161,55 @@
     } catch (e) { /* private mode */ }
   }
 
+  function findSeedItem(code) {
+    var c = canonicalCode(code);
+    if (!c) return null;
+    var items = seed().items || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i] && items[i].code === c) return items[i];
+    }
+    return null;
+  }
+
+  /** 表定第一次送貨。有總預時唔超過總預（例如 CPW019A 表寫 20 但總預 12）。 */
+  function getSeedFirstDrop(code) {
+    var it = findSeedItem(code);
+    if (!it || it.firstDrop == null) return 0;
+    var n = Math.max(0, Math.floor(Number(it.firstDrop) || 0));
+    if (it.qtyUnknown) return n;
+    var seedQ = getSeedQty(code);
+    if (seedQ != null) return Math.min(n, Math.max(0, seedQ));
+    return n;
+  }
+
+  function rawSeedFirstDrop(code) {
+    var it = findSeedItem(code);
+    if (!it || it.firstDrop == null) return 0;
+    return Math.max(0, Math.floor(Number(it.firstDrop) || 0));
+  }
+
+  function hasLocalRestock(code) {
+    var c = canonicalCode(code);
+    if (!c) return false;
+    var map = loadRestock();
+    var keys = relatedKeys(c);
+    for (var i = 0; i < keys.length; i++) {
+      if (Object.prototype.hasOwnProperty.call(map, keys[i])) return true;
+    }
+    return false;
+  }
+
   function getRestock(code) {
     var c = canonicalCode(code);
     if (!c) return 0;
     var map = loadRestock();
     var keys = relatedKeys(c);
-    var n = 0;
     for (var i = 0; i < keys.length; i++) {
-      if (map[keys[i]] != null) n = Math.max(n, Math.floor(Number(map[keys[i]]) || 0));
+      if (Object.prototype.hasOwnProperty.call(map, keys[i])) {
+        return Math.max(0, Math.floor(Number(map[keys[i]]) || 0));
+      }
     }
-    return n;
+    return getSeedFirstDrop(c);
   }
 
   function isQtyUnknownItem(code) {
@@ -216,8 +255,7 @@
       if (k !== c) delete map[k];
     });
     var n = Math.max(0, Math.floor(Number(total) || 0));
-    if (n <= 0) delete map[c];
-    else map[c] = n;
+    map[c] = n; // 0 都寫入，先至可以覆蓋表定第一次送貨
     saveRestock(map);
   }
 
@@ -576,6 +614,8 @@
       var unknown = !!it.qtyUnknown;
       var seedQ = unknown ? null : Math.max(0, Math.floor(Number(it.qty) || 0));
       var restock = getRestock(it.code);
+      var firstDropRaw = rawSeedFirstDrop(it.code);
+      var firstDrop = getSeedFirstDrop(it.code);
       var issued = getIssued(it.code);
       var sold = issued;
       var remaining = getQty(it.code); // null = qtyUnknown 未填
@@ -588,6 +628,9 @@
         category: it.category || "",
         unit: it.unit || "件",
         seed: seedQ,
+        firstDrop: firstDrop,
+        firstDropRaw: firstDropRaw,
+        restockLocal: hasLocalRestock(it.code),
         restock: restock,
         notArrived: notArrived,
         remaining: remaining,
@@ -595,7 +638,8 @@
         issued: issued,
         qtyUnknown: unknown,
         custom: !!it.custom,
-        price: it.price
+        price: it.price,
+        note: it.note || ""
       };
     });
   }
@@ -701,13 +745,13 @@
 
   function exportCsv() {
     var rows = listAll();
-    var lines = ["code,xCode,wfCode,category,name,unit,seed_first_drop,restock,sold,remaining,custom"];
+    var lines = ["code,xCode,wfCode,category,name,unit,seed_qty,seed_first_drop,restock,sold,remaining,custom"];
     rows.forEach(function (r) {
       function csv(v) {
         var t = String(v == null ? "" : v).replace(/"/g, '""');
         return '"' + t + '"';
       }
-      lines.push([r.code, r.xCode, r.wfCode, r.category, r.name, r.unit, r.seed, r.restock || 0, r.sold, r.remaining, r.custom ? "1" : "0"].map(csv).join(","));
+      lines.push([r.code, r.xCode, r.wfCode, r.category, r.name, r.unit, r.seed, r.firstDropRaw || r.firstDrop || 0, r.restock || 0, r.sold, r.remaining, r.custom ? "1" : "0"].map(csv).join(","));
     });
     var blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
     var a = document.createElement("a");
@@ -752,8 +796,8 @@
       (window.BPE_TrialMode && window.BPE_TrialMode.bannerHtml ? window.BPE_TrialMode.bannerHtml() : "") +
       '<p class="stock-meta"><strong>喺呢度更新存貨表</strong>：' +
       (trialOn
-        ? "試機模式：有總預嘅貨剩餘＝總預−售出（當已到場，唔會寫假補貨）。補貨欄顯示實際已登記數量，唔當賣貨庫存。補貨仍然不可超過總預。禮品（總預未填）剩餘未填＝「未填」、唔擋結算；填剩餘後先會擋／扣數。人手「改剩餘」仍然有效。"
-        : "總預＝未到場計劃量（上限）；補貨＝已到場貨，可＋／−／刪（入錯可改）；售出只由真正補貨扣；剩餘＝補貨−售出。補貨不可超過總預，超過會提示「已冇得補貨」。撳「加產品」可加新款（總預）。禮品（如杯墊）剩餘未填＝「未填」、唔擋結算；填剩餘後先會擋／扣數。") +
+        ? "試機模式：有總預嘅貨剩餘＝總預−售出（當已到場，唔會寫假補貨）。補貨欄未有本機紀錄時顯示表定第一次送貨（2026-12-10），唔當試機賣貨庫存。補貨仍然不可超過總預。禮品有總預後會按數扣／擋結算；年曆卡等總預未填仍然「未填」、唔擋結算。人手「改剩餘」仍然有效。"
+        : "總預＝未到場計劃量（上限）；補貨＝已到場貨（未有本機紀錄時跟表定第一次送貨，2026-12-10），可＋／−／刪（入錯可改；刪到 0 會覆蓋表定第一次）。售出只由真正補貨扣；剩餘＝補貨−售出。補貨不可超過總預，超過會提示「已冇得補貨」。撳「加產品」可加新款（總預）。禮品有總預後會按數扣／擋結算；總預未填仍然「未填」、唔擋結算。") +
       "</p>" +
       '<p class="stock-meta muted">來源：' + esc(s.source || "") +
       " · 版本 " + esc(s.version || "") +
@@ -844,7 +888,16 @@
                 : "")) +
             "</td>" +
             '<td class="stock-restock-cell">' +
-              '<div class="num" title="' + (trialOn ? "實際已登記補貨（試機賣貨唔跟呢欄）" : "已到場補貨") + '">' + esc(String(r.restock || 0)) + "</div>" +
+              '<div class="num" title="' + (trialOn ? "補貨（試機賣貨唔跟呢欄；未改本機時跟表定第一次送貨）" : "已到場補貨（未改本機時跟表定第一次送貨）") + '">' + esc(String(r.restock || 0)) + "</div>" +
+              (r.firstDropRaw
+                ? ('<div class="muted stock-first-drop" title="表定第一次送貨 2026-12-10">' +
+                    (r.firstDropRaw > (r.seed == null ? r.firstDropRaw : r.seed)
+                      ? ("第一次表定 " + esc(String(r.firstDropRaw)) + "（高過總預，補貨跟 " + esc(String(r.firstDrop)) + "）")
+                      : ("第一次 " + esc(String(r.firstDropRaw)) + "（12/10）")) +
+                    (r.restockLocal ? " · 本機已改" : "") +
+                  "</div>")
+                : (r.restockLocal ? '<div class="muted stock-first-drop">本機已改補貨</div>' : "")) +
+              (r.note ? ('<div class="muted stock-first-drop">' + esc(r.note) + "</div>") : "") +
               '<div class="stock-restock-add">' +
                 '<input class="stock-restock-input" type="number" min="1" step="1" inputmode="numeric" ' +
                   'data-code="' + esc(r.code) + '" placeholder="數量" aria-label="補貨數量 ' + esc(r.name) + '" />' +
@@ -1002,7 +1055,7 @@
         var cur = getRestock(code);
         var msg = sold > 0
           ? ("刪除入錯補貨「" + code + "」？會將補貨由 " + cur + " 降至已售 " + sold + "（剩餘變 0）。")
-          : ("刪除入錯補貨「" + code + "」？會將補貨由 " + cur + " 清為 0。");
+          : ("刪除入錯補貨「" + code + "」？會將補貨由 " + cur + " 清為 0（會覆蓋表定第一次送貨，寫入呢部機）。");
         if (!confirm(msg)) return;
         var res = setRestockTotal(code, sold);
         if (!res || !res.ok) {
