@@ -10,14 +10,14 @@
     { id: "pen", label: "原子筆", weight: 14, color: "#DDD4F4" },
     { id: "95off", label: "95折", weight: 10, color: "#5B21B6" },
     { id: "mystery", label: "神秘禮品", weight: 6, color: "#DDD4F4" },
-    { id: "off550", label: "滿折實$550減$50", weight: 12, color: "#5B21B6" },
-    { id: "coupon", label: "優惠券一張", weight: 9, color: "#DDD4F4" }
+    { id: "coupon50", label: "$50優惠券", weight: 12, color: "#5B21B6" },
+    { id: "coupon20", label: "$20優惠券", weight: 9, color: "#DDD4F4" }
   ];
   var PLINKO = [
     { id: "coaster", label: "杯墊" },
     { id: "pen", label: "原子筆" },
     { id: "mystery", label: "神秘禮品" },
-    { id: "coupon", label: "優惠券一張" },
+    { id: "coupon20", label: "$20優惠券" },
     { id: "grand", label: "大獎", highlight: true }
   ];
   var FLIP_FACES = ["🧲", "☂️", "🧴", "☕"];
@@ -98,8 +98,8 @@
     var map = {
       "下次再來": "下次<br>再來",
       "神秘禮品": "神秘<br>禮品",
-      "滿折實$550減$50": "滿折實<br>$550減$50",
-      "優惠券一張": "優惠券<br>一張"
+      "$50優惠券": "$50<br>優惠券",
+      "$20優惠券": "$20<br>優惠券"
     };
     if (map[label]) return map[label];
     return esc(label);
