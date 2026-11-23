@@ -1708,6 +1708,19 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
   border-radius: 12px;
   padding: 6px 8px 2px;
 }
+.pay-split-rows { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.pay-split-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-weight: 700; font-size: .88rem; color: var(--purple-dark, #4a2a73);
+}
+.pay-split-row .pc-pay-amt {
+  width: 8.5rem; min-height: 44px; border-radius: 12px;
+  border: 1.5px solid #d4c4e8; padding: 6px 10px;
+  font-size: 1.05rem; font-weight: 800; text-align: right;
+  box-sizing: border-box;
+}
+.pay-split-rest { font-size: 1.05rem; font-weight: 800; color: var(--purple, #6b3fa0); }
+.pay-split-rest-need { color: #b45309 !important; }
 
 /* 買6送1／套裝贈品明細 */
 .pc-break-gift { color: var(--purple-dark); }

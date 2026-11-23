@@ -78,6 +78,32 @@
     }
     return id || "";
   }
+  function orderPayParts(o) {
+    if (Array.isArray(o.payments) && o.payments.length) {
+      return o.payments.map(function (p) {
+        return {
+          id: p.id || "",
+          label: p.label || payLabel(p.id) || p.id || "未填",
+          amount: round2(p.amount)
+        };
+      });
+    }
+    var pid = o.paymentMethod || "";
+    var plabel = o.paymentLabel || payLabel(pid) || pid || "未填";
+    return [{ id: pid, label: plabel, amount: Number(o.payable) || 0 }];
+  }
+  function orderPayText(o) {
+    if (!o) return "";
+    var parts = Array.isArray(o.payments) && o.payments.length ? o.payments : null;
+    if (parts) {
+      if (parts.length === 1) return parts[0].label || payLabel(parts[0].id) || o.paymentLabel || "";
+      return parts.map(function (p) {
+        var name = p.label || payLabel(p.id) || p.id;
+        return name + " $" + money(p.amount);
+      }).join("＋");
+    }
+    return o.paymentLabel || payLabel(o.paymentMethod) || o.paymentMethod || "";
+  }
 
   function loadAllOrders() {
     try {
@@ -448,17 +474,20 @@
     BRAND_ORDER.forEach(function (b) { brandRow(b); });
 
     live.forEach(function (o) {
-      var pid = o.paymentMethod || "";
-      var plabel = o.paymentLabel || payLabel(pid) || pid || "未填";
-      var rec = payMap[pid];
-      if (!rec) {
-        if (!payUnknown[pid || plabel]) {
-          payUnknown[pid || plabel] = { id: pid || "other", label: plabel, count: 0, payable: 0 };
+      var parts = orderPayParts(o);
+      if (!parts.length) parts = [{ id: "", label: "未填", amount: Number(o.payable) || 0 }];
+      parts.forEach(function (p) {
+        var rec = payMap[p.id];
+        if (!rec) {
+          var uk = p.id || p.label;
+          if (!payUnknown[uk]) {
+            payUnknown[uk] = { id: p.id || "other", label: p.label, count: 0, payable: 0 };
+          }
+          rec = payUnknown[uk];
         }
-        rec = payUnknown[pid || plabel];
-      }
-      rec.count += 1;
-      rec.payable = round2(rec.payable + (Number(o.payable) || 0));
+        rec.count += 1;
+        rec.payable = round2(rec.payable + (Number(p.amount) || 0));
+      });
       payTotal.count += 1;
       payTotal.payable = round2(payTotal.payable + (Number(o.payable) || 0));
 
@@ -548,7 +577,7 @@
         formatHkTime(o.t),
         o.pos != null ? o.pos : "",
         o.handler || o.staffLabel || "",
-        o.paymentLabel || payLabel(o.paymentMethod) || o.paymentMethod || "",
+        orderPayText(o),
         o.count != null ? o.count : "",
         o.subtotal != null ? o.subtotal : "",
         o.payable != null ? o.payable : "",
@@ -578,6 +607,7 @@
     });
     lines.push("");
     lines.push("付款方式統計（不含作廢）");
+    lines.push("註：分批付款嘅實付會分攤到各付款方式；張數按有用過該方式嘅單計，加總可能多過單據張數。合計張數仍係單據張數。");
     lines.push(["付款方式", "張數", "實付"].map(csvCell).join(","));
     stats.payments.forEach(function (r) {
       lines.push([r.label, r.count, r.payable].map(csvCell).join(","));

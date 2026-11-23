@@ -39,9 +39,136 @@
     }
     return id || "";
   }
+  function isKnownPayId(id) {
+    for (var i = 0; i < PAY_METHODS.length; i++) {
+      if (PAY_METHODS[i].id === id) return true;
+    }
+    return false;
+  }
+  function normalizePaymentSplits(o) {
+    o = o || {};
+    var raw = Array.isArray(o.paymentSplits) ? o.paymentSplits : [];
+    var out = [];
+    var seen = {};
+    raw.forEach(function (part) {
+      if (!part || !part.id || seen[part.id] || !isKnownPayId(part.id)) return;
+      seen[part.id] = true;
+      var amt = part.amount;
+      if (amt == null || amt === "") amt = null;
+      else {
+        amt = round2(amt);
+        if (isNaN(amt) || amt < 0) amt = null;
+      }
+      out.push({ id: part.id, amount: amt });
+    });
+    if (!out.length && o.paymentMethod && isKnownPayId(o.paymentMethod)) {
+      out.push({ id: o.paymentMethod, amount: null });
+    }
+    return out;
+  }
+  function syncPaymentMethod(st) {
+    st.paymentSplits = normalizePaymentSplits(st);
+    st.paymentMethod = st.paymentSplits.length ? st.paymentSplits[0].id : "";
+    return st;
+  }
+  function togglePayMethod(st, id) {
+    if (!isKnownPayId(id)) return st;
+    var splits = (st.paymentSplits || []).slice();
+    var idx = -1;
+    for (var i = 0; i < splits.length; i++) {
+      if (splits[i].id === id) { idx = i; break; }
+    }
+    if (idx >= 0) splits.splice(idx, 1);
+    else splits.push({ id: id, amount: null });
+    st.paymentSplits = splits;
+    return syncPaymentMethod(st);
+  }
+  function setPaySplitAmount(st, id, amount) {
+    var splits = (st.paymentSplits || []).slice();
+    for (var i = 0; i < splits.length; i++) {
+      if (splits[i].id === id) {
+        if (amount == null || amount === "") splits[i].amount = null;
+        else {
+          var n = round2(amount);
+          splits[i].amount = (isNaN(n) || n < 0) ? null : n;
+        }
+        break;
+      }
+    }
+    st.paymentSplits = splits;
+    return syncPaymentMethod(st);
+  }
+  function resolvedSplits(st, payable) {
+    var splits = (st && st.paymentSplits) || [];
+    payable = round2(payable);
+    if (!splits.length) return [];
+    if (splits.length === 1) {
+      return [{ id: splits[0].id, label: payLabel(splits[0].id), amount: payable }];
+    }
+    var assigned = 0;
+    var out = [];
+    var last = splits.length - 1;
+    for (var i = 0; i < last; i++) {
+      var amt = splits[i].amount;
+      if (amt == null || amt === "" || isNaN(amt)) amt = null;
+      else amt = round2(Math.max(0, amt));
+      out.push({ id: splits[i].id, label: payLabel(splits[i].id), amount: amt });
+      if (amt != null) assigned = round2(assigned + amt);
+    }
+    var firstFilled = out.every(function (p) { return p.amount != null; });
+    var rest = firstFilled ? round2(payable - assigned) : null;
+    out.push({ id: splits[last].id, label: payLabel(splits[last].id), amount: rest });
+    return out;
+  }
+  function formatPayLabel(parts) {
+    if (!parts || !parts.length) return "";
+    if (parts.length === 1) return parts[0].label || payLabel(parts[0].id);
+    return parts.map(function (p) {
+      var name = p.label || payLabel(p.id);
+      return p.amount == null ? name : (name + " $" + money(p.amount));
+    }).join("＋");
+  }
+  function orderPayText(order) {
+    if (!order) return "";
+    if (Array.isArray(order.payments) && order.payments.length) return formatPayLabel(order.payments);
+    return order.paymentLabel || payLabel(order.paymentMethod) || order.paymentMethod || "";
+  }
+  function splitsReady(st, payable) {
+    var parts = resolvedSplits(st, payable);
+    if (!parts.length) return false;
+    if (parts.length === 1) return true;
+    var sum = 0;
+    for (var i = 0; i < parts.length; i++) {
+      var a = parts[i].amount;
+      if (a == null || isNaN(a) || a <= 0) return false;
+      sum = round2(sum + a);
+    }
+    return sum === round2(payable);
+  }
+  function payStatusLine(st, payable) {
+    var parts = resolvedSplits(st, payable);
+    if (!parts.length) return { ok: false, text: "尚未揀付款方式" };
+    if (parts.length === 1) {
+      return { ok: true, text: "已揀：" + (parts[0].label || "") + "（全數 $" + money(payable) + "）" };
+    }
+    if (!splitsReady(st, payable)) {
+      var last = parts[parts.length - 1];
+      if (parts.slice(0, -1).some(function (p) { return p.amount == null; })) {
+        return { ok: false, text: "請填前面金額，餘額會自動補到「" + (last.label || "") + "」" };
+      }
+      if (last.amount != null && last.amount < 0) {
+        return { ok: false, text: "已多填 $" + money(-last.amount) + "，請改前面金額" };
+      }
+      if (last.amount === 0) {
+        return { ok: false, text: "餘額 $0，唔使加「" + (last.label || "") + "」，或改前面金額" };
+      }
+      return { ok: false, text: "分批金額要剛剛付滿實付 $" + money(payable) };
+    }
+    return { ok: true, text: "已付滿： " + formatPayLabel(parts) };
+  }
   function normalizeState(o) {
     o = o || {};
-    return {
+    var st0 = {
       items: o.items || {},
       sets: o.sets || {},
       setPicks: o.setPicks || {},
@@ -56,8 +183,10 @@
       cupal85OffByUser: !!o.cupal85OffByUser,
       nmnGiftOffByUser: !!o.nmnGiftOffByUser,
       paymentMethod: o.paymentMethod || "",
+      paymentSplits: o.paymentSplits || [],
       couponAmount: Math.max(0, Number(o.couponAmount) || 0)
     };
+    return syncPaymentMethod(st0);
   }
   function loadState() {
     try {
@@ -1221,7 +1350,8 @@
       nmnGift: !!st.nmnGift,
       nmnGiftApplied: nmnGiftApplied,
       oralQual: calc.oralQual || 0,
-      paymentMethod: st.paymentMethod || ""
+      paymentMethod: st.paymentMethod || "",
+      paymentSplits: st.paymentSplits || []
     };
   }
 
@@ -1299,7 +1429,7 @@
     }
     var rows = list.map(function (o) {
       var no = o.orderNo || o.id || "—";
-      var pay = o.paymentLabel || o.paymentMethod || "";
+      var pay = orderPayText(o);
       var amt = o.payable != null ? ("$" + money(o.payable)) : "";
       var when = formatHkTime(o.t);
       var voided = !!o.voided;
@@ -1419,7 +1549,7 @@
         '<p class="order-detail-meta"><strong>時間</strong>：' + esc(formatHkTime(order.t)) + "（香港）</p>" +
         '<p class="order-detail-meta"><strong>POS</strong>：' + esc(String(order.pos != null ? order.pos : "—")) + "</p>" +
         '<p class="order-detail-meta"><strong>經手人</strong>：' + esc(order.handler || order.staffLabel || "—") + "</p>" +
-        '<p class="order-detail-pay"><strong>付款方式</strong>：' + esc(order.paymentLabel || order.paymentMethod || "—") + "</p>" +
+        '<p class="order-detail-pay"><strong>付款方式</strong>：' + esc(orderPayText(order) || "—") + "</p>" +
         '<h4 class="order-detail-h">產品</h4>' +
         orderLinesHtml(order) +
         '<div class="order-detail-totals">' +
@@ -1567,7 +1697,7 @@
         "<div><strong>時間：</strong>" + esc(formatHkTime(order.t)) + "（香港）</div>" +
         "<div><strong>POS：</strong>" + esc(String(order.pos != null ? order.pos : "—")) + "</div>" +
         "<div><strong>經手人：</strong>" + esc(order.handler || order.staffLabel || "—") + "</div>" +
-        "<div><strong>付款方式：</strong>" + esc(order.paymentLabel || order.paymentMethod || "—") + "</div>" +
+        "<div><strong>付款方式：</strong>" + esc(orderPayText(order) || "—") + "</div>" +
         (voided ? ("<div><strong>作廢：</strong>" + esc(formatHkTime(order.voidedAt)) + (order.voidedBy ? (" · " + esc(order.voidedBy)) : "") + "</div>") : "") +
       "</div>" +
       "<p class='noprint'><button onclick='window.print()'>列印</button> " +
@@ -1787,19 +1917,49 @@
     return '<div class="pc-breakdown" aria-label="金額明細">' + rows + "</div>";
   }
 
-  function renderPayChips(st) {
+  function renderPayChips(st, payable) {
+    payable = round2(payable);
+    var selected = {};
+    (st.paymentSplits || []).forEach(function (p) { selected[p.id] = true; });
     var chips = PAY_METHODS.map(function (m) {
-      var on = st.paymentMethod === m.id ? " active" : "";
+      var on = selected[m.id] ? " active" : "";
       return (
         '<button type="button" class="pay-chip' + on + '" data-pay="' + esc(m.id) + '" aria-pressed="' +
-          (st.paymentMethod === m.id ? "true" : "false") + '">' + esc(m.label) + "</button>"
+          (selected[m.id] ? "true" : "false") + '">' + esc(m.label) + "</button>"
       );
     }).join("");
+    var parts = resolvedSplits(st, payable);
+    var status = payStatusLine(st, payable);
+    var splitRows = "";
+    if (parts.length >= 2) {
+      splitRows = '<div class="pay-split-rows">';
+      parts.forEach(function (p, idx) {
+        var last = idx === parts.length - 1;
+        if (last) {
+          var restTxt = p.amount == null ? "—" : ("$" + money(p.amount));
+          var restCls = (p.amount == null || p.amount <= 0) ? " pay-split-rest-need" : "";
+          splitRows +=
+            '<div class="pay-split-row">' +
+              "<span>" + esc(p.label) + "（餘額）</span>" +
+              '<strong class="pay-split-rest' + restCls + '">' + restTxt + "</strong>" +
+            "</div>";
+        } else {
+          var val = p.amount == null ? "" : String(p.amount);
+          splitRows +=
+            '<label class="pay-split-row">'+
+              "<span>" + esc(p.label) + "</span>" +
+              '<input type="number" class="pc-pay-amt" data-pay-amt="' + esc(p.id) +
+                '" min="0" step="0.1" inputmode="decimal" placeholder="金額" value="' + esc(val) +
+                '" aria-label="' + esc(p.label) + '金額" />' +
+            "</label>";
+        }
+      });
+      splitRows += "</div>";
+    }
     return (
-      '<div class="pay-chips" role="group" aria-label="揀付款方式">' + chips + "</div>" +
-      (st.paymentMethod
-        ? ('<p class="pay-selected">已揀：<strong>' + esc(payLabel(st.paymentMethod)) + "</strong></p>")
-        : '<p class="pay-selected pay-need">尚未揀付款方式</p>')
+      '<div class="pay-chips" role="group" aria-label="揀付款方式，可分批">' + chips + "</div>" +
+      splitRows +
+      '<p class="pay-selected' + (status.ok ? "" : " pay-need") + '">' + esc(status.text) + "</p>"
     );
   }
 
@@ -1815,11 +1975,11 @@
       progress = "共 " + calc.count + " 件 · " + progress;
     }
 
-    var hasPay = !!st.paymentMethod;
-    var settleCls = "pc-preorder" + (hasPay ? "" : " pc-settle-need-pay");
-    var settleLabel = hasPay
+    var payOk = splitsReady(st, pr.payable);
+    var settleCls = "pc-preorder" + (payOk ? "" : " pc-settle-need-pay");
+    var settleLabel = payOk
       ? ("💳 結算 $" + money(pr.payable))
-      : "請先揀付款方式";
+      : (st.paymentMethod ? "請填分批金額" : "請先揀付款方式");
     var hasItems = calc.count > 0;
     var collapsedSummary = "$" + money(pr.payable) + " · 共 " + calc.count + " 件";
 
@@ -1921,8 +2081,8 @@
         "</div>" +
         '<div class="pc-float-foot">' +
           '<div class="pc-float-pay" id="pcFloatPay">' +
-            '<p class="pc-float-pay-label">付款方式</p>' +
-            renderPayChips(st) +
+            '<p class="pc-float-pay-label">付款方式（可分批）</p>' +
+            renderPayChips(st, pr.payable) +
           "</div>" +
           '<div class="pc-float-actions">' +
             '<button type="button" class="pc-clear" id="btnPcClear" aria-label="清除"><span aria-hidden="true">↺</span> 清除</button>' +
@@ -1933,15 +2093,15 @@
     );
   }
 
-  function renderPayment(st) {
+  function renderPayment(st, pr) {
     return (
       '<section class="panel pay-panel pc-pay" aria-labelledby="pcPayTitle">' +
         '<h3 id="pcPayTitle">💳 付款方式</h3>' +
-        '<p class="pay-note">請揀一種付款方式先可以結算。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
-        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261111c" target="_blank" rel="noopener" title="開大圖">' +
-          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261111c" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay" />' +
+        '<p class="pay-note">可揀一種，或分批付（例如先俾八達通，唔夠再補現金）。凡購物可用：八達通、現金港幣、Alipay、WeChat Pay、PayMe、VISA、Mastercard、銀聯</p>' +
+        '<a class="pay-open" href="assets/img/payment/payment-methods.jpg?v=20261123e" target="_blank" rel="noopener" title="開大圖">' +
+          '<img class="pay-img" src="assets/img/payment/payment-methods.jpg?v=20261123e" width="1079" height="728" loading="lazy" decoding="async" alt="付款方式：凡購物可使用八達通、港幣現金、Alipay 支付寶、微信支付、PayMe、VISA、Mastercard、銀聯 UnionPay。可分批付款。" />' +
         "</a>" +
-        renderPayChips(st) +
+        renderPayChips(st, pr && pr.payable) +
       "</section>"
     );
   }
@@ -1966,7 +2126,7 @@
       });
     }
     html += "</div>";
-    html += renderPayment(st);
+    html += renderPayment(st, pr);
     html += renderFloat(st, calc, pr);
     var bodyEl = $("pcFloatBody");
     var bodyScroll = (floatOpen && bodyEl) ? bodyEl.scrollTop : 0;
@@ -2046,7 +2206,7 @@
     if (pr.plasticBag) lines.push("膠購物袋　+$" + money(pr.bagFee || 1));
     if (pr.nmnGiftApplied) lines.push("口服保健滿$1200送 NMN 10粒試用裝　ZA155S1 × 1");
     lines.push("實付　$" + money(pr.payable));
-    if (pr.paymentMethod) lines.push("付款方式　" + payLabel(pr.paymentMethod));
+    if (st.paymentMethod) lines.push("付款方式　" + formatPayLabel(resolvedSplits(st, pr.payable)));
     if (window.BPE_Gifts && window.BPE_Gifts.evaluate) {
       var gev = window.BPE_Gifts.evaluate(calc.total, st);
       if (gev.reached && gev.reached.length) {
@@ -2084,6 +2244,7 @@
     if (!handler && window.ZihuaAdminAuth && window.ZihuaAdminAuth.isLoggedIn && window.ZihuaAdminAuth.isLoggedIn()) {
       handler = (window.ZihuaAdminAuth.getSessionEmail && window.ZihuaAdminAuth.getSessionEmail()) || "管理員";
     }
+    var payParts = resolvedSplits(st, pr.payable);
     var order = {
       id: "po-" + Date.now(),
       orderNo: orderNo,
@@ -2121,8 +2282,9 @@
       nmnGift: !!pr.nmnGift,
       nmnGiftApplied: !!pr.nmnGiftApplied,
       oralQual: pr.oralQual || 0,
-      paymentMethod: pr.paymentMethod,
-      paymentLabel: payLabel(pr.paymentMethod),
+      paymentMethod: (payParts[0] && payParts[0].id) || pr.paymentMethod,
+      paymentLabel: formatPayLabel(payParts),
+      payments: payParts,
       lines: calc.lines,
       gifts: giftTitles,
       handler: handler,
@@ -2222,6 +2384,7 @@
       '<p class="pc-stats-summary">有效 ' + esc(String(stt.liveCount)) + " 張 · 實付 $" + esc(money(stt.livePayable)) +
         " · 作廢 " + esc(String(stt.voidCount)) + " 張（實付 $" + esc(money(stt.voidPayable)) + "，唔計入以下合計）</p>" +
       '<h4 class="order-detail-h">付款方式</h4>' +
+      '<p class="muted stats-note">分批付款嘅實付會分攤到各付款方式（例如八達通 $80、現金 $20）。張數按有用過該方式嘅單計，加總可能多過單據張數；下面合計張數仍係單據張數。</p>' +
       '<div class="order-lines-wrap"><table class="order-lines-table stats-table">' +
         "<thead><tr><th>付款方式</th><th>張數</th><th>實付</th></tr></thead><tbody>" +
         payRows(stt.payments) +
@@ -2333,8 +2496,7 @@
       var payBtn = e.target.closest("[data-pay]");
       if (payBtn) {
         var stPay = loadState();
-        var pid = payBtn.getAttribute("data-pay");
-        stPay.paymentMethod = stPay.paymentMethod === pid ? "" : pid;
+        togglePayMethod(stPay, payBtn.getAttribute("data-pay"));
         saveState(stPay);
         render();
         return;
@@ -2397,6 +2559,7 @@
           overrides: st.overrides,
           senior: st.senior,
           paymentMethod: st.paymentMethod,
+          paymentSplits: st.paymentSplits,
           couponAmount: st.couponAmount
         }));
         render();
@@ -2419,7 +2582,8 @@
           return;
         }
         var stS = loadState();
-        if (!stS.paymentMethod) {
+        var prPay = pricing(stS, calcTotals(stS));
+        if (!splitsReady(stS, prPay.payable)) {
           var floatPay = root.querySelector("#pcFloatPay") || root.querySelector(".pc-float-pay");
           if (floatPay) {
             floatPay.classList.add("pay-need");
@@ -2427,6 +2591,8 @@
               floatPay.scrollIntoView({ behavior: "smooth", block: "nearest" });
             }
           }
+          if (!stS.paymentMethod) return;
+          alert(payStatusLine(stS, prPay.payable).text);
           return;
         }
         var calcS = calcTotals(stS);
@@ -2485,7 +2651,9 @@
             alert("扣庫存失敗：\n" + formatStockShorts(ded.shorts));
           }
         }
-        var settleMsg = "已結算。單號 " + (order.orderNo || "") + "　實付 $" + money(order.payable) + "。請確認付款後印單。";
+        var settleMsg = "已結算。單號 " + (order.orderNo || "") + "　實付 $" + money(order.payable) +
+          (order.paymentLabel ? ("　" + order.paymentLabel) : "") +
+          "。請確認付款後印單。";
         if (order && order._saveWarning) settleMsg += "\n\n" + order._saveWarning;
         alert(settleMsg);
         render();
@@ -2518,20 +2686,39 @@
       }
     });
     root.addEventListener("input", function (e) {
-      if (e.target && e.target.id === "pcCoupon") {
+      if (!e.target) return;
+      if (e.target.id === "pcCoupon") {
         var st = loadState();
         var v = Number(e.target.value);
         if (isNaN(v) || v < 0) v = 0;
         st.couponAmount = Math.round(v * 100) / 100;
         saveState(st);
-        // soft refresh of totals without stealing focus: update float numbers via re-render
-        // keep cursor in coupon field
         var pos = e.target.selectionStart;
         render();
         var again = $("pcCoupon");
         if (again) {
           again.focus();
           try { again.setSelectionRange(pos, pos); } catch (err) {}
+        }
+        return;
+      }
+      var amtInp = e.target.closest("[data-pay-amt]");
+      if (amtInp) {
+        var stA = loadState();
+        var raw = amtInp.value;
+        if (raw === "" || raw == null) setPaySplitAmount(stA, amtInp.getAttribute("data-pay-amt"), null);
+        else {
+          var nv = Number(raw);
+          setPaySplitAmount(stA, amtInp.getAttribute("data-pay-amt"), isNaN(nv) ? null : nv);
+        }
+        saveState(stA);
+        var posA = amtInp.selectionStart;
+        var payId = amtInp.getAttribute("data-pay-amt");
+        render();
+        var againA = root.querySelector('[data-pay-amt="' + payId + '"]');
+        if (againA) {
+          againA.focus();
+          try { againA.setSelectionRange(posA, posA); } catch (err) {}
         }
       }
     });
