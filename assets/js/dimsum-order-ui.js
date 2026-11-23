@@ -1617,10 +1617,8 @@
       var nameText = ln.name || ln.label || "—";
       if (ln.kind === "set-pick") {
         trClass = ' class="order-line-set-pick"';
-        nameText = "↳ " + nameText;
       } else if (ln.kind === "set-pick-missing") {
         trClass = ' class="order-line-set-missing"';
-        nameText = "↳ " + nameText;
       }
       return (
         "<tr" + trClass + ">" +
@@ -1774,10 +1772,8 @@
       var nameText = (ln.name || ln.label || "—") + extra;
       if (ln.kind === "set-pick") {
         trClass = "set-pick";
-        nameText = "↳ " + nameText;
       } else if (ln.kind === "set-pick-missing") {
         trClass = "set-pick-missing";
-        nameText = "↳ " + nameText;
       }
       linesHtml +=
         "<tr" + (trClass ? (" class='" + trClass + "'") : "") + ">" +
