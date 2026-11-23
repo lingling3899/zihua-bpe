@@ -716,12 +716,34 @@ body[data-view="order"] .floating-login .login-dropdown {
 .cupal-hero { background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 60%, #1e3a8a 100%); }
 .cupal-lead { opacity: .92; font-size: .88rem; margin: 0; }
 .cupal-panel { margin-top: 12px; }
-.plan-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cupal-flyer { margin: 12px 0 0; }
+.cupal-flyer img {
+  width: 100%; height: auto; display: block; border-radius: 16px;
+  border: 1px solid var(--border); background: #fff;
+}
+.plan-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; }
 .plan-chip {
   border: 1.5px solid var(--blue); background: #fff; color: #1d4ed8;
-  border-radius: 999px; padding: 8px 12px; font-weight: 700; font-size: .82rem;
+  border-radius: 16px; padding: 10px 12px; font-weight: 700; font-size: .82rem;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
 }
+.plan-chip strong { font-size: .95rem; }
+.plan-chip-rule { font-weight: 700; font-size: .78rem; opacity: .92; }
+.plan-chip-gift { font-weight: 600; font-size: .72rem; opacity: .9; line-height: 1.35; }
 .plan-chip.active { background: var(--blue); color: #fff; }
+.cupal-status {
+  margin: 0 0 10px; padding: 8px 12px; border-radius: 12px;
+  background: #fff7ed; color: #9a3412; font-weight: 700; font-size: .9rem;
+}
+.cupal-status.ok { background: #ecfdf5; color: #065f46; }
+.cupal-prod.selected { outline: 2px solid var(--blue); background: #eff6ff; }
+.cupal-pick-flag {
+  flex: 0 0 auto; align-self: center; margin-left: 6px;
+  padding: 8px 10px; border-radius: 999px; font-weight: 700; font-size: .75rem;
+  background: #eff6ff; color: #1d4ed8; white-space: nowrap;
+}
+.cupal-prod.selected .cupal-pick-flag { background: var(--blue); color: #fff; }
+.cupal-unpick { margin-top: 6px; font-size: .75rem; padding: 6px 8px; }
 .gender-row, .region-row { display: flex; gap: 8px; margin: 8px 0; }
 .gender-btn, .region-btn {
   flex: 1; border: 1.5px solid var(--border); background: #fff; border-radius: 12px;
