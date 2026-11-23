@@ -408,6 +408,98 @@
     }).join("　");
   }
 
+  function lookupProductName(code, sec) {
+    var c = normCode(code);
+    if (!c) return "";
+    function fromItems(items) {
+      var i, it;
+      for (i = 0; i < (items || []).length; i++) {
+        it = items[i];
+        if (!it) continue;
+        if (normCode(it.code) === c || normCode(it.xCode) === c) {
+          return String(it.name || "").trim();
+        }
+      }
+      return "";
+    }
+    if (sec) {
+      var n = fromItems(sec.items);
+      if (n) return n;
+    }
+    var sheets = allSheets();
+    var si, secs, j, n2;
+    for (si = 0; si < sheets.length; si++) {
+      secs = sheets[si].sections || [];
+      for (j = 0; j < secs.length; j++) {
+        n2 = fromItems(secs[j].items);
+        if (n2) return n2;
+      }
+    }
+    var stockItems = (window.BPE_STOCK_SEED && window.BPE_STOCK_SEED.items) || [];
+    for (j = 0; j < stockItems.length; j++) {
+      if (stockItems[j] && normCode(stockItems[j].code) === c) {
+        return String(stockItems[j].name || "").trim();
+      }
+    }
+    if (window.BPE_Stock && window.BPE_Stock.listAll) {
+      try {
+        var all = window.BPE_Stock.listAll() || [];
+        for (j = 0; j < all.length; j++) {
+          if (all[j] && normCode(all[j].code) === c) {
+            return String(all[j].name || "").trim();
+          }
+        }
+      } catch (e) {}
+    }
+    return "";
+  }
+
+  function aggregatePicksDetailed(codes, sec) {
+    var map = {};
+    var order = [];
+    (codes || []).forEach(function (c) {
+      var k = normCode(c);
+      if (!k) return;
+      if (!map[k]) {
+        map[k] = { code: k, name: lookupProductName(k, sec), qty: 0 };
+        order.push(k);
+      }
+      map[k].qty += 1;
+    });
+    return order.map(function (k) { return map[k]; });
+  }
+
+  /** 固定單貨號套裝（非任選）：每套按 setSize 計實際件數 */
+  function fixedSetPicks(bundle, sec, setCount) {
+    var q = Math.max(0, Math.floor(Number(setCount) || 0));
+    if (q <= 0) return [];
+    var items = (sec && sec.items) || [];
+    var it = null;
+    var i;
+    for (i = 0; i < items.length; i++) {
+      if (items[i] && items[i].code && !items[i].displayOnly) {
+        it = items[i];
+        break;
+      }
+    }
+    if (!it) {
+      for (i = 0; i < items.length; i++) {
+        if (items[i] && items[i].code) {
+          it = items[i];
+          break;
+        }
+      }
+    }
+    if (!it) return [];
+    var size = Math.max(1, Math.floor(Number(bundle && bundle.setSize) || 1));
+    var code = normCode(it.code);
+    return [{
+      code: code,
+      name: String(it.name || lookupProductName(code, sec) || "").trim(),
+      qty: size * q
+    }];
+  }
+
   function picksSummaryHtml(st, bundleId, qty) {
     var picks = getSetPicks(st, bundleId);
     if (qty <= 0) return "";
@@ -1023,15 +1115,25 @@
           pieceCount += q;
           nonRedeemCount += q;
           var picksTxt = "";
+          var setPicksInfo = [];
           if (isPickAnyBundle(b, sec)) {
-            picksTxt = formatPicksForLine(getSetPicks(st, b.id));
+            var rawPicks = getSetPicks(st, b.id);
+            picksTxt = formatPicksForLine(rawPicks);
+            setPicksInfo = aggregatePicksDetailed(flattenPicks(rawPicks), sec);
+          } else {
+            setPicksInfo = fixedSetPicks(b, sec, q);
           }
           if (b.useItemPrices) {
-            lines.push({
+            var noteLine = {
               kind: "set-note",
               label: sec.title + " · " + b.label + " × " + q + (picksTxt ? ("　" + picksTxt) : ""),
-              amount: null
-            });
+              amount: null,
+              bundleId: b.id,
+              qty: q,
+              name: sec.title + " · " + b.label
+            };
+            if (setPicksInfo.length) noteLine.picks = setPicksInfo;
+            lines.push(noteLine);
             return;
           }
           if (b.setPrice == null) return;
@@ -1046,7 +1148,11 @@
             amount: amt,
             isSet: true,
             isJoint: isJointSet,
-            isOral: isOralSet
+            isOral: isOralSet,
+            bundleId: b.id,
+            qty: q,
+            name: b.label,
+            picks: setPicksInfo
           });
         });
 
@@ -1485,6 +1591,9 @@
 
   function detailedLines(order) {
     var raw = (order && order.lines) || [];
+    if (window.BPE_OrderLedger && window.BPE_OrderLedger.expandSetPickLines) {
+      return window.BPE_OrderLedger.expandSetPickLines(raw);
+    }
     if (window.BPE_OrderLedger && window.BPE_OrderLedger.enrichLines) {
       return window.BPE_OrderLedger.enrichLines(raw);
     }
@@ -1504,10 +1613,19 @@
         : "—";
       var unit = ln.unitPrice != null && !isNaN(ln.unitPrice) ? ("$" + money(ln.unitPrice)) : "—";
       var qty = ln.qty != null ? String(ln.qty) : "—";
+      var trClass = "";
+      var nameText = ln.name || ln.label || "—";
+      if (ln.kind === "set-pick") {
+        trClass = ' class="order-line-set-pick"';
+        nameText = "↳ " + nameText;
+      } else if (ln.kind === "set-pick-missing") {
+        trClass = ' class="order-line-set-missing"';
+        nameText = "↳ " + nameText;
+      }
       return (
-        "<tr>" +
+        "<tr" + trClass + ">" +
           "<td><code>" + esc(ln.code || "—") + "</code></td>" +
-          "<td>" + esc(ln.name || ln.label || "—") +
+          "<td>" + esc(nameText) +
             (ln.kind === "gift" ? '<div class="muted">贈品</div>' : "") +
             (ln.kind === "discount" ? '<div class="muted">折扣</div>' : "") +
             (ln.isRedeem ? '<div class="muted">換購</div>' : "") +
@@ -1652,10 +1770,19 @@
       if (ln.kind === "gift") extra = "（贈品）";
       if (ln.kind === "discount") extra = "（折扣）";
       if (ln.isRedeem) extra += "（換購）";
+      var trClass = "";
+      var nameText = (ln.name || ln.label || "—") + extra;
+      if (ln.kind === "set-pick") {
+        trClass = "set-pick";
+        nameText = "↳ " + nameText;
+      } else if (ln.kind === "set-pick-missing") {
+        trClass = "set-pick-missing";
+        nameText = "↳ " + nameText;
+      }
       linesHtml +=
-        "<tr>" +
+        "<tr" + (trClass ? (" class='" + trClass + "'") : "") + ">" +
           "<td>" + esc(ln.code || "—") + "</td>" +
-          "<td>" + esc((ln.name || ln.label || "—") + extra) + "</td>" +
+          "<td>" + esc(nameText) + "</td>" +
           "<td>" + esc(ln.brand || "—") + "</td>" +
           '<td class="num">' + esc(qty) + "</td>" +
           '<td class="num">' + esc(unit) + "</td>" +
@@ -1683,6 +1810,9 @@
       "table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0;}" +
       "th,td{border-bottom:1px solid #ddd;padding:6px 4px;vertical-align:top;}" +
       "th{text-align:left;background:#f3e8ff;} td.num{text-align:right;font-variant-numeric:tabular-nums;}" +
+      "tr.set-pick td,tr.set-pick-missing td{background:#faf7fc;font-size:12px;color:#333;border-bottom-color:#efe6f6;}" +
+      "tr.set-pick td:first-child,tr.set-pick td:nth-child(2),tr.set-pick-missing td:first-child,tr.set-pick-missing td:nth-child(2){padding-left:16px;}" +
+      "tr.set-pick-missing td{color:#666;font-style:italic;}" +
       ".totals{margin-top:10px;font-size:1rem;} .totals div{display:flex;justify-content:space-between;padding:4px 0;}" +
       ".pay{font-size:1.15rem;font-weight:800;margin-top:8px;} .note{color:#666;font-size:.85rem;margin-top:16px;}" +
       ".void-banner{border:2px solid #b91c1c;color:#991b1b;font-weight:800;letter-spacing:.2em;text-align:center;padding:8px;margin:0 0 12px;font-size:1.4rem;}" +

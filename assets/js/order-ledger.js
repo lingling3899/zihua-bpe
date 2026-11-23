@@ -333,6 +333,138 @@
     };
   }
 
+  function lookupCatalogName(code) {
+    var c = normCode(code);
+    if (!c) return "";
+    var info = catalogByCode()[c];
+    return (info && info.name) ? String(info.name).trim() : "";
+  }
+
+  function aggregateCodesToPicks(codes) {
+    var map = {};
+    var order = [];
+    (codes || []).forEach(function (c) {
+      var k = normCode(c);
+      if (!k) return;
+      if (!map[k]) {
+        map[k] = { code: k, name: lookupCatalogName(k), qty: 0 };
+        order.push(k);
+      }
+      map[k].qty += 1;
+    });
+    return order.map(function (k) { return map[k]; });
+  }
+
+  /** 舊單 label：`套裝名 × 套數　CODE1、CODE2` 或 `… × 套數　① CODE1、CODE2　② CODE3、…` */
+  function parsePicksFromLabel(label) {
+    var s = String(label || "");
+    var m = s.match(/×\s*(\d+)(?:[\s　]+)(.+)$/);
+    if (!m) return [];
+    var rest = String(m[2] || "").trim();
+    if (!rest) return [];
+    var parts = [];
+    if (/[①②③④⑤⑥⑦⑧⑨⑩]/.test(rest)) {
+      rest.split(/[①②③④⑤⑥⑦⑧⑨⑩]/).forEach(function (chunk) {
+        chunk = String(chunk || "").replace(/^[\s　、,]+|[\s　、,]+$/g, "");
+        if (chunk) parts.push(chunk);
+      });
+    } else {
+      parts = [rest];
+    }
+    var codes = [];
+    parts.forEach(function (chunk) {
+      String(chunk).split(/[、,]/).forEach(function (tok) {
+        var t = String(tok || "").trim();
+        if (!t) return;
+        var mx = t.match(/^([A-Za-z0-9][A-Za-z0-9\-_\/]{0,24})(?:\s*[×xX*]\s*(\d+))?$/);
+        if (!mx) return;
+        var code = normCode(mx[1]);
+        var n = mx[2] ? Math.max(1, Math.floor(Number(mx[2]) || 1)) : 1;
+        var i;
+        for (i = 0; i < n; i++) codes.push(code);
+      });
+    });
+    return aggregateCodesToPicks(codes);
+  }
+
+  function enrichPicks(picks) {
+    if (!Array.isArray(picks) || !picks.length) return [];
+    var map = {};
+    var order = [];
+    picks.forEach(function (p) {
+      if (p == null) return;
+      if (typeof p === "string") {
+        var one = aggregateCodesToPicks([p])[0];
+        if (one) {
+          if (!map[one.code]) {
+            map[one.code] = one;
+            order.push(one.code);
+          } else {
+            map[one.code].qty += one.qty;
+          }
+        }
+        return;
+      }
+      var code = normCode(p.code);
+      if (!code) return;
+      var qty = Math.max(0, Math.floor(Number(p.qty != null ? p.qty : 1) || 0));
+      if (qty <= 0) return;
+      if (!map[code]) {
+        map[code] = {
+          code: code,
+          name: String(p.name || lookupCatalogName(code) || "").trim(),
+          qty: 0
+        };
+        order.push(code);
+      }
+      if (!map[code].name && p.name) map[code].name = String(p.name).trim();
+      if (!map[code].name) map[code].name = lookupCatalogName(code);
+      map[code].qty += qty;
+    });
+    return order.map(function (k) { return map[k]; });
+  }
+
+  function expandSetPickLines(lines) {
+    var out = [];
+    (lines || []).forEach(function (ln) {
+      if (!ln) return;
+      var enriched = enrichLine(ln);
+      out.push(enriched);
+      if (enriched.kind !== "set") return;
+      var picks = Array.isArray(enriched.picks) ? enriched.picks : [];
+      if (!picks.length) {
+        out.push({
+          kind: "set-pick-missing",
+          code: "",
+          name: "未入實際貨號",
+          label: "未入實際貨號",
+          brand: "",
+          qty: null,
+          unitPrice: null,
+          amount: null
+        });
+        return;
+      }
+      picks.forEach(function (p) {
+        var code = normCode(p && p.code);
+        if (!code) return;
+        var name = String((p && p.name) || lookupCatalogName(code) || code).trim();
+        var qty = Math.max(0, Math.floor(Number(p && p.qty) || 0));
+        out.push({
+          kind: "set-pick",
+          code: code,
+          name: name,
+          label: code + " " + name + (qty ? (" × " + qty) : ""),
+          brand: resolveBrand(code, name),
+          qty: qty || null,
+          unitPrice: null,
+          amount: null
+        });
+      });
+    });
+    return out;
+  }
+
   function isProductLine(ln) {
     if (!ln) return false;
     var k = ln.kind || "item";
@@ -362,6 +494,14 @@
     if (!out.label) {
       out.label = (out.code ? (out.code + " ") : "") + (out.name || "") + (out.qty != null ? (" × " + out.qty) : "");
     }
+    // 套裝行保留／補回實際貨號；唔把揀貨碼寫上套裝價行本身
+    if (ln.kind === "set" || ln.kind === "set-note") {
+      if (ln.kind === "set" && !ln.code) out.code = "";
+      var picks = enrichPicks(ln.picks);
+      if (!picks.length) picks = parsePicksFromLabel(ln.label || "");
+      if (picks.length) out.picks = picks;
+      else if ("picks" in out && !Array.isArray(out.picks)) delete out.picks;
+    }
     return out;
   }
 
@@ -382,12 +522,12 @@
     lines.forEach(function (ln) {
       if (!ln) return;
       var k = ln.kind || "item";
-      if (k === "discount" || k === "set-note") return;
+      if (k === "discount" || k === "set-note" || k === "set-pick" || k === "set-pick-missing") return;
       if (k === "gift") {
         add(ln.code, ln.giftQty != null ? ln.giftQty : ln.qty);
         return;
       }
-      if (k === "set") return; // 套裝若只有 bundle 名，唔亂發明扣貨；新單應已存 demand
+      if (k === "set") return; // 套裝庫存由 order.demand 扣；唔用 picks 再扣以免重複
       add(ln.code, ln.qty);
     });
     return demand;
@@ -495,7 +635,7 @@
       var lineSums = {};
       var lineTotal = 0;
       lines.forEach(function (ln) {
-        if (!ln || ln.kind === "set-note" || ln.kind === "gift") return;
+        if (!ln || ln.kind === "set-note" || ln.kind === "gift" || ln.kind === "set-pick" || ln.kind === "set-pick-missing") return;
         var b = ln.brand || "其他";
         var amt = Number(ln.amount);
         if (isNaN(amt)) return;
@@ -590,7 +730,7 @@
     lines.push("產品明細");
     lines.push(["單號", "狀態", "貨號", "品名", "品牌", "數量", "單價", "金額", "種類"].map(csvCell).join(","));
     scoped.forEach(function (o) {
-      enrichLines(o.lines || []).forEach(function (ln) {
+      expandSetPickLines(o.lines || []).forEach(function (ln) {
         if (!ln || ln.kind === "set-note") return;
         lines.push([
           o.orderNo || o.id || "",
@@ -648,6 +788,8 @@
     resolveBrand: resolveBrand,
     enrichLine: enrichLine,
     enrichLines: enrichLines,
+    expandSetPickLines: expandSetPickLines,
+    parsePicksFromLabel: parsePicksFromLabel,
     demandFromLines: demandFromLines,
     voidOrder: voidOrder,
     computeStats: computeStats,

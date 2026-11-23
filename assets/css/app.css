@@ -2004,6 +2004,23 @@ body.view-booth3d .wrap { padding-bottom: 8px; }
 .order-lines-table td.num,
 .order-lines-table th:nth-child(n+4) { text-align: right; font-variant-numeric: tabular-nums; }
 .order-line-note td { color: var(--muted); font-size: .75rem; }
+.order-lines-table tr.order-line-set-pick td,
+.order-lines-table tr.order-line-set-missing td {
+  background: #faf7fc;
+  font-size: .78rem;
+  color: #333;
+  border-bottom-color: #efe6f6;
+}
+.order-lines-table tr.order-line-set-pick td:first-child,
+.order-lines-table tr.order-line-set-pick td:nth-child(2),
+.order-lines-table tr.order-line-set-missing td:first-child,
+.order-lines-table tr.order-line-set-missing td:nth-child(2) {
+  padding-left: 1.15rem;
+}
+.order-lines-table tr.order-line-set-missing td {
+  color: var(--muted);
+  font-style: italic;
+}
 .order-stats-panel { width: min(560px, 100%); max-height: 90vh; }
 .stats-table { font-size: .82rem; }
 .stats-total td { font-weight: 800; border-top: 1px solid #d4c2e8; }
