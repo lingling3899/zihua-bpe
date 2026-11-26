@@ -1,20 +1,21 @@
 /* 2026 工展會 總預貨量 — HKBPE seed；散裝 CO98/CO99/ZE01 用獨立大數表 */
 window.BPE_STOCK_SEED = {
-  version: "20261123a",
-  asOf: "2026-11-23",
-  source: "HKBPE 2026 Stock Forecast（20261210 1st delivery）",
+  version: "20261126a",
+  asOf: "2026-11-26",
+  source: "HKBPE 2026 Stock Forecast 最終表（20261210 1st delivery）",
   firstDropDate: "2026-12-10",
   notes: [
-    "總預同第一次送貨按 2026-11-23 交來嘅「20261210 1st delivery」Stock Forecast 更新；第一次送貨日期 2026-12-10。",
+    "總預同第一次送貨按 2026-11-26 交來嘅最終 Stock Forecast 更新；第一次送貨日期仍然係 2026-12-10。大部分數量同 20261123a 一致。",
     "紫花油散裝 CO98／CO99／ZE01 呢份表只有 pack 列，散裝大數維持舊摘要表（21600／37152／20124），唔用 pack 件數覆蓋。ZE03 紫花滴呢份表冇列，總預 810 維持，第一次送貨未填。",
     "花香油 ZE05／ZE06／ZE07 今次按呢份表總預改為 2016／1764／1764（舊獨立大數表 3456／2988／2988 已取代）。",
     "Pack 套裝列 CO98／CO99／ZE01 分別存為 Z0004／Z0004B／Z0004C（與散裝同 WF 碼但不同 SKU）；Z0004C 總預 1080→900，第一次送貨 900。",
     "CPW021JS1 對應 app 碼 CPW021JS。",
     "X／入機代號：優先 xCode，否則 wfCode，再係 app code（職員庫存／補貨表顯示）。",
-    "禮品已有總預：CUPAL-B088 杯墊 5000（第一次 1000）、CUPAL-B090 磁石貼 1000（500）、CUPAL-G011 雨傘 42+1427＝1469（第一次 42+500＝542）、CUPAL-B089 手提包 500（200）、ZA155S1 NMN 試用裝 200（100）。年曆卡 CUPAL-B083／CUPAL-B087 表上未填總預，只有第一次送貨 500（qtyUnknown，剩餘要職員填）。日本叮叮年曆卡 2027 貨號仍係 TBC，未寫入以免撞碼。",
+    "禮品已有總預：CUPAL-B088 杯墊 5000（第一次 1000）、CUPAL-B090 磁石貼 1000（500）、CUPAL-G011 雨傘 42+1427＝1469（第一次 42+500＝542）、CUPAL-B089 手提包 500（200）、ZA155S1 NMN 試用裝 200（100）、CUPAL-G024 古寶咖啡杯 76（第一次 24）。年曆卡表上未填總預，只有第一次送貨 500（qtyUnknown，剩餘要職員填）：CUPAL-B083（表列 CUPAL-B083V2）、CUPAL-B087（表列 CUPAL-B087V1），以及新入庫嘅日本叮叮年曆卡 2027（app 碼 CPW021-B027，表列 CPW021-B027/V1）。",
     "ZHMA02 WeArmask LV3 成人獨立包裝（白）：總預只計工展會 160 件（第一次送貨 120；生產批次 2025.12 46pcs／2026.10 680pcs 另計）。",
     "2026-11-21 黃格貨號：ZA141→ZA186、ZA124→ZA120A；VTM04／ZA188、CMPL／CMPLA、ZA177／ZA177B、CU51／CU51A 雙碼（入機代號顯示雙碼，舊碼留別名）。",
     "市場遊戲／會員入會／工展會贊助標明「分開PACK」嘅重疊 SKU（ZA169、ZA160、ZA165、CO12、CO10、ZA177、CMPS、CO99、CUPAL-G011、CUPAL-B051、ZE10S1 等）唔加落主貨總預；只將表上獨有貨號寫入庫存。CPW019A 第一次送貨 20 高過總預 12，補貨上限跟總預。",
+    "2026-11-26 最終表相對 20261123a 嘅改動：CUPAL-G024 補第一次送貨 24；年曆卡表列貨號改為 CUPAL-B083V2／CUPAL-B087V1（canonical 碼不變，舊碼留別名）；日本叮叮年曆卡 2027 已有貨號 CPW021-B027/V1，正式入庫；主貨 CO10 品名改為獅子油 35ml（分開PACK 重疊列仍寫 45ml，唔覆蓋主貨名）。",
     "宅配 F0001–F0003／F0006 呢份表未填數量，唔發明。",
   ],
   aliases: {
@@ -35,7 +36,10 @@ window.BPE_STOCK_SEED = {
     ZA177B: "ZA177",
     "ZA177/ZA177B": "ZA177",
     CU51A: "CU51",
-    "CU51/CU51A": "CU51"
+    "CU51/CU51A": "CU51",
+    "CUPAL-B083V2": "CUPAL-B083",
+    "CUPAL-B087V1": "CUPAL-B087",
+    "CPW021-B027/V1": "CPW021-B027"
   },
   items: [
     /* —— 紫花油套裝 —— */
@@ -73,11 +77,12 @@ window.BPE_STOCK_SEED = {
     { code: "CUPAL-B059", wfCode: "CUPAL-B059", xCode: "CUPAL-B059", name: "紫花油不織布覆膜環保袋 2020年版（表註 TBC）", category: "其他", qty: 2500, firstDrop: 500, unit: "件" },
 
     /* —— 禮品 —— */
-    { code: "CUPAL-B083", wfCode: "CUPAL-B083", xCode: "CUPAL-B083", name: "紫花油年曆卡 2027", category: "禮品", qtyUnknown: true, firstDrop: 500, unit: "件", note: "表上未填總預，只有第一次送貨 500" },
-    { code: "CUPAL-B087", wfCode: "CUPAL-B087", xCode: "CUPAL-B087", name: "古寶肌肉關節年曆卡 2027", category: "禮品", qtyUnknown: true, firstDrop: 500, unit: "件", note: "表上未填總預，只有第一次送貨 500" },
+    { code: "CUPAL-B083", wfCode: "CUPAL-B083V2", xCode: "CUPAL-B083V2", name: "紫花油年曆卡 2027", category: "禮品", qtyUnknown: true, firstDrop: 500, unit: "件", note: "表上未填總預，只有第一次送貨 500；表列貨號 CUPAL-B083V2" },
+    { code: "CPW021-B027", wfCode: "CPW021-B027/V1", xCode: "CPW021-B027/V1", name: "日本叮叮年曆卡 2027", category: "禮品", qtyUnknown: true, firstDrop: 500, unit: "件", note: "表上未填總預，只有第一次送貨 500；表列貨號 CPW021-B027/V1" },
+    { code: "CUPAL-B087", wfCode: "CUPAL-B087V1", xCode: "CUPAL-B087V1", name: "古寶肌肉關節年曆卡 2027", category: "禮品", qtyUnknown: true, firstDrop: 500, unit: "件", note: "表上未填總預，只有第一次送貨 500；表列貨號 CUPAL-B087V1" },
 
     /* —— 其他（袋／杯） —— */
-    { code: "CUPAL-G024", wfCode: "CUPAL-G024", xCode: "CUPAL-G024", name: "古寶咖啡杯", category: "其他", qty: 76, unit: "件" },
+    { code: "CUPAL-G024", wfCode: "CUPAL-G024", xCode: "CUPAL-G024", name: "古寶咖啡杯", category: "其他", qty: 76, firstDrop: 24, unit: "件" },
 
     /* —— 口罩 —— */
     { code: "ZHMA02", wfCode: "ZHMA02", xCode: "ZHMA02", name: "WeArmask LV3 成人獨立包裝（白）", category: "口罩", qty: 160, firstDrop: 120, unit: "件", note: "生產批次：2025.12 46pcs；2026.10 680pcs（總預只計工展會 160）" },
@@ -95,7 +100,7 @@ window.BPE_STOCK_SEED = {
     { code: "CO07", name: "真威龍 正紅花油 45ml", category: "真威龍", qty: 264, firstDrop: 88, unit: "件" },
     { code: "CO08", name: "真威龍 正白樹油 45ml", category: "真威龍", qty: 88, firstDrop: 22, unit: "件" },
     { code: "CO09", name: "真威龍 四季平安油 25ml", category: "真威龍", qty: 98, firstDrop: 22, unit: "件" },
-    { code: "CO10", name: "真威龍 獅子油 45ml", category: "真威龍", qty: 88, firstDrop: 22, unit: "件" },
+    { code: "CO10", name: "真威龍 獅子油 35ml", category: "真威龍", qty: 88, firstDrop: 22, unit: "件" },
     { code: "CO11", name: "真威龍 活絡油 50ml", category: "真威龍", qty: 1440, firstDrop: 648, unit: "件" },
     { code: "CO12", name: "真威龍 驅風油 50ml", category: "真威龍", qty: 98, firstDrop: 49, unit: "件" },
 
