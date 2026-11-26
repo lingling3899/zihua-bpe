@@ -3,33 +3,39 @@
   "use strict";
 
   var LS_ORDERS = "zihua_bpe_cupal_delivery_v1";
+  /* 2026-11-26 點心紙：2／3 個月仍為同款；6 個月任選最多 2 款共 6 件全單七折；
+     9 個月任選最多 3 款共 9 件全單六折（要另開單）；12 個月任選最多 3 款共 12 件全單五折。
+     單價用點心紙原價（VTM04 宅配欄位反推為 $337，POS 指定保健仍係 $205）。
+     合計＝原價×件數×折扣後，無條件進位至整元，以對上表 2／3／6／9／12 個月欄位價。 */
   var PLANS = [
-    { months: 2, discount: 0.9, label: "2個月Plan", tag: "9折", rule: "同款2件", mode: "same", pieces: 2, gifts: [] },
-    { months: 3, discount: 0.85, label: "3個月Plan", tag: "85折", rule: "同款3件", mode: "same", pieces: 3, gifts: [] },
-    { months: 6, discount: 0.7, label: "6個月Plan", tag: "7折", rule: "同款6件", mode: "same", pieces: 6, gifts: [
-      { code: "CUPAL-G024", name: "古寶保溫杯" }
+    { months: 2, discount: 0.9, label: "2個月Plan", tag: "9折", rule: "同款2件", mode: "same", maxKinds: 1, pieces: 2, gifts: [] },
+    { months: 3, discount: 0.85, label: "3個月Plan", tag: "85折", rule: "同款3件", mode: "same", maxKinds: 1, pieces: 3, gifts: [] },
+    { months: 6, discount: 0.7, label: "6個月Plan", tag: "7折", rule: "任選2款共6件", mode: "mix", maxKinds: 2, pieces: 6, gifts: [
+      { code: "CUPAL-G024", name: "古寶咖啡杯" }
     ] },
-    { months: 9, discount: 0.6, label: "9個月Plan", tag: "6折", rule: "同款9件", mode: "same", pieces: 9, gifts: [
-      { code: "CUPAL-G024", name: "古寶保溫杯" },
-      { code: "ZA177", name: "肌肉按摩膏50克" }
+    { months: 9, discount: 0.6, label: "9個月Plan", tag: "6折", rule: "任選3款共9件", mode: "mix", maxKinds: 3, pieces: 9, note: "要另開單", gifts: [
+      { code: "CUPAL-G024", name: "古寶咖啡杯" },
+      { code: "ZA177", name: "古寶按摩膏50克" },
+      { name: "1次送貨" }
     ] },
-    { months: 12, discount: 0.5, label: "12個月Plan", tag: "5折", rule: "可選2款共12件", mode: "mix2", pieces: 12, gifts: [
-      { code: "CUPAL-G024", name: "古寶保溫杯" },
+    { months: 12, discount: 0.5, label: "12個月Plan", tag: "5折", rule: "任選3款共12件", mode: "mix", maxKinds: 3, pieces: 12, gifts: [
+      { code: "CUPAL-G024", name: "古寶咖啡杯" },
+      { code: "ZA177", name: "古寶按摩膏50克" },
       { code: "VTM04", name: "液體鈣軟膠囊100粒" },
-      { code: "ZA177", name: "肌肉按摩膏50克" }
+      { name: "2次送貨" }
     ] }
   ];
   var PRODUCTS = [
     { id: "cmpl", name: "古寶補適貼（大）10片", code: "CMPL/CMPLA", price: 67 },
-    { id: "cmps", name: "古寶補適貼（細）10片", code: "CMPS", price: 48 },
-    { id: "cpw020b", name: "古寶三合一關節靈 90粒（新裝）", code: "CPW020B", price: 288 },
-    { id: "ucii", name: "UC II 關節修復 Active Joint 3-in-1", code: "UCII", price: 328 },
-    { id: "cal", name: "液體鈣 PRO CALCIUM", code: "CAL", price: 198 },
-    { id: "fortigel", name: "Fortigel 關骼健", code: "FG", price: 268 },
-    { id: "msm", name: "三合一關節靈 MSM", code: "MSM", price: 218 },
-    { id: "tendon", name: "強腱肌活靈 60粒", code: "TDN", price: 198 },
-    { id: "oint", name: "關節靈軟膏 50g", code: "OINT", price: 88 },
-    { id: "massage", name: "肌肉按摩膏 50g", code: "MSG", price: 88 }
+    { id: "cmps", name: "古寶補適貼（細）10片", code: "CMPS", price: 44 },
+    { id: "cpw020b", name: "古寶三合一關節靈 90粒（新裝）", code: "CPW020B", price: 260 },
+    { id: "cu51", name: "古寶關節靈軟膏 50克", code: "CU51/CU51A", price: 78 },
+    { id: "vtm04", name: "古寶液體鈣軟膠囊 100粒", code: "VTM04/ZA188", price: 337 },
+    { id: "za119a", name: "古寶強腱肌活靈 60粒", code: "ZA119A", price: 299 },
+    { id: "za120a", name: "古寶釋痛肌腱噴霧 80毫升", code: "ZA120A", price: 94 },
+    { id: "za186", name: "古寶 UC II 關節修復靈 60粒", code: "ZA186", price: 307 },
+    { id: "za172", name: "古寶 FORTIGEL 關絡健生物活性骨膠原蛋白肽 28'S", code: "ZA172", price: 423 },
+    { id: "za177", name: "古寶肌肉按摩膏 50G", code: "ZA177/ZA177B", price: 84 }
   ];
 
   var state = {
@@ -71,19 +77,33 @@
     });
     return sum;
   }
+  function maxKindsOf(plan) {
+    if (!plan) return 1;
+    if (plan.maxKinds) return plan.maxKinds;
+    if (plan.mode === "same") return 1;
+    if (plan.mode === "mix3") return 3;
+    return 2;
+  }
+  function isMixPlan(plan) {
+    return plan && plan.mode !== "same";
+  }
   function mixKind(plan) {
     var n = selectedIds().length;
-    if (plan.mode === "same") return "同款";
+    var maxK = maxKindsOf(plan);
+    if (!isMixPlan(plan)) return "同款";
     if (n <= 1) return "同款";
-    return "任選2款";
+    return "任選" + n + "款";
   }
   function selectionOk() {
     var plan = planOf();
     var n = selectedIds().length;
     var sum = piecesSum();
     if (sum !== plan.pieces) return false;
-    if (plan.mode === "same") return n === 1;
-    return n === 1 || n === 2;
+    if (!isMixPlan(plan)) return n === 1;
+    return n >= 1 && n <= maxKindsOf(plan);
+  }
+  function ceilDollar(n) {
+    return Math.ceil(Math.round(Number(n) * 100) / 100);
   }
   function calcTotal() {
     var plan = planOf();
@@ -92,7 +112,7 @@
       var q = Math.max(0, Math.floor(Number(state.qty[p.id] || 0)));
       if (q > 0) sum += p.price * q * plan.discount;
     });
-    return Math.round(sum * 100) / 100;
+    return ceilDollar(sum);
   }
   function itemLines() {
     return PRODUCTS.filter(function (p) {
@@ -102,18 +122,30 @@
       return { id: p.id, name: p.name, code: p.code, price: p.price, qty: q };
     });
   }
+  function splitPieces(ids, pieces) {
+    var n = ids.length;
+    var next = {};
+    if (n <= 0) return next;
+    var base = Math.floor(pieces / n);
+    var rem = pieces % n;
+    ids.forEach(function (id, i) {
+      next[id] = base + (i < rem ? 1 : 0);
+    });
+    return next;
+  }
   function normalizeQtyForPlan() {
     var plan = planOf();
     var ids = selectedIds();
-    if (plan.mode === "same") {
+    if (!isMixPlan(plan)) {
       if (!ids.length) return;
       var keep = ids[0];
       state.qty = {};
       state.qty[keep] = plan.pieces;
       return;
     }
-    if (ids.length > 2) {
-      ids = ids.slice(0, 2);
+    var maxK = maxKindsOf(plan);
+    if (ids.length > maxK) {
+      ids = ids.slice(0, maxK);
       var slim = {};
       ids.forEach(function (id) { slim[id] = state.qty[id]; });
       state.qty = slim;
@@ -121,45 +153,41 @@
     var sum = piecesSum();
     if (ids.length === 1 && sum !== plan.pieces) {
       state.qty[ids[0]] = plan.pieces;
-    } else if (ids.length === 2 && sum !== plan.pieces) {
-      var a = Math.floor(plan.pieces / 2);
-      state.qty[ids[0]] = a;
-      state.qty[ids[1]] = plan.pieces - a;
+    } else if (ids.length > 1 && sum !== plan.pieces) {
+      state.qty = Object.assign({}, state.qty, splitPieces(ids, plan.pieces));
     }
   }
   function pickProduct(id) {
     var plan = planOf();
     var ids = selectedIds();
-    if (plan.mode === "same") {
+    var maxK = maxKindsOf(plan);
+    if (!isMixPlan(plan)) {
       state.qty = {};
       state.qty[id] = plan.pieces;
       return;
     }
     if ((state.qty[id] || 0) > 0) return;
-    if (ids.length === 0) {
-      state.qty[id] = plan.pieces;
+    if (ids.length >= maxK) {
+      alert("呢個計劃最多任選 " + maxK + " 款，共 " + plan.pieces + " 件。請先取消其中一款再換。");
       return;
     }
-    if (ids.length === 1) {
-      var other = ids[0];
-      var half = Math.floor(plan.pieces / 2);
-      state.qty[other] = half;
-      state.qty[id] = plan.pieces - half;
-      return;
-    }
-    alert("12個月計劃最多任選 2 款，共 12 件。請先取消其中一款再換。");
+    ids = ids.concat([id]);
+    state.qty = splitPieces(ids, plan.pieces);
   }
   function unpickProduct(id) {
     var plan = planOf();
     delete state.qty[id];
     var ids = selectedIds();
-    if (plan.mode === "mix2" && ids.length === 1) {
+    if (!ids.length) return;
+    if (ids.length === 1) {
       state.qty[ids[0]] = plan.pieces;
+    } else {
+      state.qty = splitPieces(ids, plan.pieces);
     }
   }
   function changeQty(id, delta) {
     var plan = planOf();
-    if (plan.mode !== "mix2") return;
+    if (!isMixPlan(plan)) return;
     var ids = selectedIds();
     if (ids.indexOf(id) < 0) {
       if (delta > 0) pickProduct(id);
@@ -167,43 +195,57 @@
     }
     var cur = Math.max(0, Math.floor(Number(state.qty[id] || 0)));
     if (ids.length === 1) {
-      var next1 = cur + delta;
-      if (next1 <= 0) delete state.qty[id];
-      else state.qty[id] = Math.min(plan.pieces, next1);
+      if (delta < 0 && cur + delta <= 0) delete state.qty[id];
+      else state.qty[id] = plan.pieces;
       return;
     }
-    var other = ids[0] === id ? ids[1] : ids[0];
-    var next = cur + delta;
-    if (next <= 0) {
+    if (delta === 0) return;
+    if (cur + delta <= 0) {
       unpickProduct(id);
       return;
     }
-    var otherQ = Math.max(0, Math.floor(Number(state.qty[other] || 0)));
-    var maxThis = plan.pieces - 1;
-    if (next > maxThis) return;
-    state.qty[id] = next;
-    state.qty[other] = plan.pieces - next;
-    if (state.qty[other] < 1) {
-      state.qty[id] = cur;
-      state.qty[other] = otherQ;
+    /* 保持總件數不變：向另一款借入／借出 1 件，該款至少留 1 件 */
+    var others = ids.filter(function (x) { return x !== id; });
+    var donor = null;
+    var i;
+    if (delta > 0) {
+      var best = 0;
+      for (i = 0; i < others.length; i++) {
+        var q = Math.max(0, Math.floor(Number(state.qty[others[i]] || 0)));
+        if (q > 1 && q > best) { best = q; donor = others[i]; }
+      }
+      if (!donor) return;
+      state.qty[id] = cur + 1;
+      state.qty[donor] = Math.max(0, Math.floor(Number(state.qty[donor] || 0))) - 1;
+    } else {
+      var recv = others[0];
+      var small = Math.max(0, Math.floor(Number(state.qty[recv] || 0)));
+      for (i = 1; i < others.length; i++) {
+        var q2 = Math.max(0, Math.floor(Number(state.qty[others[i]] || 0)));
+        if (q2 < small) { small = q2; recv = others[i]; }
+      }
+      state.qty[id] = cur - 1;
+      state.qty[recv] = Math.max(0, Math.floor(Number(state.qty[recv] || 0))) + 1;
     }
   }
   function statusLine() {
     var plan = planOf();
     var n = selectedIds().length;
     var sum = piecesSum();
+    var maxK = maxKindsOf(plan);
+    var extra = plan.note ? (" · " + plan.note) : "";
     if (sum === 0) {
-      return plan.mode === "same"
+      return !isMixPlan(plan)
         ? ("請揀 1 款產品，同款 " + plan.pieces + " 件")
-        : "請揀 1 款（同款 12 件），或任選 2 款共 12 件";
+        : ("請揀 1 至 " + maxK + " 款，合共 " + plan.pieces + " 件");
     }
     if (selectionOk()) {
       return n === 1
-        ? ("已選同款 " + plan.pieces + " 件 · " + plan.tag)
-        : ("已選任選 2 款共 " + plan.pieces + " 件 · " + plan.tag);
+        ? ("已選同款 " + plan.pieces + " 件 · " + plan.tag + extra)
+        : ("已選任選 " + n + " 款共 " + plan.pieces + " 件 · " + plan.tag + extra);
     }
-    if (plan.mode === "same") return "呢個方案只可揀 1 款，同款 " + plan.pieces + " 件";
-    if (n > 2) return "最多任選 2 款";
+    if (!isMixPlan(plan)) return "呢個方案只可揀 1 款，同款 " + plan.pieces + " 件";
+    if (n > maxK) return "最多任選 " + maxK + " 款";
     return "已選 " + n + " 款共 " + sum + " 件，需合共 " + plan.pieces + " 件";
   }
 
@@ -223,7 +265,8 @@
         '<button type="button" class="plan-chip' + (state.plan === p.months ? " active" : "") +
         '" data-plan="' + p.months + '">' +
           "<strong>" + esc(p.label) + "</strong>" +
-          '<span class="plan-chip-rule">' + esc(p.rule) + " · " + esc(p.tag) + "</span>" +
+          '<span class="plan-chip-rule">' + esc(p.rule) + " · " + esc(p.tag) +
+          (p.note ? (" · " + esc(p.note)) : "") + "</span>" +
           (g ? '<span class="plan-chip-gift">送 ' + esc(g) + "</span>" : "") +
         "</button>"
       );
@@ -263,11 +306,11 @@
       '<header class="cupal-hero">' +
         "<p>2026 HKBPE 宅配計劃</p>" +
         "<h2>CUPAL Health 肌肉關節專家 宅配訂購表格</h2>" +
-        '<p class="cupal-lead">跟最新宣傳：2／3／6／9 個月為同款；12 個月可同款 12 件，或任選 2 款共 12 件。資料只存本機，職員可匯出跟進。</p>' +
+        '<p class="cupal-lead">跟 2026-11-26 點心紙：2／3 個月為同款；6 個月任選最多 2 款共 6 件全單七折；9 個月任選最多 3 款共 9 件全單六折（要另開單）；12 個月任選最多 3 款共 12 件全單五折。資料只存本機，職員可匯出跟進。</p>' +
       "</header>" +
       '<figure class="cupal-flyer">' +
         '<a href="assets/img/cupal/delivery-plans.jpg?v=20261123d" target="_blank" rel="noopener" title="開大圖">' +
-          '<img src="assets/img/cupal/delivery-plans.jpg?v=20261123d" width="1600" height="800" loading="lazy" decoding="async" alt="古寶宅配計劃：2、3、6、9個月為同款；12個月可選2款共12件；6個月送古寶保溫杯，9個月加肌肉按摩膏50克，12個月再加液體鈣軟膠囊100粒。低至半價，定期送到府上。" />' +
+          '<img src="assets/img/cupal/delivery-plans.jpg?v=20261123d" width="1600" height="800" loading="lazy" decoding="async" alt="古寶宅配計劃參考圖（舊宣傳）。最新規則以 2026-11-26 點心紙及本頁計算器為準：6個月任選最多2款共6件送咖啡杯；9個月任選最多3款共9件（要另開單）加按摩膏及1次送貨；12個月任選最多3款共12件再加液體鈣及2次送貨。" />' +
         "</a>" +
       "</figure>" +
       '<section class="panel cupal-panel">' +
@@ -320,10 +363,12 @@
       '<section class="panel cupal-panel">' +
         "<h3>訂購備註及條款</h3>" +
         "<ul class=\"muted\">" +
-          "<li>2／3／6／9 個月計劃為同款，件數＝月數。</li>" +
-          "<li>12 個月計劃可同款 12 件，或任選 2 款共 12 件。</li>" +
-          "<li>6 個月送古寶保溫杯；9 個月加送肌肉按摩膏 50 克；12 個月再加液體鈣軟膠囊 100 粒。贈品送完即止，以確認單為準。</li>" +
-          "<li>合計＝原價 × 件數 × 折扣。送貨週期以確認單為準。</li>" +
+          "<li>2／3 個月計劃為同款，件數＝月數。</li>" +
+          "<li>6 個月：任選最多 2 款產品，共 6 件，全單七折。</li>" +
+          "<li>9 個月：任選最多 3 款產品，共 9 件，全單六折（要另開單）。</li>" +
+          "<li>12 個月：任選最多 3 款產品，共 12 件，全單五折。</li>" +
+          "<li>贈品：6 個月送古寶咖啡杯；9 個月加送按摩膏 50 克＋1 次送貨；12 個月再加液體鈣軟膠囊 100 粒＋2 次送貨。入會另有 F0006 CMPS 古寶補適貼（細）10片，以確認單為準，送完即止。</li>" +
+          "<li>合計＝點心紙原價 × 件數 × 折扣，無條件進位至整元（與上表欄位價一致）。VTM04／ZA188 宅配單價 $337（POS 指定保健價仍為 $205）。送貨週期以確認單為準。</li>" +
           "<li>查詢電話：5409 8204（示意）。</li>" +
           "<li>本表只存本機，唔係正式電子商務結帳。</li>" +
         "</ul>" +
@@ -358,9 +403,9 @@
     var total = calcTotal();
     var plan = planOf();
     if (!selectionOk() || total <= 0) {
-      alert(plan.mode === "same"
+      alert(!isMixPlan(plan)
         ? ("請揀 1 款產品，同款 " + plan.pieces + " 件。")
-        : "請揀 1 款同款 12 件，或任選 2 款共 12 件。");
+        : ("請揀 1 至 " + maxKindsOf(plan) + " 款，合共 " + plan.pieces + " 件。"));
       return;
     }
     if (!state.form.name.trim() || !state.form.phone.trim()) { alert("請填姓名同電話。"); return; }

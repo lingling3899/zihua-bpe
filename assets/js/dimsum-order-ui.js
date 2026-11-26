@@ -253,16 +253,26 @@
     return Math.round((Number(n) || 0) * 100) / 100;
   }
 
-  var REDEEM_STOCK = { R0001: "CMPS", R0002: "CPW021A", R0003: "ZE10", R0004: "ZA155S1" };
+  var REDEEM_STOCK = {
+    R0001: "CMPS",
+    R0006: "CPW021A",
+    R0007: "ZE10",
+    R0005: "ZA155S1",
+    /* 舊表碼，防試機舊單仍可對到庫存 */
+    R0002: "CPW021A",
+    R0003: "ZE10",
+    R0004: "ZA155S1"
+  };
+  var LIMIT_STOCK = { C0013: "ZA081", C0014: "ZA094" };
   var SET_SECTION_IDS = { "z-oil-set": 1, "z-pack": 1, "z-ointment-set": 1, "cp-set": 1, "cp-pack": 1 };
   var SET_SKU_CODES = {
     Z0001A: 1, Z0005: 1, Z0007A: 1, Z0007B: 1, Z0007C: 1,
     Z0004: 1, Z0004B: 1, Z0004C: 1, Z0008A: 1, Z0008B: 1,
-    J0002: 1, L0024: 1
+    J0002: 1, JO002: 1, L0024: 1
   };
   var JOINT_CODES = {
     CMPS: 1, CMPL: 1, CMPLA: 1, "CMPL/CMPLA": 1, ZA164: 1, ZA177: 1, ZA177B: 1, "ZA177/ZA177B": 1, CU51: 1, CU51A: 1, "CU51/CU51A": 1,
-    J0002: 1, L0024: 1, ZA119A: 1, ZA172: 1, CPW020B: 1, ZA124: 1, ZA120A: 1, ZA141: 1, ZA186: 1
+    J0002: 1, JO002: 1, L0024: 1, ZA119A: 1, ZA172: 1, CPW020B: 1, ZA124: 1, ZA120A: 1, ZA141: 1, ZA186: 1
   };
   var JOINT_BUNDLE_IDS = { "cp-mix-3": 1 };
   var ORAL_CODES = {
@@ -273,12 +283,12 @@
     CPW005: 1, CPW006: 1, CPW004: 1, CU22: 1,
     SWC05: 1, ZA075: 1, ZA118A: 1, ZA081: 1, ZA094: 1, ZA100A: 1, BIF02: 1,
     ZA154: 1, ZA156A: 1, ZA157: 1, ZA158: 1, ZA165: 1, ZA160: 1,
-    C0004: 1, C0005: 1, C0006: 1
+    C0013: 1, C0014: 1
   };
   var ORAL_BUNDLE_IDS = {
     "an-cu001-3": 1, "an-za153-2": 1, "an-za155-3": 1, "an-za169-3": 1, "ch-lingzhi-2": 1
   };
-  var TOPICAL_CODES = { CMPS: 1, CMPL: 1, CMPLA: 1, "CMPL/CMPLA": 1, ZA164: 1, ZA177: 1, ZA177B: 1, "ZA177/ZA177B": 1, CU51: 1, CU51A: 1, "CU51/CU51A": 1, ZA124: 1, ZA120A: 1, J0002: 1, L0024: 1 };
+  var TOPICAL_CODES = { CMPS: 1, CMPL: 1, CMPLA: 1, "CMPL/CMPLA": 1, ZA164: 1, ZA177: 1, ZA177B: 1, "ZA177/ZA177B": 1, CU51: 1, CU51A: 1, "CU51/CU51A": 1, ZA124: 1, ZA120A: 1, J0002: 1, JO002: 1, L0024: 1 };
 
   function entryCode(it) {
     if (!it) return "";
@@ -291,6 +301,10 @@
   function redeemStockCode(code) {
     var c = normCode(code);
     return REDEEM_STOCK[c] || c;
+  }
+  function mappedStockCode(code) {
+    var c = normCode(code);
+    return REDEEM_STOCK[c] || LIMIT_STOCK[c] || c;
   }
   function isSetSku(code, sec) {
     var c = normCode(code);
@@ -1334,8 +1348,7 @@
       (sheet.sections || []).forEach(function (sec) {
         (sec.items || []).forEach(function (it) {
           if (it.displayOnly) return;
-          var code = it.code;
-          if (isRedeemCode(code)) code = redeemStockCode(code);
+          var code = mappedStockCode(it.code);
           add(code, itemQty(st, it.code));
         });
         (sec.bundles || []).forEach(function (b) {

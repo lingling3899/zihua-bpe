@@ -16,7 +16,16 @@
     { id: "unionpay", label: "銀聯" }
   ];
 
-  var REDEEM_STOCK = { R0001: "CMPS", R0002: "CPW021A", R0003: "ZE10", R0004: "ZA155S1" };
+  var REDEEM_STOCK = {
+    R0001: "CMPS",
+    R0006: "CPW021A",
+    R0007: "ZE10",
+    R0005: "ZA155S1",
+    R0002: "CPW021A",
+    R0003: "ZE10",
+    R0004: "ZA155S1"
+  };
+  var LIMIT_STOCK = { C0013: "ZA081", C0014: "ZA094" };
 
   var BRAND_ORDER = ["紫花油", "日本叮叮", "真威龍", "古寶（CUPAL）", "調理個", "口罩（WeArmask）", "其他"];
 
@@ -281,8 +290,8 @@
   function resolveBrand(code, name) {
     var c = normCode(code);
     var nm = String(name || "");
-    if (REDEEM_STOCK[c]) {
-      var stockCode = REDEEM_STOCK[c];
+    if (REDEEM_STOCK[c] || LIMIT_STOCK[c]) {
+      var stockCode = REDEEM_STOCK[c] || LIMIT_STOCK[c];
       var catMap = catalogByCode();
       var info = catMap[stockCode] || {};
       return resolveBrand(stockCode, info.name || nm);
@@ -516,6 +525,7 @@
       var q = Math.max(0, Math.floor(Number(n) || 0));
       if (!c || q <= 0) return;
       if (REDEEM_STOCK[c]) c = REDEEM_STOCK[c];
+      else if (LIMIT_STOCK[c]) c = LIMIT_STOCK[c];
       demand[c] = (demand[c] || 0) + q;
     }
     var lines = enrichLines((order && order.lines) || []);

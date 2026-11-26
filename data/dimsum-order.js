@@ -1,6 +1,6 @@
 /* 第60屆工展會點心紙下單資料 — 以掃描紙為準；參考用途，非醫療建議 */
 window.BPE_DIMSUM_ORDER = {
-  version: "20261110b",
+  version: "20261126b",
   currency: "HK$",
   sheets: [
     {
@@ -44,7 +44,7 @@ window.BPE_DIMSUM_ORDER = {
             { code: "CO98", name: "紫花油 6ml", orig: 19, special: 17, unit: "支" },
             { code: "CO99", name: "紫花油 12ml", orig: 33, special: 29, unit: "支" },
             { code: "ZE01", name: "紫花油 26ml", orig: 54, special: 44, unit: "支" },
-            { code: "ZE03", name: "紫花滴", orig: null, special: 35, unit: "支" },
+            { code: "ZE03", name: "紫花滴", orig: 35, special: 35, unit: "支" },
             { code: "ZE08", name: "紫花 C75 軟膏", orig: 68, special: 50, unit: "盒" },
             { code: "ZE10", name: "紫花油蚊水 85ml（新款）", orig: 62, special: 55, unit: "支" }
           ]
@@ -71,7 +71,6 @@ window.BPE_DIMSUM_ORDER = {
           ],
           items: [
             { code: "ZHMA02", name: "成人 Level 3 獨立包裝口罩（白）30片", orig: 128, special: 38, unit: "盒" },
-            { code: "ZHMA12", name: "中童 Level 3 口罩（白）30片", orig: 125, special: 38, unit: "盒" },
             { code: "ZHMA17", name: "小童立體口罩（紫）20片", orig: 90, special: 38, unit: "盒" },
             { code: "ZHMA18", name: "小童立體口罩（白）20片", orig: 90, special: 38, unit: "盒" },
             { code: "ZHMA19", name: "小童立體口罩（卡通）20片", orig: 90, special: 38, unit: "盒" }
@@ -112,7 +111,6 @@ window.BPE_DIMSUM_ORDER = {
         {
           id: "dd-125",
           title: "任選套裝 · 任選 3 盒 $125",
-          note: "含 USB 液體驅蚊器（圖紙屬本組）",
           bundles: [
             { id: "dd-125-set", label: "任選 3 盒 $125", setPrice: 125, setSize: 3 }
           ],
@@ -137,12 +135,12 @@ window.BPE_DIMSUM_ORDER = {
         {
           id: "rd-redeem",
           title: "換購 · 購買任何產品",
-          note: "加錢換購；須同時購買其他產品；每款每張單限換 1 件。官方表 R0003 寫 ZE09 50ml，目錄／庫存只有 ZE10 85ml（新款），沿用 ZE10。",
+          note: "加錢換購；須同時購買其他產品；每款每張單限換 1 件。R0007 跟最新點心紙為 ZE10 紫花油蚊水 85ml（新款）。",
           items: [
-            { code: "R0001", name: "加 $20 換購 CMPS 古寶補適貼（細）10片", orig: 44, special: 20, unit: "盒" },
-            { code: "R0002", name: "加 $30 換購 CPW021A 日本叮叮環保驅蚊劑 35克", orig: 45, special: 30, unit: "盒" },
-            { code: "R0003", name: "加 $30 換購 ZE10 紫花油蚊水 85ml", orig: 62, special: 30, unit: "盒" },
-            { code: "R0004", name: "加 $99 換購 ZA155S1 CUPAL Health NMN PQQ Ex 10粒試用裝", orig: 280, special: 99, unit: "盒" }
+            { code: "R0001", name: "加 $20 換購 CMPS 古寶補適貼（細）10片 1盒", orig: 44, special: 20, unit: "盒" },
+            { code: "R0006", name: "加 $30 換購 CPW021A 日本叮叮環保驅蚊劑 35克", orig: 45, special: 30, unit: "盒" },
+            { code: "R0007", name: "加 $30 換購 ZE10 紫花油蚊水 85ml", orig: 62, special: 30, unit: "盒" },
+            { code: "R0005", name: "加 $99 換購銀 PQQNMN 試用裝 10粒 1盒", orig: 280, special: 99, unit: "盒" }
           ]
         },
         {
@@ -239,16 +237,15 @@ window.BPE_DIMSUM_ORDER = {
           id: "cp-limit",
           title: "限購 · 購買任何產品",
           items: [
-            { code: "C0004", name: "CUPAL 全效淨痘飲 14包（20270326）", orig: null, special: 100, unit: "盒" },
-            { code: "C0005", name: "ZA094 古寶濕敏淨益生菌 28包（20270921）", orig: null, special: 300, unit: "盒", saleNote: "$300／2盒", packQty: 2, packPrice: 300 },
-            { code: "C0006", name: "古寶宿立清益生菌（新裝）丸裝（20270421）", orig: null, special: 100, unit: "套" }
+            { code: "C0013", name: "ZA081 CUPAL 全效淨痘飲 14包（20270326）", orig: null, special: 240, unit: "盒", saleNote: "$240／2盒", packQty: 2, packPrice: 240 },
+            { code: "C0014", name: "ZA094 古寶濕敏淨益生菌 28包（20270921）", orig: null, special: 300, unit: "盒", saleNote: "$300／2盒", packQty: 2, packPrice: 300 }
           ]
         },
         {
           id: "cp-set",
           title: "特別套裝",
           items: [
-            { code: "J0002", name: "補適貼（大）1盒＋補適貼（細）2盒", orig: 155, special: 100, unit: "套" }
+            { code: "JO002", name: "補適貼（大）1盒＋補適貼（細）2盒", orig: 155, special: 100, unit: "套" }
           ]
         },
         {
@@ -265,21 +262,24 @@ window.BPE_DIMSUM_ORDER = {
             { code: "CMPS", name: "古寶補適貼（細）10片", orig: 44, special: 35, unit: "盒" },
             { code: "CMPL", xCode: "CMPL/CMPLA", name: "古寶補適貼（大）10片", orig: 67, special: 55, unit: "盒" },
             { code: "ZA164", name: "金御一條根極速消痛滲透霜 100克", orig: 88, special: 65, unit: "盒" },
-            { code: "ZA177", xCode: "ZA177/ZA177B", name: "古寶按摩膏 50克", orig: 84, special: 84, unit: "盒" },
-            { code: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克", orig: 78, special: 65, unit: "盒" }
+            { code: "ZA177", xCode: "ZA177/ZA177B", name: "古寶按摩膏 50克", orig: 84, special: 65, unit: "盒" },
+            { code: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克", orig: 78, special: 65, unit: "盒" },
+            { code: "ZA120A", xCode: "ZA120A", name: "古寶釋痛肌腱噴霧 80毫升", orig: 94, special: 49, unit: "盒" }
           ]
         },
         {
           id: "cp-mix",
           title: "任選套裝 $150／3盒",
-          note: "CMPL／CMPLA、ZA164、CU51／CU51A 任選",
+          note: "CMPL／CMPLA、ZA164、ZA177／ZA177B、CU51／CU51A、ZA120A 任選",
           bundles: [
             { id: "cp-mix-3", label: "$150／3盒", setPrice: 150, setSize: 3 }
           ],
           items: [
             { code: "CMPL", xCode: "CMPL/CMPLA", name: "古寶補適貼（大）10片（見散件）", orig: 67, special: 55, unit: "盒", displayOnly: true },
             { code: "ZA164", name: "金御一條根極速消痛滲透霜 100克（見散件）", orig: 88, special: 65, unit: "盒", displayOnly: true },
-            { code: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克（見散件）", orig: 78, special: 65, unit: "盒", displayOnly: true }
+            { code: "ZA177", xCode: "ZA177/ZA177B", name: "古寶按摩膏 50克（見散件）", orig: 84, special: 65, unit: "盒", displayOnly: true },
+            { code: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克（見散件）", orig: 78, special: 65, unit: "盒", displayOnly: true },
+            { code: "ZA120A", xCode: "ZA120A", name: "古寶釋痛肌腱噴霧 80毫升（見散件）", orig: 94, special: 49, unit: "盒", displayOnly: true }
           ]
         }
       ]
@@ -312,7 +312,6 @@ window.BPE_DIMSUM_ORDER = {
             { code: "ZA119A", name: "古寶強腱肌活靈 60粒", orig: null, special: 299, unit: "盒" },
             { code: "ZA172", name: "Cupal Fortigel 關絡健 28包", orig: null, special: 423, unit: "盒" },
             { code: "CPW020B", name: "古寶三合一關節靈 90粒", orig: null, special: 260, unit: "盒" },
-            { code: "ZA120A", xCode: "ZA120A", name: "古寶釋痛肌腱噴霧 80毫升", orig: null, special: 94, unit: "盒" },
             { code: "ZA186", xCode: "ZA186", name: "古寶 UC II 關節修復靈 60粒", orig: null, special: 307, unit: "盒" },
             { code: "CPW003", name: "通脈紅麴 120粒", orig: null, special: 360, unit: "盒" },
             { code: "CPW010", name: "蜂膠素 100粒", orig: null, special: 295, unit: "盒" },
@@ -336,12 +335,13 @@ window.BPE_DIMSUM_ORDER = {
             { code: "ZA118A", name: "CUPAL Beauty 褪黑透肌美白丸 60粒 EX", orig: null, special: 468, unit: "盒" },
             { code: "ZA081", name: "CUPAL 全效淨痘飲 14包", orig: null, special: 248, unit: "盒" },
             { code: "ZA094", name: "古寶濕敏淨益生菌 28包", orig: null, special: 399, unit: "盒" },
-            { code: "ZA100A", name: "古寶宿立清益生菌（新裝）丸裝", orig: null, special: 298, unit: "盒" },
             { code: "BIF02", name: "成人腸道益生菌 20×2g", orig: null, special: 96, unit: "盒" },
             { code: "ZA154", name: "調理個肺 30包", orig: null, special: 129, unit: "盒" },
             { code: "ZA156A", name: "調理個腎 90粒", orig: null, special: 189, unit: "盒" },
+            { code: "ZA165", name: "調理個胃 60片", orig: null, special: 130, unit: "盒" },
             { code: "ZA157", name: "調理個肝 60粒", orig: null, special: 250, unit: "盒" },
-            { code: "ZA158", name: "調理個心 60粒", orig: null, special: 188, unit: "盒" }
+            { code: "ZA158", name: "調理個心 60粒", orig: null, special: 188, unit: "盒" },
+            { code: "ZA160", name: "調理個腦 30包", orig: null, special: 295, unit: "盒" }
           ]
         }
       ]
