@@ -4,7 +4,7 @@
 
   var LS_OVERRIDES = "zihua_bpe_office_roster_overrides_v1";
   var LS_PHOTO = "zihua_bpe_office_roster_photo_v1";
-  var OFFICIAL_SHEET = "assets/img/office/roster-official-20261120.jpg?v=20261120b";
+  var OFFICIAL_SHEET = "assets/img/office/roster-official-20261128.jpg?v=20261128a";
   var FULL_SHIFT_EPS = 0.05;
 
   var officeMode = "date"; // date | person
@@ -111,8 +111,8 @@
 
   function officialSheetSrc() {
     var s = seed();
-    var path = (s && s.officialSheet) || "assets/img/office/roster-official-20261120.jpg";
-    if (path.indexOf("?") === -1) path += "?v=20261120b";
+    var path = (s && s.officialSheet) || "assets/img/office/roster-official-20261128.jpg";
+    if (path.indexOf("?") === -1) path += "?v=20261128a";
     return path;
   }
 

@@ -1,16 +1,16 @@
 window.BPE_OFFICE_ROSTER_SEED = {
-  "version": "20261120b-office",
+  "version": "20261128a-office",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "label": "暫定 Office 同事更表（內部參考）",
-  "officialSheet": "assets/img/office/roster-official-20261120.jpg",
+  "officialSheet": "assets/img/office/roster-official-20261128.jpg",
   "rulesNote": [
     "原本返工 8:45–18:00＝9 小時",
     "補鐘時數跟表上當日 On Duty Hour（平日 1:45、平安夜／除夕 3:45、週末／假 11、尾場 1）；半更按工時比例（工時÷當日 Call 時數×On Duty Hour）",
     "冬至 12/22 當平日。公眾假：聖誕 12/25、Boxing Day 12/26、元旦 1/1。平安夜 12/24 同除夕 12/31 係平日，補鐘跟表上 3:45",
-    "12/10–11 Set Up：列出但不計入補鐘合計（表註「不計此場」；無 On Duty Hour）",
-    "12/12 Wing 拍野計 5 小時（唔當全日；未定起迄，職員可後補時間）",
-    "1 補鐘日＝9 小時：應補日數＝floor(補鐘時數÷9)；剩返可補小時＝餘數。表列 Hr／÷9.150 CL 只作參考，app 應補日數仍用 1日＝9h",
+    "12/10–11 Set Up：列出但不計入補鐘合計（表註「不計此日」；無 Call Time／On Duty Hour）。12/11 紙上寫 Angle TBC（按現有職員名理解為 Angie）同 Wing PM TBC，唔當已確認上更",
+    "1 補鐘日＝9 小時：應補日數＝floor(補鐘時數÷9)；剩返可補小時＝餘數。表列 Hr／÷9.150 CL 只作參考，app 應補日數仍用 1日＝9h。2026-11-28 表底只有 Andrew 匯總且被裁到，唔用嚟改其他人應補",
+    "12/12、12/13 格底有無列名嘅「6」，唔係當日 On Duty Hour（11）亦唔係人數；含義未明，無寫入補鐘或人數",
     "此為暫定 roster／內部參考，唔係正式 claim 金額"
   ],
   "people": [
@@ -37,7 +37,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
         "Ben",
         "Wing"
       ],
-      "notes": "Day 1；Wing 拍野 5小時",
+      "notes": "Day 1",
       "fairHours": 11
     },
     {
@@ -51,10 +51,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "onDutyHour": 11,
       "onDuty": [
         "Cherry",
-        "Andrew",
         "Bessy"
       ],
-      "notes": "Cherry 10:30–16:30、Andrew 16:30–21:30、Bessy 全日",
+      "notes": "",
       "fairHours": 11
     },
     {
@@ -176,7 +175,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "onDuty": [
         "Andrew"
       ],
-      "notes": "展位 Time 11:00–22:00，補鐘仍跟 Call／On Duty Hour 1:45",
+      "notes": "MeiMei OFF（表寫 Meimei OFF）；展位 Time 11:00–22:00，補鐘仍跟 Call／On Duty Hour 1:45",
       "fairHours": 11
     },
     {
@@ -234,8 +233,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "callEnd": "21:30",
       "onDutyHour": 11,
       "onDuty": [
-        "Cherry",
-        "Bessy"
+        "Andrew",
+        "Cherry"
       ],
       "notes": "聖誕假",
       "fairHours": 11
@@ -267,7 +266,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "onDutyHour": 11,
       "onDuty": [
         "MeiMei",
-        "Andrew"
+        "Bessy"
       ],
       "notes": "",
       "fairHours": 11
@@ -342,8 +341,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "callEnd": "21:30",
       "onDutyHour": 11,
       "onDuty": [
+        "Andrew",
         "MeiMei",
-        "Ben",
         "Bessy"
       ],
       "notes": "元旦",
@@ -417,8 +416,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": "Day 1"
     },
     {
@@ -434,8 +433,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": "Day 1"
     },
     {
@@ -447,14 +446,13 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "timeEnd": "21:00",
       "callStart": "10:30",
       "callEnd": "21:30",
-      "start": "",
-      "end": "",
+      "start": "10:30",
+      "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 5,
-      "daysCredit": 0.5,
-      "notes": "拍野 5小時",
-      "workedHours": 5
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
+      "notes": "Day 1"
     },
     {
       "name": "Cherry",
@@ -466,29 +464,12 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "callStart": "10:30",
       "callEnd": "21:30",
       "start": "10:30",
-      "end": "16:30",
-      "fairHours": 11,
-      "onDutyHour": 11,
-      "buchongHours": 6,
-      "daysCredit": 0.5,
-      "notes": "Cherry 10:30–16:30、Andrew 16:30–21:30、Bessy 全日"
-    },
-    {
-      "name": "Andrew",
-      "date": "2026-12-13",
-      "weekday": "日",
-      "dayType": "週末",
-      "timeStart": "11:00",
-      "timeEnd": "21:00",
-      "callStart": "10:30",
-      "callEnd": "21:30",
-      "start": "16:30",
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 5,
-      "daysCredit": 0.5,
-      "notes": "Cherry 10:30–16:30、Andrew 16:30–21:30、Bessy 全日"
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
+      "notes": ""
     },
     {
       "name": "Bessy",
@@ -503,9 +484,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
-      "notes": "Cherry 10:30–16:30、Andrew 16:30–21:30、Bessy 全日"
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
+      "notes": ""
     },
     {
       "name": "Andrew",
@@ -521,7 +502,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": "Time 較早 10:00，補鐘仍跟 Call／On Duty Hour 1:45"
     },
     {
@@ -538,7 +519,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -555,7 +536,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -572,7 +553,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -589,7 +570,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -605,8 +586,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -622,8 +603,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -639,8 +620,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -656,8 +637,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -674,8 +655,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
-      "notes": "展位 Time 11:00–22:00，補鐘仍跟 Call／On Duty Hour 1:45"
+      "daysCredit": 1.0,
+      "notes": "MeiMei OFF（表寫 Meimei OFF）；展位 Time 11:00–22:00，補鐘仍跟 Call／On Duty Hour 1:45"
     },
     {
       "name": "MeiMei",
@@ -691,7 +672,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": "冬至（非公眾假期，當平日）"
     },
     {
@@ -708,7 +689,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": "展位 Time 11:00–22:00，補鐘仍跟 Call／On Duty Hour 1:45"
     },
     {
@@ -725,8 +706,25 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 3.75,
       "buchongHours": 3.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": "平安夜；On Duty Hour 3:45"
+    },
+    {
+      "name": "Andrew",
+      "date": "2026-12-25",
+      "weekday": "五",
+      "dayType": "公眾假期",
+      "timeStart": "11:00",
+      "timeEnd": "22:00",
+      "callStart": "10:30",
+      "callEnd": "21:30",
+      "start": "10:30",
+      "end": "21:30",
+      "fairHours": 11,
+      "onDutyHour": 11,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
+      "notes": "聖誕假"
     },
     {
       "name": "Cherry",
@@ -741,25 +739,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
-      "notes": "聖誕假"
-    },
-    {
-      "name": "Bessy",
-      "date": "2026-12-25",
-      "weekday": "五",
-      "dayType": "公眾假期",
-      "timeStart": "11:00",
-      "timeEnd": "22:00",
-      "callStart": "10:30",
-      "callEnd": "21:30",
-      "start": "10:30",
-      "end": "21:30",
-      "fairHours": 11,
-      "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": "聖誕假"
     },
     {
@@ -775,8 +756,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": "聖誕假／Boxing Day"
     },
     {
@@ -792,8 +773,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": "聖誕假／Boxing Day"
     },
     {
@@ -809,12 +790,12 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
-      "name": "Andrew",
+      "name": "Bessy",
       "date": "2026-12-27",
       "weekday": "日",
       "dayType": "週末",
@@ -826,8 +807,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -844,7 +825,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": "展位 Time 11:00–22:00，補鐘仍跟 Call／On Duty Hour 1:45"
     },
     {
@@ -861,7 +842,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": "展位 Time 11:00–22:00，補鐘仍跟 Call／On Duty Hour 1:45"
     },
     {
@@ -878,7 +859,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 1.75,
       "buchongHours": 1.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -895,10 +876,27 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "fairHours": 11,
       "onDutyHour": 3.75,
       "buchongHours": 3.75,
-      "daysCredit": 1,
+      "daysCredit": 1.0,
       "notes": "除夕；On Duty Hour 3:45"
     },
     {
+      "name": "Andrew",
+      "date": "2027-01-01",
+      "weekday": "五",
+      "dayType": "公眾假期",
+      "timeStart": "11:00",
+      "timeEnd": "21:00",
+      "callStart": "10:30",
+      "callEnd": "21:30",
+      "start": "10:30",
+      "end": "21:30",
+      "fairHours": 11,
+      "onDutyHour": 11,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
+      "notes": "元旦"
+    },
+    {
       "name": "MeiMei",
       "date": "2027-01-01",
       "weekday": "五",
@@ -911,25 +909,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
-      "notes": "元旦"
-    },
-    {
-      "name": "Ben",
-      "date": "2027-01-01",
-      "weekday": "五",
-      "dayType": "公眾假期",
-      "timeStart": "11:00",
-      "timeEnd": "21:00",
-      "callStart": "10:30",
-      "callEnd": "21:30",
-      "start": "10:30",
-      "end": "21:30",
-      "fairHours": 11,
-      "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": "元旦"
     },
     {
@@ -945,8 +926,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": "元旦"
     },
     {
@@ -962,8 +943,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -979,8 +960,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -996,8 +977,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -1013,8 +994,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "21:30",
       "fairHours": 11,
       "onDutyHour": 11,
-      "buchongHours": 11,
-      "daysCredit": 1,
+      "buchongHours": 11.0,
+      "daysCredit": 1.0,
       "notes": ""
     },
     {
@@ -1030,8 +1011,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "20:30",
       "fairHours": 10,
       "onDutyHour": 1,
-      "buchongHours": 1,
-      "daysCredit": 1,
+      "buchongHours": 1.0,
+      "daysCredit": 1.0,
       "notes": "Last Day；Call 10:30–20:30；補鐘 1h"
     },
     {
@@ -1047,8 +1028,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "20:30",
       "fairHours": 10,
       "onDutyHour": 1,
-      "buchongHours": 1,
-      "daysCredit": 1,
+      "buchongHours": 1.0,
+      "daysCredit": 1.0,
       "notes": "Last Day；Call 10:30–20:30；補鐘 1h"
     },
     {
@@ -1064,8 +1045,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "20:30",
       "fairHours": 10,
       "onDutyHour": 1,
-      "buchongHours": 1,
-      "daysCredit": 1,
+      "buchongHours": 1.0,
+      "daysCredit": 1.0,
       "notes": "Last Day；Call 10:30–20:30；補鐘 1h"
     },
     {
@@ -1081,8 +1062,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "20:30",
       "fairHours": 10,
       "onDutyHour": 1,
-      "buchongHours": 1,
-      "daysCredit": 1,
+      "buchongHours": 1.0,
+      "daysCredit": 1.0,
       "notes": "Last Day；Call 10:30–20:30；補鐘 1h"
     },
     {
@@ -1098,8 +1079,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "20:30",
       "fairHours": 10,
       "onDutyHour": 1,
-      "buchongHours": 1,
-      "daysCredit": 1,
+      "buchongHours": 1.0,
+      "daysCredit": 1.0,
       "notes": "Last Day；Call 10:30–20:30；補鐘 1h"
     },
     {
@@ -1115,8 +1096,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "20:30",
       "fairHours": 10,
       "onDutyHour": 1,
-      "buchongHours": 1,
-      "daysCredit": 1,
+      "buchongHours": 1.0,
+      "daysCredit": 1.0,
       "notes": "Last Day；Call 10:30–20:30；補鐘 1h"
     },
     {
@@ -1132,8 +1113,8 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "end": "20:30",
       "fairHours": 10,
       "onDutyHour": 1,
-      "buchongHours": 1,
-      "daysCredit": 1,
+      "buchongHours": 1.0,
+      "daysCredit": 1.0,
       "notes": "Last Day；Call 10:30–20:30；補鐘 1h"
     }
   ],
@@ -1142,7 +1123,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "date": "2026-12-10",
       "weekday": "四",
       "label": "Set Up",
-      "staffNotes": "（PM）Louis – Monitor SetUp；（NN）& Andrew – Movein & 收貨",
+      "staffNotes": "（PM）Louis – Monitor Set Up；（NN）& Andrew – Movein & 收貨",
       "hours": "",
       "note": "無 Call Time／On Duty Hour；不計入補鐘合計"
     },
@@ -1150,18 +1131,18 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "date": "2026-12-11",
       "weekday": "五",
       "label": "Set Up & Move In",
-      "staffNotes": "（Full）Cherry, MeiMei, Andrew, Ben, Bessy；Wing PM；6PM 準時離場",
+      "staffNotes": "（Full）Cherry, MeiMei, Andrew, Ben, Bessy（Angle TBC，按現有職員名理解為 Angie，未確認上更）；Wing PM TBC；6PM 準時離場",
       "hours": "",
-      "note": "表註「不計此場」；無 Call Time／On Duty Hour；不計入補鐘合計"
+      "note": "表註「不計此日」；無 Call Time／On Duty Hour；不計入補鐘合計；Angle／Wing PM 為 TBC，唔計已確認上更"
     }
   ],
   "summary": [
     {
       "name": "MeiMei",
-      "days": 14,
-      "weekdayDays": 11,
-      "holidayWeekendDays": 3,
-      "totalFairHours": 153,
+      "days": 14.0,
+      "weekdayDays": 11.0,
+      "holidayWeekendDays": 3.0,
+      "totalFairHours": 153.0,
       "buchongHours": 55.5,
       "buchongDays": 6.167,
       "buchongWholeDays": 6,
@@ -1169,69 +1150,69 @@ window.BPE_OFFICE_ROSTER_SEED = {
     },
     {
       "name": "Andrew",
-      "days": 8.5,
-      "weekdayDays": 4,
-      "holidayWeekendDays": 4.5,
-      "totalFairHours": 98,
-      "buchongHours": 55.25,
-      "buchongDays": 6.139,
+      "days": 9.0,
+      "weekdayDays": 4.0,
+      "holidayWeekendDays": 5.0,
+      "totalFairHours": 98.0,
+      "buchongHours": 61.25,
+      "buchongDays": 6.806,
       "buchongWholeDays": 6,
-      "buchongRemainHours": 1.25
+      "buchongRemainHours": 7.25
     },
     {
       "name": "Cherry",
-      "days": 4.5,
-      "weekdayDays": 1,
-      "holidayWeekendDays": 3.5,
-      "totalFairHours": 54,
-      "buchongHours": 40,
-      "buchongDays": 4.444,
-      "buchongWholeDays": 4,
-      "buchongRemainHours": 4
-    },
-    {
-      "name": "Ben",
-      "days": 5,
-      "weekdayDays": 1,
-      "holidayWeekendDays": 4,
-      "totalFairHours": 54,
-      "buchongHours": 45,
-      "buchongDays": 5,
+      "days": 5.0,
+      "weekdayDays": 1.0,
+      "holidayWeekendDays": 4.0,
+      "totalFairHours": 54.0,
+      "buchongHours": 45.0,
+      "buchongDays": 5.0,
       "buchongWholeDays": 5,
       "buchongRemainHours": 0
     },
     {
+      "name": "Ben",
+      "days": 4.0,
+      "weekdayDays": 1.0,
+      "holidayWeekendDays": 3.0,
+      "totalFairHours": 43.0,
+      "buchongHours": 34.0,
+      "buchongDays": 3.778,
+      "buchongWholeDays": 3,
+      "buchongRemainHours": 7.0
+    },
+    {
       "name": "Bessy",
-      "days": 5,
-      "weekdayDays": 1,
-      "holidayWeekendDays": 4,
-      "totalFairHours": 54,
-      "buchongHours": 45,
-      "buchongDays": 5,
+      "days": 5.0,
+      "weekdayDays": 1.0,
+      "holidayWeekendDays": 4.0,
+      "totalFairHours": 54.0,
+      "buchongHours": 45.0,
+      "buchongDays": 5.0,
       "buchongWholeDays": 5,
       "buchongRemainHours": 0
     },
     {
       "name": "Angel",
-      "days": 2,
-      "weekdayDays": 1,
-      "holidayWeekendDays": 1,
-      "totalFairHours": 21,
-      "buchongHours": 12,
+      "days": 2.0,
+      "weekdayDays": 1.0,
+      "holidayWeekendDays": 1.0,
+      "totalFairHours": 21.0,
+      "buchongHours": 12.0,
       "buchongDays": 1.333,
       "buchongWholeDays": 1,
-      "buchongRemainHours": 3
+      "buchongRemainHours": 3.0
     },
     {
       "name": "Wing",
-      "days": 2.5,
-      "weekdayDays": 1,
-      "holidayWeekendDays": 1.5,
-      "totalFairHours": 32,
-      "buchongHours": 17,
-      "buchongDays": 1.889,
-      "buchongWholeDays": 1,
-      "buchongRemainHours": 8
+      "days": 3.0,
+      "weekdayDays": 1.0,
+      "holidayWeekendDays": 2.0,
+      "totalFairHours": 32.0,
+      "buchongHours": 23.0,
+      "buchongDays": 2.556,
+      "buchongWholeDays": 2,
+      "buchongRemainHours": 5.0
     }
   ]
 };
