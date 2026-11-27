@@ -18,7 +18,7 @@
       { code: "ZA177", name: "古寶按摩膏50克" },
       { name: "1次送貨" }
     ] },
-    { months: 12, discount: 0.5, label: "12個月Plan", tag: "5折", rule: "任選3款共12件", mode: "mix", maxKinds: 3, pieces: 12, gifts: [
+    { months: 12, discount: 0.5, label: "12個月Plan", tag: "5折", rule: "任選3款共12件", mode: "mix", maxKinds: 3, pieces: 12, note: "要另開單", gifts: [
       { code: "CUPAL-G024", name: "古寶咖啡杯" },
       { code: "ZA177", name: "古寶按摩膏50克" },
       { code: "VTM04", name: "液體鈣軟膠囊100粒" },
@@ -32,8 +32,8 @@
     { id: "cu51", name: "古寶關節靈軟膏 50克", code: "CU51/CU51A", price: 78 },
     { id: "vtm04", name: "古寶液體鈣軟膠囊 100粒", code: "VTM04/ZA188", price: 337 },
     { id: "za119a", name: "古寶強腱肌活靈 60粒", code: "ZA119A", price: 299 },
-    { id: "za120a", name: "古寶釋痛肌腱噴霧 80毫升", code: "ZA120A", price: 94 },
-    { id: "za186", name: "古寶 UC II 關節修復靈 60粒", code: "ZA186", price: 307 },
+    { id: "za120a", name: "古寶釋痛肌腱噴霧 80毫升", code: "ZA124", price: 94, m3Buy2Get1: true },
+    { id: "za186", name: "古寶 UC II 關節修復靈 60粒", code: "ZA141", price: 307 },
     { id: "za172", name: "古寶 FORTIGEL 關絡健生物活性骨膠原蛋白肽 28'S", code: "ZA172", price: 423 },
     { id: "za177", name: "古寶肌肉按摩膏 50G", code: "ZA177/ZA177B", price: 84 }
   ];
@@ -105,12 +105,19 @@
   function ceilDollar(n) {
     return Math.ceil(Math.round(Number(n) * 100) / 100);
   }
+  function lineRaw(p, q, plan) {
+    /* ZA124 噴霧 3 個月欄位寫「買二送一」，唔用 85 折、亦唔發明欄位價：付 2 件原價，得 3 件 */
+    if (p.m3Buy2Get1 && plan.months === 3 && q === plan.pieces) {
+      return p.price * 2;
+    }
+    return p.price * q * plan.discount;
+  }
   function calcTotal() {
     var plan = planOf();
     var sum = 0;
     PRODUCTS.forEach(function (p) {
       var q = Math.max(0, Math.floor(Number(state.qty[p.id] || 0)));
-      if (q > 0) sum += p.price * q * plan.discount;
+      if (q > 0) sum += lineRaw(p, q, plan);
     });
     return ceilDollar(sum);
   }
@@ -293,7 +300,8 @@
           '<div class="pc-card-body">' +
             "<strong>" + esc(p.name) + "</strong>" +
             '<div class="pc-meta"><code>' + esc(p.code) + '</code> · 原價 $' + money(p.price) +
-            (on ? (" · 小計 $" + money(p.price * q * plan.discount)) : "") +
+            (p.m3Buy2Get1 ? " · 3個月買二送一" : "") +
+            (on ? (" · 小計 $" + money(lineRaw(p, q, plan))) : "") +
             "</div>" +
           "</div>" +
           ctrl +
@@ -306,7 +314,7 @@
       '<header class="cupal-hero">' +
         "<p>2026 HKBPE 宅配計劃</p>" +
         "<h2>CUPAL Health 肌肉關節專家 宅配訂購表格</h2>" +
-        '<p class="cupal-lead">跟 2026-11-26 點心紙：2／3 個月為同款；6 個月任選最多 2 款共 6 件全單七折；9 個月任選最多 3 款共 9 件全單六折（要另開單）；12 個月任選最多 3 款共 12 件全單五折。資料只存本機，職員可匯出跟進。</p>' +
+        '<p class="cupal-lead">跟 2026-11-26 點心紙：2／3 個月為同款；6 個月任選最多 2 款共 6 件全單七折；9 個月任選最多 3 款共 9 件全單六折（要另開單）；12 個月任選最多 3 款共 12 件全單五折（9／12 個月要另開單）。ZA124 噴霧 3 個月為買二送一。資料只存本機，職員可匯出跟進。</p>' +
       "</header>" +
       '<figure class="cupal-flyer">' +
         '<a href="assets/img/cupal/delivery-plans.jpg?v=20261123d" target="_blank" rel="noopener" title="開大圖">' +
@@ -363,10 +371,10 @@
       '<section class="panel cupal-panel">' +
         "<h3>訂購備註及條款</h3>" +
         "<ul class=\"muted\">" +
-          "<li>2／3 個月計劃為同款，件數＝月數。</li>" +
+          "<li>2／3 個月計劃為同款，件數＝月數。ZA124 釋痛肌腱噴霧嘅 3 個月計劃跟點心紙「買二送一」（付 2 件原價，得 3 件），不以 85 折計。</li>" +
           "<li>6 個月：任選最多 2 款產品，共 6 件，全單七折。</li>" +
           "<li>9 個月：任選最多 3 款產品，共 9 件，全單六折（要另開單）。</li>" +
-          "<li>12 個月：任選最多 3 款產品，共 12 件，全單五折。</li>" +
+          "<li>12 個月：任選最多 3 款產品，共 12 件，全單五折（要另開單）。</li>" +
           "<li>贈品：6 個月送古寶咖啡杯；9 個月加送按摩膏 50 克＋1 次送貨；12 個月再加液體鈣軟膠囊 100 粒＋2 次送貨。入會另有 F0006 CMPS 古寶補適貼（細）10片，以確認單為準，送完即止。</li>" +
           "<li>合計＝點心紙原價 × 件數 × 折扣，無條件進位至整元（與上表欄位價一致）。VTM04／ZA188 宅配單價 $337（POS 指定保健價仍為 $205）。送貨週期以確認單為準。</li>" +
           "<li>查詢電話：5409 8204（示意）。</li>" +

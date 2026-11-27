@@ -386,6 +386,13 @@
     var ctx = findBundleContext(bundleId);
     return !!(ctx && isPickAnyBundle(ctx.bundle, ctx.section));
   }
+  function bundleCode(b) {
+    if (!b) return "";
+    return String(b.code || b.id || "").trim();
+  }
+  function isRequirePicksBundle(b) {
+    return !!(b && b.requirePicks);
+  }
 
   function aggregateCodes(codes) {
     var map = {};
@@ -550,11 +557,32 @@
       (sheet.sections || []).forEach(function (sec) {
         (sec.bundles || []).forEach(function (b) {
           if (!isPickAnyBundle(b, sec)) return;
+          if (isRequirePicksBundle(b)) return; /* 帶 * 套裝改由強制攔截，唔用「仍可結算」提示 */
           var q = setQty(st, b.id);
           if (q <= 0) return;
           var picks = getSetPicks(st, b.id);
           if (picks.length !== q) {
             bad.push(b.label || b.id);
+          }
+        });
+      });
+    });
+    return bad;
+  }
+
+  function incompleteRequirePicksBundles(st) {
+    var bad = [];
+    var sheets = allSheets();
+    sheets.forEach(function (sheet) {
+      (sheet.sections || []).forEach(function (sec) {
+        (sec.bundles || []).forEach(function (b) {
+          if (!isRequirePicksBundle(b)) return;
+          var q = setQty(st, b.id);
+          if (q <= 0) return;
+          var picks = getSetPicks(st, b.id);
+          if (picks.length !== q) {
+            bad.push((bundleCode(b) ? (bundleCode(b) + "* ") : "") + (b.label || b.id) +
+              "（已選 " + picks.length + "／" + q + " 套）");
           }
         });
       });
@@ -1889,12 +1917,23 @@
           ? window.BPE_Gifts.renderGiftCardsHtml()
           : "") +
         '<p class="pc-hero-note">套裝價自動計算 · 散支加到 6 支 26ml 或 5 支 10ml 先自動打開結算 · 送 12ml 及杯墊於結算扣庫存 · 花香套／任選 5 支亦送杯墊（唔自動跳結算） · 任何消費送 2027 年曆卡 · 滿額贈品以最高一級計 · 先減優惠券，再滿$115減$15／關節85折／銀髮95折，膠袋$1唔計入滿額門檻 · 以最終實付（未計袋）計禮遇 · 送完即止</p>' +
+        renderFlyerLibraryHtml() +
         (window.BPE_SalesTarget && window.BPE_SalesTarget.renderProgressHtml
           ? window.BPE_SalesTarget.renderProgressHtml()
           : "") +
         renderRecentOrdersHtml() +
       "</header>"
     );
+  }
+
+  function renderFlyerLibraryHtml() {
+    var list = (data().flyers || []);
+    if (!list.length) return "";
+    var links = list.map(function (f, i) {
+      return '<a class="pc-flyer-link" href="' + esc(f.src) + '" target="_blank" rel="noopener">' +
+        esc((i + 1) + ". " + (f.title || "點心紙")) + "</a>";
+    }).join(" · ");
+    return '<p class="pc-hero-note pc-flyer-lib">最新點心紙（2026-11-27，隨時可查）：' + links + "</p>";
   }
 
   function staffExtraSheet() {
@@ -1953,16 +1992,18 @@
     }
 
     (sec.bundles || []).forEach(function (b) {
-      if (searchQ && !matchQ(b.label) && !matchQ(b.id)) return;
+      if (searchQ && !matchQ(b.label) && !matchQ(b.id) && !matchQ(b.code)) return;
       var q = setQty(st, b.id);
       var priceLabel = b.useItemPrices ? "按單品／買3送1" : ("$" + money(b.setPrice) + "／套");
       var picksLine = isPickAnyBundle(b, sec) ? picksSummaryHtml(st, b.id, q) : "";
+      var codeTxt = bundleCode(b);
       html +=
         '<div class="pc-card">' +
           '<div class="pc-thumb" aria-hidden="true">📦</div>' +
           '<div class="pc-card-body">' +
             "<strong>" + esc(b.label) + "</strong>" +
-            '<div class="pc-meta"><span title="X＝入機代號">入機代號 <code>' + esc(b.id) + "</code></span> · " + esc(priceLabel) + "</div>" +
+            '<div class="pc-meta"><span title="X＝入機代號">入機代號 <code>' + esc(codeTxt) + "</code></span> · " + esc(priceLabel) +
+              (isRequirePicksBundle(b) ? " · ＊結算前必須入實際貨號" : "") + "</div>" +
             picksLine +
           "</div>" +
           qtyCtrl("set", b.id, q) +
@@ -2755,6 +2796,14 @@
         }
         if ((calcS.redeemCount || 0) > 0 && (calcS.nonRedeemCount || 0) <= 0) {
           alert("換購須同時購買其他產品。");
+          return;
+        }
+        var mustFill = incompleteRequirePicksBundles(stS);
+        if (mustFill.length) {
+          alert(
+            "以下帶 * 套裝必須先入齊實際貨號，先至可以結算（＊代表要另外入 code，分番是哪一隻產品）：\n\n" +
+            mustFill.join("\n")
+          );
           return;
         }
         var incomplete = incompletePickAnyBundles(stS);

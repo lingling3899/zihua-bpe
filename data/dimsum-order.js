@@ -1,7 +1,13 @@
 /* 第60屆工展會點心紙下單資料 — 以掃描紙為準；參考用途，非醫療建議 */
 window.BPE_DIMSUM_ORDER = {
-  version: "20261126b",
+  version: "20261127a",
   currency: "HK$",
+  flyers: [
+    { id: "20261127-p1", title: "古寶保健（靈芝／指定保健／贈品）", src: "assets/img/dimsum/20261127-page1-cupal-lingzhi.jpg" },
+    { id: "20261127-p2", title: "日本叮叮／換購／真威龍", src: "assets/img/dimsum/20261127-page2-dingding-cwl.jpg" },
+    { id: "20261127-p3", title: "紫花油／花香／口罩", src: "assets/img/dimsum/20261127-page3-zihua.jpg" },
+    { id: "20261127-p4", title: "安宮／NMN／宅配／限購／散件", src: "assets/img/dimsum/20261127-page4-cupal-special.jpg" }
+  ],
   sheets: [
     {
       id: "zihua",
@@ -52,10 +58,10 @@ window.BPE_DIMSUM_ORDER = {
         {
           id: "z-scent",
           title: "花香味藥油 · 任選套裝",
-          note: "贈送紫花油杯墊：買滿 $168／5 支",
+          note: "贈送紫花油杯墊：買滿 $168／5 支。ZE567B*／ZE567A* 代表要另外入 code，分番是哪一隻產品；結算前必須入齊實際貨號。",
           bundles: [
-            { id: "z-scent-2", label: "任選 2 支 $78", setPrice: 78, setSize: 2 },
-            { id: "z-scent-5", label: "任選 5 支 $168（送杯墊）", setPrice: 168, setSize: 5 }
+            { id: "z-scent-2", code: "ZE567B", label: "ZE567B* 任選 2 支 $78", setPrice: 78, setSize: 2, requirePicks: true },
+            { id: "z-scent-5", code: "ZE567A", label: "ZE567A* 任選 5 支 $168（送杯墊）", setPrice: 168, setSize: 5, requirePicks: true }
           ],
           items: [
             { code: "ZE05", name: "芳香紅薇 10ml（玫）", orig: 49.9, special: 45, unit: "支" },
@@ -119,7 +125,7 @@ window.BPE_DIMSUM_ORDER = {
             { code: "CPW021JA", name: "全效驅蚊芳香石（綠茶香）", orig: null, special: 65, unit: "盒" },
             { code: "CPW021JB", name: "全效驅蚊芳香石（巨峰提子香）", orig: null, special: 65, unit: "盒" },
             { code: "CPW021J", name: "全效驅蚊芳香石（櫻花香）", orig: null, special: 65, unit: "盒" },
-            { code: "CPW021JS", name: "全效驅蚊精油補充裝（櫻花香）20毫升（2瓶）", orig: null, special: 65, unit: "盒" },
+            { code: "CPW021JS", xCode: "CPW021JS1", name: "全效驅蚊精油補充裝（櫻花香）20毫升（2瓶）", orig: null, special: 65, unit: "盒" },
             { code: "CPW021H", name: "驅蟲系列 點必絕 10克", orig: null, special: 79, unit: "盒" },
             { code: "CPX021CA", name: "驅蟲系列 點必清滅蟻餌膠 10克", orig: null, special: 79, unit: "盒" }
           ]
@@ -155,9 +161,11 @@ window.BPE_DIMSUM_ORDER = {
         },
         {
           id: "rd-oils",
-          title: "其他藥油 · 任選 5 支 $185（平均 $37）",
+          title: "其他藥油 · 任選套裝",
+          note: "C001A* 任選 3 支 $115（平均 $38）；C001B* 任選 5 支 $185（平均 $37）。＊代表要另外入 code，分番是哪一隻產品（CO01–CO10、CO12；唔包括 CO11 活絡油）。結算前必須入齊實際貨號。",
           bundles: [
-            { id: "cwl-oils-5", label: "任選 5 支 $185", setPrice: 185, setSize: 5 }
+            { id: "cwl-oils-3", code: "C001A", label: "C001A* 任選 3 支 $115（平均 $38）", setPrice: 115, setSize: 3, requirePicks: true },
+            { id: "cwl-oils-5", code: "C001B", label: "C001B* 任選 5 支 $185（平均 $37）", setPrice: 185, setSize: 5, requirePicks: true }
           ],
           items: [
             { code: "CO01", name: "真威龍 骨痛靈油 45ml", orig: 68, special: 60, unit: "支" },
@@ -264,7 +272,7 @@ window.BPE_DIMSUM_ORDER = {
             { code: "ZA164", name: "金御一條根極速消痛滲透霜 100克", orig: 88, special: 65, unit: "盒" },
             { code: "ZA177", xCode: "ZA177/ZA177B", name: "古寶按摩膏 50克", orig: 84, special: 65, unit: "盒" },
             { code: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克", orig: 78, special: 65, unit: "盒" },
-            { code: "ZA120A", xCode: "ZA120A", name: "古寶釋痛肌腱噴霧 80毫升", orig: 94, special: 49, unit: "盒" }
+            { code: "ZA120A", xCode: "ZA124", name: "古寶釋痛肌腱噴霧 80毫升", orig: 94, special: 70, unit: "盒" }
           ]
         },
         {
@@ -279,7 +287,7 @@ window.BPE_DIMSUM_ORDER = {
             { code: "ZA164", name: "金御一條根極速消痛滲透霜 100克（見散件）", orig: 88, special: 65, unit: "盒", displayOnly: true },
             { code: "ZA177", xCode: "ZA177/ZA177B", name: "古寶按摩膏 50克（見散件）", orig: 84, special: 65, unit: "盒", displayOnly: true },
             { code: "CU51", xCode: "CU51/CU51A", name: "古寶關節靈軟膏 50克（見散件）", orig: 78, special: 65, unit: "盒", displayOnly: true },
-            { code: "ZA120A", xCode: "ZA120A", name: "古寶釋痛肌腱噴霧 80毫升（見散件）", orig: 94, special: 49, unit: "盒", displayOnly: true }
+            { code: "ZA120A", xCode: "ZA124", name: "古寶釋痛肌腱噴霧 80毫升（見散件）", orig: 94, special: 70, unit: "盒", displayOnly: true }
           ]
         }
       ]
@@ -303,45 +311,46 @@ window.BPE_DIMSUM_ORDER = {
         },
         {
           id: "ch-designated",
-          title: "指定保健產品 · 買3送1",
-          note: "任選買3送1；「套」＝4盒（付3盒價）。合計以單價×付費盒數估算，請職員核對。",
+          title: "指定保健產品 · 買3送1*",
+          note: "任選買3送1*；「套」＝4盒（付3盒價）。＊代表要另外入 code，分番是哪一隻產品。用套裝掣落單必須入齊實際貨號先至可以結算；逐件入貨（貨號已在行上）仍然得。合計以單價×付費盒數估算，請職員核對。",
           bundles: [
-            { id: "ch-b3g1", label: "買3送1（1套＝付3盒價，得4盒）", setPrice: null, setSize: 4, bogoPay: 3, bogoGet: 4, useItemPrices: true }
+            { id: "ch-b3g1", label: "買3送1*（1套＝付3盒價，得4盒）", setPrice: null, setSize: 4, bogoPay: 3, bogoGet: 4, useItemPrices: true, requirePicks: true }
           ],
           items: [
-            { code: "ZA119A", name: "古寶強腱肌活靈 60粒", orig: null, special: 299, unit: "盒" },
+            { code: "ZA075", name: "CUPAL 逆肌齡白藜蘆醇 75粒", orig: null, special: 569, unit: "盒" },
+            { code: "ZA118A", name: "CUPAL Beauty 褪黑透肌美白丸 60粒 EX", orig: null, special: 468, unit: "盒" },
             { code: "ZA172", name: "Cupal Fortigel 關絡健 28包", orig: null, special: 423, unit: "盒" },
-            { code: "CPW020B", name: "古寶三合一關節靈 90粒", orig: null, special: 260, unit: "盒" },
-            { code: "ZA186", xCode: "ZA186", name: "古寶 UC II 關節修復靈 60粒", orig: null, special: 307, unit: "盒" },
-            { code: "CPW003", name: "通脈紅麴 120粒", orig: null, special: 360, unit: "盒" },
-            { code: "CPW010", name: "蜂膠素 100粒", orig: null, special: 295, unit: "盒" },
+            { code: "ZA094", name: "古寶濕敏淨益生菌 28包", orig: null, special: 399, unit: "盒" },
             { code: "CPW011", name: "樂肝健 80粒", orig: null, special: 380, unit: "盒" },
-            { code: "CPW015", name: "冠軍藍莓 100粒", orig: null, special: 295, unit: "盒" },
             { code: "CPW016", name: "活腦素 100粒", orig: null, special: 380, unit: "盒" },
+            { code: "CPW003", name: "通脈紅麴 120粒", orig: null, special: 360, unit: "盒" },
+            { code: "CPW004", name: "古寶威格爾 60粒", orig: null, special: 320, unit: "盒" },
+            { code: "ZA186", xCode: "ZA141", name: "古寶 UC II 關節修復", orig: null, special: 307, unit: "盒" },
+            { code: "ZA119A", name: "古寶強腱肌活靈 60粒", orig: null, special: 299, unit: "盒" },
+            { code: "ZA100A", name: "古寶宿立清益生菌 20粒", orig: null, special: 298, unit: "盒" },
+            { code: "CPW010", name: "蜂膠素 100粒", orig: null, special: 295, unit: "盒" },
+            { code: "CPW015", name: "冠軍藍莓 100粒", orig: null, special: 295, unit: "盒" },
+            { code: "ZA160", name: "調理個腦 30包", orig: null, special: 295, unit: "盒" },
+            { code: "ZA002", name: "南極磷蝦油丸 30粒", orig: null, special: 288, unit: "盒" },
+            { code: "CPW020B", name: "古寶三合一關節靈 90粒", orig: null, special: 260, unit: "盒" },
+            { code: "ZA157", name: "調理個肝 60粒", orig: null, special: 250, unit: "盒" },
+            { code: "ZA081", name: "CUPAL 全效淨痘飲 14包", orig: null, special: 248, unit: "盒" },
+            { code: "SWC05", name: "CUPAL 瑞士膠原蛋白美肌精華 165g（橙味）", orig: null, special: 238, unit: "盒" },
             { code: "CPW017", name: "速燒脂 60粒", orig: null, special: 235, unit: "盒" },
             { code: "CPW026", name: "免疫球蛋白片 80粒", orig: null, special: 220, unit: "盒" },
             { code: "VTM04", xCode: "VTM04/ZA188", name: "古寶液體鈣軟膠囊 100粒", orig: null, special: 205, unit: "盒" },
-            { code: "ZA002", name: "南極磷蝦油丸 30粒", orig: null, special: 288, unit: "盒" },
+            { code: "ZA156A", name: "調理個腎 90粒", orig: null, special: 189, unit: "盒" },
+            { code: "ZA158", name: "調理個心 60粒", orig: null, special: 188, unit: "盒" },
             { code: "CPW007", name: "卵磷脂 100粒", orig: null, special: 180, unit: "盒" },
             { code: "CPW019A", name: "古寶 RTG 精純魚油 100粒", orig: null, special: 180, unit: "盒" },
             { code: "ZA166", name: "古寶兒童魚油", orig: null, special: 179, unit: "盒" },
             { code: "CU30C", name: "古寶哥路牛初乳片 120片", orig: null, special: 168, unit: "盒" },
-            { code: "CPW005", name: "古寶開奶茶 10克×24", orig: null, special: 80, unit: "盒" },
-            { code: "CPW006", name: "古寶七星茶 10克×24", orig: null, special: 80, unit: "盒" },
-            { code: "CPW004", name: "古寶威格爾 60粒", orig: null, special: 320, unit: "盒" },
-            { code: "CU22", name: "古寶海狗丸 60'S", orig: null, special: 116, unit: "盒" },
-            { code: "SWC05", name: "CUPAL 瑞士膠原蛋白美肌精華 165g（橙味）", orig: null, special: 238, unit: "盒" },
-            { code: "ZA075", name: "CUPAL 逆肌齡白藜蘆醇 75粒", orig: null, special: 569, unit: "盒" },
-            { code: "ZA118A", name: "CUPAL Beauty 褪黑透肌美白丸 60粒 EX", orig: null, special: 468, unit: "盒" },
-            { code: "ZA081", name: "CUPAL 全效淨痘飲 14包", orig: null, special: 248, unit: "盒" },
-            { code: "ZA094", name: "古寶濕敏淨益生菌 28包", orig: null, special: 399, unit: "盒" },
-            { code: "BIF02", name: "成人腸道益生菌 20×2g", orig: null, special: 96, unit: "盒" },
-            { code: "ZA154", name: "調理個肺 30包", orig: null, special: 129, unit: "盒" },
-            { code: "ZA156A", name: "調理個腎 90粒", orig: null, special: 189, unit: "盒" },
             { code: "ZA165", name: "調理個胃 60片", orig: null, special: 130, unit: "盒" },
-            { code: "ZA157", name: "調理個肝 60粒", orig: null, special: 250, unit: "盒" },
-            { code: "ZA158", name: "調理個心 60粒", orig: null, special: 188, unit: "盒" },
-            { code: "ZA160", name: "調理個腦 30包", orig: null, special: 295, unit: "盒" }
+            { code: "ZA154", name: "調理個肺 30包", orig: null, special: 129, unit: "盒" },
+            { code: "CU22", name: "古寶海狗丸 60'S", orig: null, special: 116, unit: "盒" },
+            { code: "BIF02", name: "成人腸道益生菌 20×2g", orig: null, special: 96, unit: "盒" },
+            { code: "CPW005", name: "古寶開奶茶 10克×24", orig: null, special: 80, unit: "盒" },
+            { code: "CPW006", name: "古寶七星茶 10克×24", orig: null, special: 80, unit: "盒" }
           ]
         }
       ]
