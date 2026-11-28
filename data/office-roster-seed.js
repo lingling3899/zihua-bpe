@@ -1,5 +1,5 @@
 window.BPE_OFFICE_ROSTER_SEED = {
-  "version": "20261128a-office",
+  "version": "20261128b-office",
   "fairStart": "2026-12-12",
   "fairEnd": "2027-01-04",
   "label": "暫定 Office 同事更表（內部參考）",
@@ -8,7 +8,7 @@ window.BPE_OFFICE_ROSTER_SEED = {
     "原本返工 8:45–18:00＝9 小時",
     "補鐘時數跟表上當日 On Duty Hour（平日 1:45、平安夜／除夕 3:45、週末／假 11、尾場 1）；半更按工時比例（工時÷當日 Call 時數×On Duty Hour）",
     "冬至 12/22 當平日。公眾假：聖誕 12/25、Boxing Day 12/26、元旦 1/1。平安夜 12/24 同除夕 12/31 係平日，補鐘跟表上 3:45",
-    "12/10–11 Set Up：列出但不計入補鐘合計（表註「不計此日」；無 Call Time／On Duty Hour）。12/11 紙上寫 Angle TBC（按現有職員名理解為 Angie）同 Wing PM TBC，唔當已確認上更",
+    "12/10–11 Set Up：列出但不計入補鐘合計（表註「不計此日」；無 Call Time／On Duty Hour）。12/11 紙上寫 Angel TBC 同 Wing PM TBC，唔當已確認上更",
     "1 補鐘日＝9 小時：應補日數＝floor(補鐘時數÷9)；剩返可補小時＝餘數。表列 Hr／÷9.150 CL 只作參考，app 應補日數仍用 1日＝9h。2026-11-28 表底只有 Andrew 匯總且被裁到，唔用嚟改其他人應補",
     "12/12、12/13 格底有無列名嘅「6」，唔係當日 On Duty Hour（11）亦唔係人數；含義未明，無寫入補鐘或人數",
     "此為暫定 roster／內部參考，唔係正式 claim 金額"
@@ -1131,9 +1131,9 @@ window.BPE_OFFICE_ROSTER_SEED = {
       "date": "2026-12-11",
       "weekday": "五",
       "label": "Set Up & Move In",
-      "staffNotes": "（Full）Cherry, MeiMei, Andrew, Ben, Bessy（Angle TBC，按現有職員名理解為 Angie，未確認上更）；Wing PM TBC；6PM 準時離場",
+      "staffNotes": "（Full）Cherry, MeiMei, Andrew, Ben, Bessy（Angel TBC，未確認上更）；Wing PM TBC；6PM 準時離場",
       "hours": "",
-      "note": "表註「不計此日」；無 Call Time／On Duty Hour；不計入補鐘合計；Angle／Wing PM 為 TBC，唔計已確認上更"
+      "note": "表註「不計此日」；無 Call Time／On Duty Hour；不計入補鐘合計；Angel／Wing PM 為 TBC，唔計已確認上更"
     }
   ],
   "summary": [
