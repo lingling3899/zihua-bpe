@@ -317,8 +317,8 @@
         '<p class="cupal-lead">跟 2026-11-26 點心紙：2／3 個月為同款；6 個月任選最多 2 款共 6 件全單七折；9 個月任選最多 3 款共 9 件全單六折（要另開單）；12 個月任選最多 3 款共 12 件全單五折（9／12 個月要另開單）。ZA124 噴霧 3 個月為買二送一。資料只存本機，職員可匯出跟進。</p>' +
       "</header>" +
       '<figure class="cupal-flyer">' +
-        '<a href="assets/img/cupal/delivery-plans.jpg?v=20261123d" target="_blank" rel="noopener" title="開大圖">' +
-          '<img src="assets/img/cupal/delivery-plans.jpg?v=20261123d" width="1600" height="800" loading="lazy" decoding="async" alt="古寶宅配計劃參考圖（舊宣傳）。最新規則以 2026-11-26 點心紙及本頁計算器為準：6個月任選最多2款共6件送咖啡杯；9個月任選最多3款共9件（要另開單）加按摩膏及1次送貨；12個月任選最多3款共12件再加液體鈣及2次送貨。" />' +
+        '<a href="assets/img/cupal/delivery-plans.jpg?v=20261128c" target="_blank" rel="noopener" title="開大圖">' +
+          '<img src="assets/img/cupal/delivery-plans.jpg?v=20261128c" width="833" height="424" loading="lazy" decoding="async" alt="古寶宅配計劃參考圖。最新規則以 2026-11-26 點心紙及本頁計算器為準：6個月任選最多2款共6件送咖啡杯；9個月任選最多3款共9件（要另開單）加按摩膏及1次送貨；12個月任選最多3款共12件再加液體鈣及2次送貨。" />' +
         "</a>" +
       "</figure>" +
       '<section class="panel cupal-panel">' +
